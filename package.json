@@ -1,0 +1,15 @@
+{
+  "name": "conference-bot",
+  "version": "0.1.0",
+  "description": "Manages online virtual events",
+  "main": "lib/index.js",
+  "repository": "git@github.com:matrix-org/conference-bot.git",
+  "author": "The Matrix.org Foundation C.I.C.",
+  "license": "Apache-2.0",
+  "private": true,
+  "dependencies": {
+    "config": "^3.3.3",
+    "js-yaml": "^3.14.1",
+    "matrix-bot-sdk": "^0.5.9"
+  }
+}
