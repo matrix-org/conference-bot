@@ -7,9 +7,17 @@
   "author": "The Matrix.org Foundation C.I.C.",
   "license": "Apache-2.0",
   "private": true,
+  "scripts": {
+    "start": "yarn build && node lib/index.js",
+    "build": "tsc"
+  },
   "dependencies": {
     "config": "^3.3.3",
     "js-yaml": "^3.14.1",
     "matrix-bot-sdk": "^0.5.9"
+  },
+  "devDependencies": {
+    "@types/node": "12",
+    "typescript": "^4.1.3"
   }
 }

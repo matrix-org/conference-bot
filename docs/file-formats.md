@@ -2,7 +2,8 @@
 
 ## Schedule
 
-TODO: Describe pentabarf format.
+The schedule for the bot is expected to be in the [Pentabarf](https://github.com/FOSDEM/pentabarf) format. 
+An example is [here](https://fosdem.org/2021/schedule/xml).
 
 ## Talk moderators
 
