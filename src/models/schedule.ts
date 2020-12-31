@@ -14,12 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { RoomKind } from "./room_kinds";
+
 export interface IPerson {
     id: string;
     name: string;
 }
 
-export interface IEvent {
+export interface ITalk {
     id: string;
     dateTs: number; // ms
     startTime: number; // ms
@@ -31,14 +33,16 @@ export interface IEvent {
     speakers: IPerson[];
 }
 
-export interface IRoom {
+export interface IStage {
     id: string;
-    eventsByDate: {
-        [day: number]: IEvent[]; // ms timestamp
+    name: string;
+    kind: RoomKind;
+    talksByDate: {
+        [day: number]: ITalk[]; // ms timestamp
     };
 }
 
 export interface IConference {
     title: string;
-    rooms: IRoom[];
+    stages: IStage[];
 }

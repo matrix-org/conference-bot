@@ -17,18 +17,19 @@ limitations under the License.
 import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
 import { simpleHtmlReply } from "../utils";
+import { Conference } from "../Conference";
 
 export class HelpCommand implements ICommand {
     public readonly prefixes = ["help", "?"];
 
-    public async run(client: MatrixClient, roomId: string, event: any, args: string[]) {
+    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
         const htmlHelp = "" +
             "<h1>Conference bot help</h1>" +
             "<h4>General:</h4>" +
             "<pre><code>" +
-            "!events help                    - This menu.\n" +
-            "!events create &lt;pentabarf url&gt;  - Creates a new event. If no event is currently active \n" +
-            "                                  then this event will be made active.\n" +
+            "!conference help   - This menu.\n" +
+            "!conference build  - Builds the basic conference structure needed to prepare the rest" +
+            "                     of the conference. This is based off the bot's config.\n" +
             "</code></pre>" +
             "";
         return simpleHtmlReply(client, roomId, event, htmlHelp);

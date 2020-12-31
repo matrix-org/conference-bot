@@ -24,3 +24,16 @@ TODO:
 * Some sort of `!run <event code>` command (widget?)
 * Interactions with Mjolnir
 * Expectations that livestreams are handled external to the bot
+
+## Room kinds
+
+The conference bot uses the following terminology for defining what purpose a Matrix room serves:
+
+* `Stage` - A place where talks are held with a static livestream for the whole event. In a physical
+  world, this would be the location where attendees go to see a talk.
+* `Talk` - A presentation. During the talk, the talk room will be closed to only the speakers and other
+  relevant people (questions would be asked in the stage room). After the talk, the talk room is opened
+  up and used for "hallway" conversations with the speakers.
+* `Special Interest` - These are rooms where subject matter is usually specific and the bot's concern
+  with it is largely moderation and lightly scheduled events. These are most like stands at a physical
+  conference, or places to hold larger discussions.

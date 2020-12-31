@@ -14,12 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-export const ACD_EVENTS_INDEX = "org.matrix.confbot.meta.events_index";
-export interface IEventsIndexContent {
-    events: string[]; // eventId[]
-}
+import { MatrixClient } from "matrix-bot-sdk";
+import { makeChildRoom } from "./room_state";
+import { Conference } from "../Conference";
 
-export const ACD_CURRENT_EVENT = "org.matrix.confbot.meta.current_event";
-export interface ICurrentEventContent {
-    eventId: string;
+export class MatrixRoom {
+    constructor(public readonly roomId: string, protected client: MatrixClient, protected conference: Conference) {
+    }
+
+    public async addDirectChild(roomId: string) {
+        const state = makeChildRoom(roomId);
+        await this.client.sendStateEvent(this.roomId, state.type, state.state_key, state.content);
+    }
 }

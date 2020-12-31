@@ -14,13 +14,57 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import {
+    RS_CHILD_ROOM,
+    RS_PARENT_ROOM,
+    RS_STORED_CONFERENCE,
+    RS_STORED_PERSON,
+    RS_STORED_STAGE,
+    RS_STORED_TALK
+} from "./room_state";
+
+export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = {
+    ban: 50,
+    events_default: 0,
+    invite: 50,
+    kick: 50,
+    redact: 50,
+    state_default: 50,
+    users_default: 0,
+    events: {
+        "im.vector.modular.widgets": 50,
+        "m.room.avatar": 50,
+        "m.room.canonical_alias": 100,
+        "m.room.history_visibility": 100,
+        "m.room.join_rules": 100,
+        "m.room.guest_access": 100,
+        "m.room.name": 50,
+        "m.room.power_levels": 100,
+        "m.room.topic": 50,
+        [RS_STORED_CONFERENCE]: 100,
+        [RS_STORED_PERSON]: 100,
+        [RS_STORED_STAGE]: 100,
+        [RS_STORED_TALK]: 100,
+        [RS_PARENT_ROOM]: 100,
+        [RS_CHILD_ROOM]: 100,
+    },
+    users: {
+        // should be populated with the creator
+    },
+};
+
 export const RSC_ROOM_KIND_FLAG = "org.matrix.confbot.kind";
 export enum RoomKind {
     Conference = "conference",
-    VirtualRoom = "virtual_room",
+    Stage = "stage",
     Talk = "talk",
-    Other = "other",
+    SpecialInterest = "other",
 }
+
+export const RSC_CONFERENCE_ID = "org.matrix.confbot.conference";
+export const RSC_STAGE_ID = "org.matrix.confbot.stage";
+export const RSC_TALK_ID = "org.matrix.confbot.talk";
+export const RSC_SPECIAL_INTEREST_ID = "org.matrix.confbot.interest";
 
 export const CONFERENCE_ROOM_CREATION_TEMPLATE = {
     preset: 'private_chat',
@@ -34,7 +78,7 @@ export const CONFERENCE_ROOM_CREATION_TEMPLATE = {
     },
 };
 
-export const PRIMARY_ROOM_CREATION_TEMPLATE = {
+export const STAGE_CREATION_TEMPLATE = {
     preset: 'public_chat',
     visibility: 'public',
     initial_state: [
@@ -42,11 +86,12 @@ export const PRIMARY_ROOM_CREATION_TEMPLATE = {
         {type: "m.room.history_visibility", state_key: "", content: {history_visibility: "world_readable"}},
     ],
     creation_content: {
-        [RSC_ROOM_KIND_FLAG]: RoomKind.VirtualRoom,
+        [RSC_ROOM_KIND_FLAG]: RoomKind.Stage,
     },
+    power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
 };
 
-export const INITIAL_EVENT_ROOM_CREATION_TEMPLATE = {
+export const TALK_CREATION_TEMPLATE = { // before being opened up to the public
     preset: 'private_chat',
     visibility: 'private',
     initial_state: [
@@ -56,7 +101,21 @@ export const INITIAL_EVENT_ROOM_CREATION_TEMPLATE = {
     creation_content: {
         [RSC_ROOM_KIND_FLAG]: RoomKind.Talk,
     },
+    power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
 }
+
+export const SPECIAL_INTEREST_CREATION_TEMPLATE = {
+    preset: 'public_chat',
+    visibility: 'public',
+    initial_state: [
+        {type: "m.room.guest_access", state_key: "", content: {guest_access: "can_join"}},
+        {type: "m.room.history_visibility", state_key: "", content: {history_visibility: "world_readable"}},
+    ],
+    creation_content: {
+        [RSC_ROOM_KIND_FLAG]: RoomKind.SpecialInterest,
+    },
+    power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
+};
 
 export function mergeWithCreationTemplate(template: any, addlProps: any): any {
     const result = {...template};

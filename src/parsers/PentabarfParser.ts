@@ -15,8 +15,10 @@ limitations under the License.
 */
 
 import * as parser from 'fast-xml-parser';
-import { IConference, IEvent, IPerson, IRoom } from "../models/schedule";
+import { IConference, IPerson, IStage, ITalk } from "../models/schedule";
 import * as moment from "moment";
+import { RoomKind } from "../models/room_kinds";
+import config from "../config";
 
 export interface IPentabarfEvent {
     attr: {
@@ -90,12 +92,26 @@ function simpleTimeParse(str: string): { hours: number, minutes: number } {
     return {hours: Number(parts[0]), minutes: Number(parts[1])};
 }
 
+function deprefix(id: string): {kind: RoomKind, name: string} {
+    const stagePrefix = config.conference.prefixes.stageRooms.find(p => id.startsWith(p));
+    if (stagePrefix) {
+        return {kind: RoomKind.Stage, name: id.substring(stagePrefix.length)};
+    }
+
+    const interestPrefix = config.conference.prefixes.interestRooms.find(p => id.startsWith(p));
+    if (interestPrefix) {
+        return {kind: RoomKind.SpecialInterest, name: id.substring(interestPrefix.length)};
+    }
+
+    return {kind: RoomKind.SpecialInterest, name: id};
+}
+
 export class PentabarfParser {
     public readonly parsed: IPentabarfSchedule;
 
     public readonly conference: IConference;
-    public readonly rooms: IRoom[];
-    public readonly events: IEvent[];
+    public readonly stages: IStage[];
+    public readonly talks: ITalk[];
     public readonly speakers: IPerson[];
 
     constructor(rawXml: string) {
@@ -105,12 +121,12 @@ export class PentabarfParser {
             ignoreAttributes: false,
         });
 
-        this.rooms = [];
-        this.events = [];
+        this.stages = [];
+        this.talks = [];
         this.speakers = [];
         this.conference = {
             title: this.parsed.schedule?.conference?.title,
-            rooms: this.rooms,
+            stages: this.stages,
         };
 
         for (const day of arrayLike(this.parsed.schedule?.day)) {
@@ -120,15 +136,18 @@ export class PentabarfParser {
             for (const pRoom of arrayLike(day.room)) {
                 if (!pRoom) continue;
 
-                let room: IRoom = {
+                const metadata = deprefix(pRoom.attr?.["@_name"] || "org.matrix.confbot.unknown");
+                let stage: IStage = {
                     id: pRoom.attr?.["@_name"],
-                    eventsByDate: {},
+                    name: metadata.name,
+                    kind: metadata.kind,
+                    talksByDate: {},
                 };
-                const existingRoom = this.rooms.find(r => r.id === room.id);
-                if (existingRoom) {
-                    room = existingRoom;
+                const existingStage = this.stages.find(r => r.id === stage.id);
+                if (existingStage) {
+                    stage = existingStage;
                 } else {
-                    this.rooms.push(room);
+                    this.stages.push(stage);
                 }
 
                 for (const pEvent of arrayLike(pRoom.event)) {
@@ -138,7 +157,7 @@ export class PentabarfParser {
                     const parsedDuration = simpleTimeParse(pEvent.duration);
                     const startTime = moment(dateTs).add(parsedStartTime.hours, 'hours').add(parsedStartTime.minutes, 'minutes');
                     const endTime = moment(startTime).add(parsedDuration.hours, 'hours').add(parsedDuration.minutes, 'minutes');
-                    let event: IEvent = {
+                    let talk: ITalk = {
                         id: pEvent.attr?.["@_id"],
                         dateTs: dateTs,
                         startTime: startTime.valueOf(),
@@ -149,15 +168,15 @@ export class PentabarfParser {
                         track: pEvent.track,
                         speakers: [],
                     };
-                    const existingEvent = this.events.find(e => e.id === event.id);
-                    if (existingEvent) {
-                        event = existingEvent;
+                    const existingTalk = this.talks.find(e => e.id === talk.id);
+                    if (existingTalk) {
+                        talk = existingTalk;
                     } else {
-                        this.events.push(event);
+                        this.talks.push(talk);
                     }
 
-                    if (!room.eventsByDate[dateTs]) room.eventsByDate[dateTs] = [];
-                    if (!room.eventsByDate[dateTs].includes(event)) room.eventsByDate[dateTs].push(event);
+                    if (!stage.talksByDate[dateTs]) stage.talksByDate[dateTs] = [];
+                    if (!stage.talksByDate[dateTs].includes(talk)) stage.talksByDate[dateTs].push(talk);
 
                     for (const pPerson of arrayLike(pEvent.persons?.person)) {
                         if (!pPerson) continue;
@@ -173,7 +192,7 @@ export class PentabarfParser {
                             this.speakers.push(person);
                         }
 
-                        event.speakers.push(person);
+                        talk.speakers.push(person);
                     }
                 }
             }

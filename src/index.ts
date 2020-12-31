@@ -20,11 +20,11 @@ limitations under the License.
 import { LogLevel, LogService, MatrixClient, RichConsoleLogger, SimpleFsStorageProvider, UserID } from "matrix-bot-sdk";
 import * as path from "path";
 import config from "./config";
-import { logMessage } from "./LogProxy";
 import { ICommand } from "./commands/ICommand";
-import { simpleReply } from "./utils";
+import { htmlMessage, simpleReply } from "./utils";
 import { HelpCommand } from "./commands/HelpCommand";
-import { CreateCommand } from "./commands/CreateCommand";
+import { BuildCommand } from "./commands/BuildCommand";
+import { Conference } from "./Conference";
 
 config.RUNTIME = {
     client: null,
@@ -37,6 +37,8 @@ LogService.info("index", "Bot starting...");
 const storage = new SimpleFsStorageProvider(path.join(config.dataPath, "bot.json"));
 const client = new MatrixClient(config.homeserverUrl, config.accessToken, storage);
 config.RUNTIME.client = client;
+
+const conference = new Conference(config.conference.id, client);
 
 let localpart;
 let displayName;
@@ -60,14 +62,26 @@ let userId;
 
     await client.joinRoom(config.managementRoom);
 
-    await logMessage(LogLevel.INFO, "index", "Starting to listen to messages.");
+    await conference.construct();
+    if (!conference.isCreated) {
+        await client.sendMessage(config.managementRoom, htmlMessage("m.notice", "" +
+            "<h4>Welcome!</h4>" +
+            "<p>Your conference hasn't been built yet (or I don't know of it). If your config is correct, run <code>!conference build</code> to start building your conference.</p>"
+        ));
+    } else {
+        await client.sendMessage(config.managementRoom, htmlMessage("m.notice", "" +
+            "<h4>Bot restarted</h4>" +
+            "<p>Your conference has been built already, but I appear to have restarted. If this is unexpected, please contact a support representative.</p>"
+        ));
+    }
+
     await client.start();
 })();
 
 function registerCommands() {
     const commands: ICommand[] = [
         new HelpCommand(),
-        new CreateCommand(),
+        new BuildCommand(),
     ];
 
     client.on("room.message", async (roomId: string, event: any) => {
@@ -79,7 +93,7 @@ function registerCommands() {
         const content = event['content'];
 
         const prefixes = [
-            "!events",
+            "!conference",
             localpart + ":",
             displayName + ":",
             userId + ":",
@@ -101,7 +115,7 @@ function registerCommands() {
             for (const command of commands) {
                 if (command.prefixes.includes(args[0])) {
                     LogService.info("index", `${event['sender']} is running command: ${content['body']}`);
-                    return await command.run(client, roomId, event, args.slice(1));
+                    return await command.run(conference, client, roomId, event, args.slice(1));
                 }
             }
         } catch (e) {

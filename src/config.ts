@@ -22,6 +22,16 @@ interface IConfig {
     accessToken: string;
     dataPath: string;
     managementRoom: string;
+    conference: {
+        id: string;
+        pentabarfDefinition: string;
+        timezone: string;
+        prefixes: {
+            stageRooms: string[];
+            interestRooms: string[];
+            aliases: string;
+        };
+    };
 
     RUNTIME: {
         client: MatrixClient;

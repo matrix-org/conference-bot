@@ -12,3 +12,32 @@ dataPath: "storage"
 # The ID of the room to use as a management room. The bot will only
 # accept commands in here.
 managementRoom: "!room:example.org"
+
+# Information about the conference
+conference:
+  # The ID of the conference to call this one. Data from other conferences
+  # will be ignored (such as past conferences).
+  id: "fosdem2021"
+
+  # The URL to the XML which is updated with conference information.
+  # This is read and parsed by the bot during the early stages of
+  # setting up the conference.
+  pentabarfDefinition: "https://fosdem.org/2021/schedule/xml"
+
+  # The timezone that the pentabarf definition is in.
+  timezone: "Europe/Brussels"
+
+  # Various prefixes used by the bot when parsing information.
+  prefixes:
+    # The prefixes for the rooms listed in the pentabarf definition which
+    # describe the rooms that are 'stage' rooms. The prefixes will be trimmed
+    # when naming the room.
+    stageRooms: ["D."]
+
+    # The prefixes for the rooms listed in the pentabarf definition which
+    # describe the rooms that are 'special interest' rooms. The prefixes will
+    # be trimmed when naming the room.
+    interestRooms: ["S.", "B."]
+
+    # The prefix to apply to all generated room aliases.
+    aliases: ""

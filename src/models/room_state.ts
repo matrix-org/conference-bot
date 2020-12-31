@@ -14,12 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { IConference, IEvent, IPerson, IRoom } from "./schedule";
+import { IConference, ITalk, IPerson, IStage } from "./schedule";
 import { objectFastCloneWithout } from "../utils";
 
 export interface IStateEvent<T> {
-    eventType: string;
-    stateKey: string;
+    type: string;
+    state_key: string;
     content: T;
 }
 
@@ -29,8 +29,8 @@ export interface IStoredPerson extends IPerson {
 }
 export function makeStoredPerson(confId: string, person: IPerson): IStateEvent<IStoredPerson> {
     return {
-        eventType: RS_STORED_PERSON,
-        stateKey: person.id,
+        type: RS_STORED_PERSON,
+        state_key: person.id,
         content: {
             ...objectFastCloneWithout(person, []),
             conferenceId: confId,
@@ -38,52 +38,50 @@ export function makeStoredPerson(confId: string, person: IPerson): IStateEvent<I
     };
 }
 
-export const RS_STORED_EVENT = "org.matrix.confbot.event";
-export interface IStoredEvent extends Omit<IEvent, "speakers"> {
+export const RS_STORED_TALK = "org.matrix.confbot.talk";
+export interface IStoredTalk extends Omit<ITalk, "speakers"> {
     conferenceId: string;
 }
-export function makeStoredEvent(confId: string, event: IEvent): IStateEvent<IStoredEvent> {
+export function makeStoredTalk(confId: string, talk: ITalk): IStateEvent<IStoredTalk> {
     return {
-        eventType: RS_STORED_EVENT,
-        stateKey: event.id,
+        type: RS_STORED_TALK,
+        state_key: talk.id,
         content: {
-            ...objectFastCloneWithout(event, ['speakers']),
+            ...objectFastCloneWithout(talk, ['speakers']),
             conferenceId: confId,
-        } as IStoredEvent,
+        } as IStoredTalk,
     };
 }
 
-export const RS_STORED_ROOM = "org.matrix.confbot.room";
-export interface IStoredRoom extends Omit<IRoom, "eventsByDate"> {
+export const RS_STORED_STAGE = "org.matrix.confbot.stage";
+export interface IStoredStage extends Omit<IStage, "talksByDate"> {
     conferenceId: string;
 }
-export function makeStoredRoom(confId: string, room: IRoom): IStateEvent<IStoredRoom> {
+export function makeStoredStage(confId: string, stage: IStage): IStateEvent<IStoredStage> {
     return {
-        eventType: RS_STORED_ROOM,
-        stateKey: room.id,
+        type: RS_STORED_STAGE,
+        state_key: stage.id,
         content: {
-            ...objectFastCloneWithout(room, ['eventsByDate']),
+            ...objectFastCloneWithout(stage, ['talksByDate']),
             conferenceId: confId,
-        } as IStoredRoom,
+        } as IStoredStage,
     };
 }
 
 export const RS_STORED_CONFERENCE = "org.matrix.confbot.conference";
-export interface IStoredConference extends Omit<IConference, "rooms"> {
+export interface IStoredConference extends Omit<IConference, "stages"> {
     conferenceId: string;
 }
 export function makeStoredConference(confId: string, conference: IConference): IStateEvent<IStoredConference> {
     return {
-        eventType: RS_STORED_CONFERENCE,
-        stateKey: "",
+        type: RS_STORED_CONFERENCE,
+        state_key: "",
         content: {
-            ...objectFastCloneWithout(conference, ['rooms']),
+            ...objectFastCloneWithout(conference, ['stages']),
             conferenceId: confId,
         } as IStoredConference,
     };
 }
-
-export const RSC_CONFERENCE_ROOM_FLAG = "org.matrix.confbot.conference";
 
 export const RS_PARENT_ROOM = "org.matrix.confbot.parent";
 export interface IParentRoom {
@@ -91,8 +89,8 @@ export interface IParentRoom {
 }
 export function makeParentRoom(roomId: string): IStateEvent<IParentRoom> {
     return {
-        eventType: RS_PARENT_ROOM,
-        stateKey: "",
+        type: RS_PARENT_ROOM,
+        state_key: "",
         content: {roomId: roomId},
     };
 }
@@ -103,16 +101,8 @@ export interface IChildRoom {
 }
 export function makeChildRoom(roomId: string): IStateEvent<IChildRoom> {
     return {
-        eventType: RS_CHILD_ROOM,
-        stateKey: roomId,
+        type: RS_CHILD_ROOM,
+        state_key: roomId,
         content: {roomId: roomId},
-    };
-}
-
-export function dtoToInitialState(dto: IStateEvent<any>): any {
-    return {
-        type: dto.eventType,
-        state_key: dto.stateKey,
-        content: dto.content,
     };
 }

@@ -74,6 +74,15 @@ export async function simpleHtmlReply(client: MatrixClient, roomId: string, even
     return await client.sendMessage(roomId, reply);
 }
 
+export function htmlMessage(msgtype: string, html: string): any {
+    return {
+        body: htmlToText(html, {wordwrap: false}),
+        msgtype: msgtype,
+        format: "org.matrix.custom.html",
+        formatted_body: html,
+    };
+}
+
 export function objectFastCloneWithout<T>(obj: T, keys: (keyof T)[]): T | Partial<T> {
     const repl = <T>{};
     for (const key of <(keyof T)[]>Object.keys(obj)) {
@@ -81,4 +90,32 @@ export function objectFastCloneWithout<T>(obj: T, keys: (keyof T)[]): T | Partia
         repl[key] = obj[key];
     }
     return repl;
+}
+
+export async function safeCreateRoom(client: MatrixClient, opts: any): Promise<string> {
+    if (opts) {
+        opts = JSON.parse(JSON.stringify(opts)); // clone for safety
+    }
+    if (opts?.power_level_content_override) {
+        if (!opts.power_level_content_override.users) {
+            opts.power_level_content_override.users = {};
+        }
+
+        let maxPl = 100;
+        const searchPls = (objOrVal:any|number) => {
+            if (!Number.isInteger(objOrVal)) {
+                for (const val of Object.values(objOrVal)) {
+                    searchPls(val);
+                }
+            } else {
+                if (objOrVal > maxPl) {
+                    maxPl = objOrVal;
+                }
+            }
+        };
+        searchPls(opts.power_level_content_override);
+
+        opts.power_level_content_override.users[await client.getUserId()] = maxPl;
+    }
+    return await client.createRoom(opts);
 }
