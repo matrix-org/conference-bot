@@ -14,18 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import * as config from "config";
 import { MatrixClient } from "matrix-bot-sdk";
 
-interface IConfig {
-    homeserverUrl: string;
-    accessToken: string;
-    dataPath: string;
-    managementRoom: string;
-
-    RUNTIME: {
-        client: MatrixClient;
-    };
+export interface ICommand {
+    prefixes: string[];
+    run(client: MatrixClient, roomId: string, event: any, args: string[]);
 }
-
-export default <IConfig>config;

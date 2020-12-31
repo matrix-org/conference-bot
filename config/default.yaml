@@ -8,3 +8,7 @@ accessToken: "YOUR_TOKEN_HERE"
 
 # Location on disk for where to store various bot information.
 dataPath: "storage"
+
+# The ID of the room to use as a management room. The bot will only
+# accept commands in here.
+managementRoom: "!room:example.org"

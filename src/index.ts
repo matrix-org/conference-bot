@@ -15,20 +15,100 @@ limitations under the License.
 */
 
 // TODO: Healthz
+// TODO: Timezones!! (Europe-Brussels)
 
-import { LogLevel, LogService, MatrixClient, RichConsoleLogger, SimpleFsStorageProvider } from "matrix-bot-sdk";
+import { LogLevel, LogService, MatrixClient, RichConsoleLogger, SimpleFsStorageProvider, UserID } from "matrix-bot-sdk";
 import * as path from "path";
 import config from "./config";
+import { logMessage } from "./LogProxy";
+import { ICommand } from "./commands/ICommand";
+import { simpleReply } from "./utils";
+import { HelpCommand } from "./commands/HelpCommand";
+import { CreateCommand } from "./commands/CreateCommand";
+
+config.RUNTIME = {
+    client: null,
+};
 
 LogService.setLogger(new RichConsoleLogger());
 LogService.setLevel(LogLevel.DEBUG);
 LogService.info("index", "Bot starting...");
 
 const storage = new SimpleFsStorageProvider(path.join(config.dataPath, "bot.json"));
-const bot = new MatrixClient(config.homeserverUrl, config.accessToken, storage);
+const client = new MatrixClient(config.homeserverUrl, config.accessToken, storage);
+config.RUNTIME.client = client;
 
-(async function() {
-    // TODO: Command processor
-    LogService.info("index", "Starting sync...");
-    await bot.start();
+let localpart;
+let displayName;
+let userId;
+
+(async function () {
+    // Quickly check connectivity before going much further
+    userId = await client.getUserId();
+    LogService.info("index", "Running as ", userId);
+
+    localpart = new UserID(userId).localpart;
+
+    const profile = await client.getUserProfile(userId);
+    if (profile?.displayname) {
+        displayName = profile.displayname;
+    } else {
+        displayName = localpart; // for sanity
+    }
+
+    registerCommands();
+
+    await client.joinRoom(config.managementRoom);
+
+    await logMessage(LogLevel.INFO, "index", "Starting to listen to messages.");
+    await client.start();
 })();
+
+function registerCommands() {
+    const commands: ICommand[] = [
+        new HelpCommand(),
+        new CreateCommand(),
+    ];
+
+    client.on("room.message", async (roomId: string, event: any) => {
+        if (roomId !== config.managementRoom) return;
+        if (!event['content']) return;
+        if (event['content']['msgtype'] !== 'm.text') return;
+        if (!event['content']['body']) return;
+
+        const content = event['content'];
+
+        const prefixes = [
+            "!events",
+            localpart + ":",
+            displayName + ":",
+            userId + ":",
+            localpart + " ",
+            displayName + " ",
+            userId + " ",
+        ];
+
+        const prefixUsed = prefixes.find(p => content['body'].startsWith(p));
+        if (!prefixUsed) return;
+
+        const restOfBody = content['body'].substring(prefixUsed.length).trim();
+        const args = restOfBody.split(' ');
+        if (args.length <= 0) {
+            return await simpleReply(client, roomId, event, `Invalid command. Try ${prefixUsed.trim()} help`);
+        }
+
+        try {
+            for (const command of commands) {
+                if (command.prefixes.includes(args[0])) {
+                    LogService.info("index", `${event['sender']} is running command: ${content['body']}`);
+                    return await command.run(client, roomId, event, args.slice(1));
+                }
+            }
+        } catch (e) {
+            LogService.error("index", "Error processing command: ", e);
+            return await simpleReply(client, roomId, event, `There was an error processing your command: ${e.message}`);
+        }
+
+        return await simpleReply(client, roomId, event, `Unknown command. Try ${prefixUsed.trim()} help`);
+    });
+}

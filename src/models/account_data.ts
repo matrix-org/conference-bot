@@ -14,18 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import * as config from "config";
-import { MatrixClient } from "matrix-bot-sdk";
-
-interface IConfig {
-    homeserverUrl: string;
-    accessToken: string;
-    dataPath: string;
-    managementRoom: string;
-
-    RUNTIME: {
-        client: MatrixClient;
-    };
+export const ACD_EVENTS_INDEX = "org.matrix.confbot.meta.events_index";
+export interface IEventsIndexContent {
+    events: string[]; // eventId[]
 }
 
-export default <IConfig>config;
+export const ACD_CURRENT_EVENT = "org.matrix.confbot.meta.current_event";
+export interface ICurrentEventContent {
+    eventId: string;
+}

@@ -14,18 +14,31 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import * as config from "config";
-import { MatrixClient } from "matrix-bot-sdk";
+export interface IPerson {
+    id: string;
+    name: string;
+}
 
-interface IConfig {
-    homeserverUrl: string;
-    accessToken: string;
-    dataPath: string;
-    managementRoom: string;
+export interface IEvent {
+    id: string;
+    dateTs: number; // ms
+    startTime: number; // ms
+    endTime: number; // ms
+    slug: string;
+    title: string;
+    subtitle: string;
+    track: string;
+    speakers: IPerson[];
+}
 
-    RUNTIME: {
-        client: MatrixClient;
+export interface IRoom {
+    id: string;
+    eventsByDate: {
+        [day: number]: IEvent[]; // ms timestamp
     };
 }
 
-export default <IConfig>config;
+export interface IConference {
+    title: string;
+    rooms: IRoom[];
+}
