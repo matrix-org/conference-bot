@@ -22,6 +22,7 @@ import { PentabarfParser } from "../parsers/PentabarfParser";
 import { ITalk } from "../models/schedule";
 import config from "../config";
 import { Conference } from "../Conference";
+import { COLOR_RED } from "../models/colors";
 
 export class BuildCommand implements ICommand {
     public readonly prefixes = ["build", "b"];
@@ -35,7 +36,7 @@ export class BuildCommand implements ICommand {
         if (!conference.isCreated) {
             await conference.createDb(parsed.conference);
         } else {
-            return await simpleHtmlReply(client, roomId, event, "<font color='#rr0000'>Error: conference already constructed.</font>");
+            return await simpleHtmlReply(client, roomId, event, `<span data-mx-color='${COLOR_RED}'><b>Error: conference already constructed.</b></span>`);
         }
 
         await simpleReply(client, roomId, event, "Conference initialized! Preparing rooms for later use (this will take a while)...");
