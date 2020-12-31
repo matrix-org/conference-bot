@@ -14,13 +14,36 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+export const RSC_ROOM_KIND_FLAG = "org.matrix.confbot.kind";
+export enum RoomKind {
+    Conference = "conference",
+    VirtualRoom = "virtual_room",
+    Talk = "talk",
+    Other = "other",
+}
+
+export const CONFERENCE_ROOM_CREATION_TEMPLATE = {
+    preset: 'private_chat',
+    visibility: 'private',
+    initial_state: [
+        {type: "m.room.guest_access", state_key: "", content: {guest_access: "forbidden"}},
+        {type: "m.room.history_visibility", state_key: "", content: {history_visibility: "shared"}},
+    ],
+    creation_content: {
+        [RSC_ROOM_KIND_FLAG]: RoomKind.Conference,
+    },
+};
+
 export const PRIMARY_ROOM_CREATION_TEMPLATE = {
     preset: 'public_chat',
-    visbility: 'public',
+    visibility: 'public',
     initial_state: [
         {type: "m.room.guest_access", state_key: "", content: {guest_access: "can_join"}},
         {type: "m.room.history_visibility", state_key: "", content: {history_visibility: "world_readable"}},
     ],
+    creation_content: {
+        [RSC_ROOM_KIND_FLAG]: RoomKind.VirtualRoom,
+    },
 };
 
 export const INITIAL_EVENT_ROOM_CREATION_TEMPLATE = {
@@ -30,6 +53,9 @@ export const INITIAL_EVENT_ROOM_CREATION_TEMPLATE = {
         {type: "m.room.guest_access", state_key: "", content: {guest_access: "forbidden"}},
         {type: "m.room.history_visibility", state_key: "", content: {history_visibility: "invited"}},
     ],
+    creation_content: {
+        [RSC_ROOM_KIND_FLAG]: RoomKind.Talk,
+    },
 }
 
 export function mergeWithCreationTemplate(template: any, addlProps: any): any {
@@ -39,6 +65,9 @@ export function mergeWithCreationTemplate(template: any, addlProps: any): any {
         switch (prop) {
             case 'initial_state':
                 result.initial_state.push(...addlProps.initial_state);
+                break;
+            case 'creation_content':
+                result.creation_content = {...result.creation_content, ...addlProps.creation_content};
                 break;
             default:
                 result[prop] = addlProps[prop];

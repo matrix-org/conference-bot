@@ -84,6 +84,7 @@ export function makeStoredConference(confId: string, conference: IConference): I
 }
 
 export const RSC_CONFERENCE_ROOM_FLAG = "org.matrix.confbot.conference";
+
 export const RS_PARENT_ROOM = "org.matrix.confbot.parent";
 export interface IParentRoom {
     roomId: string;

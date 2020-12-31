@@ -31,6 +31,7 @@ import {
     RSC_CONFERENCE_ROOM_FLAG
 } from "../models/room_state";
 import {
+    CONFERENCE_ROOM_CREATION_TEMPLATE,
     INITIAL_EVENT_ROOM_CREATION_TEMPLATE,
     mergeWithCreationTemplate,
     PRIMARY_ROOM_CREATION_TEMPLATE
@@ -72,14 +73,13 @@ export class CreateCommand implements ICommand {
         }
         roomState.push(makeStoredConference(conferenceId, parsed.conference));
 
-        const confRoomId = await client.createRoom({
+        const confRoomId = await client.createRoom(mergeWithCreationTemplate(CONFERENCE_ROOM_CREATION_TEMPLATE, {
             creation_content: {
                 [RSC_CONFERENCE_ROOM_FLAG]: conferenceId,
             },
             name: `Conference ${conferenceId}`,
-            preset: 'private_chat',
             initial_state: roomState.map(e => dtoToInitialState(e)),
-        });
+        }));
 
         await client.setAccountData(ACD_EVENTS_INDEX, {events: [...knownEvents.events, conferenceId]});
 
