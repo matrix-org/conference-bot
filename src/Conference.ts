@@ -34,6 +34,8 @@ import { assignAliasVariations } from "./utils/aliases";
 import config from "./config";
 import { MatrixRoom } from "./models/MatrixRoom";
 import { Stage } from "./models/Stage";
+import { Talk } from "./models/Talk";
+import { LiveWidget } from "./models/LiveWidget";
 
 export class Conference {
     private dbRoom: MatrixRoom;
@@ -41,7 +43,7 @@ export class Conference {
         [stageId: string]: Stage;
     } = {};
     private talks: {
-        [talkId: string]: MatrixRoom;
+        [talkId: string]: Talk;
     } = {};
     private interestRooms: {
         [interestId: string]: MatrixRoom;
@@ -68,7 +70,7 @@ export class Conference {
                         this.stages[createEvent[RSC_STAGE_ID]] = new Stage(room, this.client, this);
                         break;
                     case RoomKind.Talk:
-                        this.talks[createEvent[RSC_TALK_ID]] = new MatrixRoom(room, this.client, this);
+                        this.talks[createEvent[RSC_TALK_ID]] = new Talk(room, this.client, this);
                         break;
                     case RoomKind.SpecialInterest:
                         this.interestRooms[createEvent[RSC_SPECIAL_INTEREST_ID]] = new MatrixRoom(room, this.client, this);
@@ -99,6 +101,9 @@ export class Conference {
     }
 
     public async createStage(stage: IStage): Promise<Stage> {
+        if (this.stages[stage.id]) {
+            return this.stages[stage.id];
+        }
         const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(STAGE_CREATION_TEMPLATE, {
             creation_content: {
                 [RSC_CONFERENCE_ID]: this.id,
@@ -112,10 +117,17 @@ export class Conference {
         await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + stage.name);
         await this.dbRoom.addDirectChild(roomId);
         this.stages[stage.id] = new Stage(roomId, this.client, this);
+
+        const widget = await LiveWidget.forAuditorium(this.stages[stage.id], this.client);
+        await this.client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
+
         return this.stages[stage.id];
     }
 
     public async createTalk(talk: ITalk, stage: Stage): Promise<MatrixRoom> {
+        if (this.talks[talk.id]) {
+            return this.talks[talk.id];
+        }
         const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(TALK_CREATION_TEMPLATE, {
             creation_content: {
                 [RSC_CONFERENCE_ID]: this.id,
@@ -128,7 +140,11 @@ export class Conference {
         }));
         await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + (await stage.getName()) + '-' + talk.slug);
         await stage.addDirectChild(roomId);
-        this.talks[talk.id] = new MatrixRoom(roomId, this.client, this);
+        this.talks[talk.id] = new Talk(roomId, this.client, this);
+
+        const widget = await LiveWidget.forTalk(this.talks[talk.id], this.client);
+        await this.client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
+
         return this.talks[talk.id];
     }
 }

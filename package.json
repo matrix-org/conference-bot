@@ -18,8 +18,10 @@
     "html-to-text": "^6.0.0",
     "js-yaml": "^3.14.1",
     "matrix-bot-sdk": "^0.5.9",
+    "matrix-widget-api": "^0.1.0-beta.10",
     "moment": "^2.29.1",
-    "node-fetch": "^2.6.1"
+    "node-fetch": "^2.6.1",
+    "rfc4648": "^1.4.0"
   },
   "devDependencies": {
     "@types/node": "12",

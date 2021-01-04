@@ -29,6 +29,7 @@ import {
 import { logMessage } from "./LogProxy";
 import * as htmlEscape from "escape-html";
 import { htmlToText } from "html-to-text";
+import * as crypto from "crypto";
 
 export async function replaceRoomIdsWithPills(client: MatrixClient, text: string, roomIds: string[] | string, msgtype: MessageType = "m.text"): Promise<TextualMessageEventContent> {
     if (!Array.isArray(roomIds)) roomIds = [roomIds];
@@ -118,4 +119,8 @@ export async function safeCreateRoom(client: MatrixClient, opts: any): Promise<s
         opts.power_level_content_override.users[await client.getUserId()] = maxPl;
     }
     return await client.createRoom(opts);
+}
+
+export function sha256(str: string): string {
+    return crypto.createHash('sha256').update(str).digest('hex');
 }
