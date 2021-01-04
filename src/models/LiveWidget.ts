@@ -17,7 +17,7 @@ limitations under the License.
 import { IStateEvent } from "./room_state";
 import { IWidget } from "matrix-widget-api";
 import { sha256 } from "../utils";
-import { Stage } from "./Stage";
+import { Auditorium } from "./Auditorium";
 import config from "../config";
 import { MatrixClient } from "matrix-bot-sdk";
 import { base32 } from "rfc4648";
@@ -28,7 +28,7 @@ export class LiveWidget {
         // nothing
     }
 
-    public static async forAuditorium(aud: Stage, client: MatrixClient): Promise<IStateEvent<IWidget>> {
+    public static async forAuditorium(aud: Auditorium, client: MatrixClient): Promise<IStateEvent<IWidget>> {
         const widgetId = sha256(JSON.stringify(await aud.getDefinition()));
         return {
             type: "im.vector.modular.widgets",

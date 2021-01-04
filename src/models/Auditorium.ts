@@ -15,27 +15,27 @@ limitations under the License.
 */
 
 import { MatrixClient } from "matrix-bot-sdk";
-import { IStoredStage, RS_STORED_STAGE } from "./room_state";
+import { IStoredAuditorium, RS_STORED_AUDITORIUM } from "./room_state";
 import { Conference } from "../Conference";
 import { MatrixRoom } from "./MatrixRoom";
-import { RSC_STAGE_ID } from "./room_kinds";
+import { RSC_AUDITORIUM_ID } from "./room_kinds";
 
-export class Stage extends MatrixRoom {
-    private storedStage: IStoredStage;
+export class Auditorium extends MatrixRoom {
+    private storedAud: IStoredAuditorium;
 
     constructor(roomId: string, client: MatrixClient, conference: Conference) {
         super(roomId, client, conference);
     }
 
-    public async getDefinition(): Promise<IStoredStage> {
-        if (this.storedStage) {
-            return this.storedStage;
+    public async getDefinition(): Promise<IStoredAuditorium> {
+        if (this.storedAud) {
+            return this.storedAud;
         }
 
         const createEvent = await this.client.getRoomStateEvent(this.roomId, "m.room.create", "");
-        const stageId = createEvent[RSC_STAGE_ID];
-        this.storedStage = await this.client.getRoomStateEvent(this.roomId, RS_STORED_STAGE, stageId);
-        return this.storedStage;
+        const audId = createEvent[RSC_AUDITORIUM_ID];
+        this.storedAud = await this.client.getRoomStateEvent(this.roomId, RS_STORED_AUDITORIUM, audId);
+        return this.storedAud;
     }
 
     public async getName(): Promise<string> {

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { IConference, ITalk, IPerson, IStage } from "./schedule";
+import { IConference, ITalk, IPerson, IAuditorium } from "./schedule";
 import { objectFastCloneWithout } from "../utils";
 
 export interface IStateEvent<T> {
@@ -53,23 +53,23 @@ export function makeStoredTalk(confId: string, talk: ITalk): IStateEvent<IStored
     };
 }
 
-export const RS_STORED_STAGE = "org.matrix.confbot.stage";
-export interface IStoredStage extends Omit<IStage, "talksByDate"> {
+export const RS_STORED_AUDITORIUM = "org.matrix.confbot.auditorium";
+export interface IStoredAuditorium extends Omit<IAuditorium, "talksByDate"> {
     conferenceId: string;
 }
-export function makeStoredStage(confId: string, stage: IStage): IStateEvent<IStoredStage> {
+export function makeStoredAuditorium(confId: string, auditorium: IAuditorium): IStateEvent<IStoredAuditorium> {
     return {
-        type: RS_STORED_STAGE,
-        state_key: stage.id,
+        type: RS_STORED_AUDITORIUM,
+        state_key: auditorium.id,
         content: {
-            ...objectFastCloneWithout(stage, ['talksByDate']),
+            ...objectFastCloneWithout(auditorium, ['talksByDate']),
             conferenceId: confId,
-        } as IStoredStage,
+        } as IStoredAuditorium,
     };
 }
 
 export const RS_STORED_CONFERENCE = "org.matrix.confbot.conference";
-export interface IStoredConference extends Omit<IConference, "stages"> {
+export interface IStoredConference extends Omit<IConference, "auditoriums"> {
     conferenceId: string;
 }
 export function makeStoredConference(confId: string, conference: IConference): IStateEvent<IStoredConference> {
@@ -77,7 +77,7 @@ export function makeStoredConference(confId: string, conference: IConference): I
         type: RS_STORED_CONFERENCE,
         state_key: "",
         content: {
-            ...objectFastCloneWithout(conference, ['stages']),
+            ...objectFastCloneWithout(conference, ['auditoriums']),
             conferenceId: confId,
         } as IStoredConference,
     };

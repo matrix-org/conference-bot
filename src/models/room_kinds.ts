@@ -19,7 +19,7 @@ import {
     RS_PARENT_ROOM,
     RS_STORED_CONFERENCE,
     RS_STORED_PERSON,
-    RS_STORED_STAGE,
+    RS_STORED_AUDITORIUM,
     RS_STORED_TALK
 } from "./room_state";
 
@@ -43,7 +43,7 @@ export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = {
         "m.room.topic": 50,
         [RS_STORED_CONFERENCE]: 100,
         [RS_STORED_PERSON]: 100,
-        [RS_STORED_STAGE]: 100,
+        [RS_STORED_AUDITORIUM]: 100,
         [RS_STORED_TALK]: 100,
         [RS_PARENT_ROOM]: 100,
         [RS_CHILD_ROOM]: 100,
@@ -56,13 +56,13 @@ export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = {
 export const RSC_ROOM_KIND_FLAG = "org.matrix.confbot.kind";
 export enum RoomKind {
     Conference = "conference",
-    Stage = "stage",
+    Auditorium = "auditorium",
     Talk = "talk",
     SpecialInterest = "other",
 }
 
 export const RSC_CONFERENCE_ID = "org.matrix.confbot.conference";
-export const RSC_STAGE_ID = "org.matrix.confbot.stage";
+export const RSC_AUDITORIUM_ID = "org.matrix.confbot.auditorium";
 export const RSC_TALK_ID = "org.matrix.confbot.talk";
 export const RSC_SPECIAL_INTEREST_ID = "org.matrix.confbot.interest";
 
@@ -78,7 +78,7 @@ export const CONFERENCE_ROOM_CREATION_TEMPLATE = {
     },
 };
 
-export const STAGE_CREATION_TEMPLATE = {
+export const AUDITORIUM_CREATION_TEMPLATE = {
     preset: 'public_chat',
     visibility: 'public',
     initial_state: [
@@ -86,7 +86,7 @@ export const STAGE_CREATION_TEMPLATE = {
         {type: "m.room.history_visibility", state_key: "", content: {history_visibility: "world_readable"}},
     ],
     creation_content: {
-        [RSC_ROOM_KIND_FLAG]: RoomKind.Stage,
+        [RSC_ROOM_KIND_FLAG]: RoomKind.Auditorium,
     },
     power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
 };

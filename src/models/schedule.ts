@@ -33,7 +33,7 @@ export interface ITalk {
     speakers: IPerson[];
 }
 
-export interface IStage {
+export interface IAuditorium {
     id: string;
     name: string;
     kind: RoomKind;
@@ -44,5 +44,5 @@ export interface IStage {
 
 export interface IConference {
     title: string;
-    stages: IStage[];
+    auditoriums: IAuditorium[];
 }

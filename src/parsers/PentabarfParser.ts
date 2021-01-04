@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import * as parser from 'fast-xml-parser';
-import { IConference, IPerson, IStage, ITalk } from "../models/schedule";
+import { IConference, IPerson, IAuditorium, ITalk } from "../models/schedule";
 import * as moment from "moment";
 import { RoomKind } from "../models/room_kinds";
 import config from "../config";
@@ -93,9 +93,9 @@ function simpleTimeParse(str: string): { hours: number, minutes: number } {
 }
 
 function deprefix(id: string): {kind: RoomKind, name: string} {
-    const stagePrefix = config.conference.prefixes.stageRooms.find(p => id.startsWith(p));
-    if (stagePrefix) {
-        return {kind: RoomKind.Stage, name: id.substring(stagePrefix.length)};
+    const auditoriumPrefix = config.conference.prefixes.auditoriumRooms.find(p => id.startsWith(p));
+    if (auditoriumPrefix) {
+        return {kind: RoomKind.Auditorium, name: id.substring(auditoriumPrefix.length)};
     }
 
     const interestPrefix = config.conference.prefixes.interestRooms.find(p => id.startsWith(p));
@@ -110,7 +110,7 @@ export class PentabarfParser {
     public readonly parsed: IPentabarfSchedule;
 
     public readonly conference: IConference;
-    public readonly stages: IStage[];
+    public readonly auditoriums: IAuditorium[];
     public readonly talks: ITalk[];
     public readonly speakers: IPerson[];
 
@@ -121,12 +121,12 @@ export class PentabarfParser {
             ignoreAttributes: false,
         });
 
-        this.stages = [];
+        this.auditoriums = [];
         this.talks = [];
         this.speakers = [];
         this.conference = {
             title: this.parsed.schedule?.conference?.title,
-            stages: this.stages,
+            auditoriums: this.auditoriums,
         };
 
         for (const day of arrayLike(this.parsed.schedule?.day)) {
@@ -137,17 +137,17 @@ export class PentabarfParser {
                 if (!pRoom) continue;
 
                 const metadata = deprefix(pRoom.attr?.["@_name"] || "org.matrix.confbot.unknown");
-                let stage: IStage = {
+                let auditorium: IAuditorium = {
                     id: pRoom.attr?.["@_name"],
                     name: metadata.name,
                     kind: metadata.kind,
                     talksByDate: {},
                 };
-                const existingStage = this.stages.find(r => r.id === stage.id);
-                if (existingStage) {
-                    stage = existingStage;
+                const existingAuditorium = this.auditoriums.find(r => r.id === auditorium.id);
+                if (existingAuditorium) {
+                    auditorium = existingAuditorium;
                 } else {
-                    this.stages.push(stage);
+                    this.auditoriums.push(auditorium);
                 }
 
                 for (const pEvent of arrayLike(pRoom.event)) {
@@ -175,8 +175,8 @@ export class PentabarfParser {
                         this.talks.push(talk);
                     }
 
-                    if (!stage.talksByDate[dateTs]) stage.talksByDate[dateTs] = [];
-                    if (!stage.talksByDate[dateTs].includes(talk)) stage.talksByDate[dateTs].push(talk);
+                    if (!auditorium.talksByDate[dateTs]) auditorium.talksByDate[dateTs] = [];
+                    if (!auditorium.talksByDate[dateTs].includes(talk)) auditorium.talksByDate[dateTs].push(talk);
 
                     for (const pPerson of arrayLike(pEvent.persons?.person)) {
                         if (!pPerson) continue;

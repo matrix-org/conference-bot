@@ -44,21 +44,21 @@ export class BuildCommand implements ICommand {
 
         await simpleReply(client, roomId, event, "Conference initialized! Preparing rooms for later use (this will take a while)...");
 
-        let stagesCreated = 0;
+        let auditoriumsCreated = 0;
         let talksCreated = 0;
-        for (const stage of parsed.stages) {
-            const confStage = await conference.createStage(stage);
-            stagesCreated++;
+        for (const auditorium of parsed.auditoriums) {
+            const confAud = await conference.createAuditorium(auditorium);
+            auditoriumsCreated++;
 
             const allTalks: ITalk[] = [];
-            Object.values(stage.talksByDate).forEach(ea => allTalks.push(...ea));
+            Object.values(auditorium.talksByDate).forEach(ea => allTalks.push(...ea));
             for (const talk of allTalks) {
-                await conference.createTalk(talk, confStage);
+                await conference.createTalk(talk, confAud);
                 talksCreated++;
             }
         }
 
-        await client.sendNotice(roomId, `${stagesCreated} stages have been created`);
+        await client.sendNotice(roomId, `${auditoriumsCreated} auditoriums have been created`);
         await client.sendNotice(roomId, `${talksCreated} talks have been created`);
         await client.sendMessage(roomId, htmlMessage("m.notice", "" +
             "<h4>Conference built</h4>" +

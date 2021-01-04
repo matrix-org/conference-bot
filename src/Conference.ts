@@ -22,25 +22,25 @@ import {
     RSC_CONFERENCE_ID,
     RSC_ROOM_KIND_FLAG,
     RSC_SPECIAL_INTEREST_ID,
-    RSC_STAGE_ID,
+    RSC_AUDITORIUM_ID,
     RSC_TALK_ID,
-    STAGE_CREATION_TEMPLATE,
+    AUDITORIUM_CREATION_TEMPLATE,
     TALK_CREATION_TEMPLATE
 } from "./models/room_kinds";
-import { IConference, IStage, ITalk } from "./models/schedule";
-import { makeParentRoom, makeStoredConference, makeStoredStage, makeStoredTalk } from "./models/room_state";
+import { IConference, IAuditorium, ITalk } from "./models/schedule";
+import { makeParentRoom, makeStoredConference, makeStoredAuditorium, makeStoredTalk } from "./models/room_state";
 import { safeCreateRoom } from "./utils";
 import { assignAliasVariations } from "./utils/aliases";
 import config from "./config";
 import { MatrixRoom } from "./models/MatrixRoom";
-import { Stage } from "./models/Stage";
+import { Auditorium } from "./models/Auditorium";
 import { Talk } from "./models/Talk";
 import { LiveWidget } from "./models/LiveWidget";
 
 export class Conference {
     private dbRoom: MatrixRoom;
-    private stages: {
-        [stageId: string]: Stage;
+    private auditoriums: {
+        [auditoriumId: string]: Auditorium;
     } = {};
     private talks: {
         [talkId: string]: Talk;
@@ -66,8 +66,8 @@ export class Conference {
                     case RoomKind.Conference:
                         this.dbRoom = new MatrixRoom(room, this.client, this);
                         break;
-                    case RoomKind.Stage:
-                        this.stages[createEvent[RSC_STAGE_ID]] = new Stage(room, this.client, this);
+                    case RoomKind.Auditorium:
+                        this.auditoriums[createEvent[RSC_AUDITORIUM_ID]] = new Auditorium(room, this.client, this);
                         break;
                     case RoomKind.Talk:
                         this.talks[createEvent[RSC_TALK_ID]] = new Talk(room, this.client, this);
@@ -100,31 +100,31 @@ export class Conference {
         this.dbRoom = new MatrixRoom(roomId, this.client, this);
     }
 
-    public async createStage(stage: IStage): Promise<Stage> {
-        if (this.stages[stage.id]) {
-            return this.stages[stage.id];
+    public async createAuditorium(auditorium: IAuditorium): Promise<Auditorium> {
+        if (this.auditoriums[auditorium.id]) {
+            return this.auditoriums[auditorium.id];
         }
-        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(STAGE_CREATION_TEMPLATE, {
+        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_CREATION_TEMPLATE, {
             creation_content: {
                 [RSC_CONFERENCE_ID]: this.id,
-                [RSC_STAGE_ID]: stage.id,
+                [RSC_AUDITORIUM_ID]: auditorium.id,
             },
             initial_state: [
-                makeStoredStage(this.id, stage),
+                makeStoredAuditorium(this.id, auditorium),
                 makeParentRoom(this.dbRoom.roomId),
             ],
         }));
-        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + stage.name);
+        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.name);
         await this.dbRoom.addDirectChild(roomId);
-        this.stages[stage.id] = new Stage(roomId, this.client, this);
+        this.auditoriums[auditorium.id] = new Auditorium(roomId, this.client, this);
 
-        const widget = await LiveWidget.forAuditorium(this.stages[stage.id], this.client);
+        const widget = await LiveWidget.forAuditorium(this.auditoriums[auditorium.id], this.client);
         await this.client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
 
-        return this.stages[stage.id];
+        return this.auditoriums[auditorium.id];
     }
 
-    public async createTalk(talk: ITalk, stage: Stage): Promise<MatrixRoom> {
+    public async createTalk(talk: ITalk, auditorium: Auditorium): Promise<MatrixRoom> {
         if (this.talks[talk.id]) {
             return this.talks[talk.id];
         }
@@ -135,11 +135,11 @@ export class Conference {
             },
             initial_state: [
                 makeStoredTalk(this.id, talk),
-                makeParentRoom(stage.roomId),
+                makeParentRoom(auditorium.roomId),
             ],
         }));
-        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + (await stage.getName()) + '-' + talk.slug);
-        await stage.addDirectChild(roomId);
+        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + (await auditorium.getName()) + '-' + talk.slug);
+        await auditorium.addDirectChild(roomId);
         this.talks[talk.id] = new Talk(roomId, this.client, this);
 
         const widget = await LiveWidget.forTalk(this.talks[talk.id], this.client);

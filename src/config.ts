@@ -33,7 +33,7 @@ interface IConfig {
         pentabarfDefinition: string;
         timezone: string;
         prefixes: {
-            stageRooms: string[];
+            auditoriumRooms: string[];
             interestRooms: string[];
             aliases: string;
         };

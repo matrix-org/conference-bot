@@ -48,9 +48,9 @@ conference:
   # Various prefixes used by the bot when parsing information.
   prefixes:
     # The prefixes for the rooms listed in the pentabarf definition which
-    # describe the rooms that are 'stage' rooms. The prefixes will be trimmed
-    # when naming the room.
-    stageRooms: ["D."]
+    # describe the rooms that are 'auditorium' rooms. The prefixes will be
+    # trimmed when naming the room.
+    auditoriumRooms: ["D."]
 
     # The prefixes for the rooms listed in the pentabarf definition which
     # describe the rooms that are 'special interest' rooms. The prefixes will
