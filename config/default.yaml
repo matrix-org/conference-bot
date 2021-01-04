@@ -13,6 +13,24 @@ dataPath: "storage"
 # accept commands in here.
 managementRoom: "!room:example.org"
 
+# Configuration for the webserver (used to serve widgets for the conference's
+# rooms).
+webserver:
+  # The address to bind to. If using Docker, this should be all interfaces and
+  # instead managed through port mapping.
+  address: '0.0.0.0'
+
+  # The port to bind the webserver on.
+  port: 8080
+
+  # The public URL where the bot can expect to be able to serve widgets from.
+  # Note that this URL will be put into the Matrix room state.
+  publicBaseUrl: "https://conferences.example.org"
+
+  # Additional assets may be served from `${publicBaseUrl}/assets/*` which are
+  # available at this path.
+  additionalAssetsPath: "/data/public"
+
 # Information about the conference
 conference:
   # The ID of the conference to call this one. Data from other conferences

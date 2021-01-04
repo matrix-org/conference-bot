@@ -16,6 +16,7 @@ limitations under the License.
 
 // TODO: Healthz
 // TODO: Timezones!! (Europe-Brussels)
+// TODO: Start webserver
 
 import { LogLevel, LogService, MatrixClient, RichConsoleLogger, SimpleFsStorageProvider, UserID } from "matrix-bot-sdk";
 import * as path from "path";

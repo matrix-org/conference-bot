@@ -22,6 +22,12 @@ interface IConfig {
     accessToken: string;
     dataPath: string;
     managementRoom: string;
+    webserver: {
+        address: string;
+        port: number;
+        publicBaseUrl: string;
+        additionalAssetsPath: string;
+    };
     conference: {
         id: string;
         pentabarfDefinition: string;
