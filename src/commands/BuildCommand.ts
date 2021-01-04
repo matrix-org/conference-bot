@@ -36,7 +36,10 @@ export class BuildCommand implements ICommand {
         if (!conference.isCreated) {
             await conference.createDb(parsed.conference);
         } else {
-            return await simpleHtmlReply(client, roomId, event, `<span data-mx-color='${COLOR_RED}'><b>Error: conference already constructed.</b></span>`);
+            return await simpleHtmlReply(client, roomId, event, "" +
+            `<h4><span data-mx-color='${COLOR_RED}'>Conference already built</span></h4>` +
+            "<p>Now it's time to <a href='https://github.com/matrix-org/conference-bot/blob/main/docs/importing-people.md'>import your participants &amp; team</a>.</p>"
+        );
         }
 
         await simpleReply(client, roomId, event, "Conference initialized! Preparing rooms for later use (this will take a while)...");
