@@ -30,6 +30,7 @@ interface IConfig {
     };
     conference: {
         id: string;
+        name: string;
         pentabarfDefinition: string;
         timezone: string;
         prefixes: {

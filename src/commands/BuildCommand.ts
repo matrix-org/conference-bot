@@ -15,9 +15,9 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { MatrixClient } from "matrix-bot-sdk";
+import { MatrixClient, MentionPill, RichReply } from "matrix-bot-sdk";
 import * as fetch from "node-fetch";
-import { htmlMessage, simpleHtmlReply, simpleReply } from "../utils";
+import { htmlMessage, simpleHtmlReply } from "../utils";
 import { PentabarfParser } from "../parsers/PentabarfParser";
 import { ITalk } from "../models/schedule";
 import config from "../config";
@@ -37,12 +37,18 @@ export class BuildCommand implements ICommand {
             await conference.createDb(parsed.conference);
         } else {
             return await simpleHtmlReply(client, roomId, event, "" +
-            `<h4><span data-mx-color='${COLOR_RED}'>Conference already built</span></h4>` +
-            "<p>Now it's time to <a href='https://github.com/matrix-org/conference-bot/blob/main/docs/importing-people.md'>import your participants &amp; team</a>.</p>"
-        );
+                `<h4><span data-mx-color='${COLOR_RED}'>Conference already built</span></h4>` +
+                "<p>Now it's time to <a href='https://github.com/matrix-org/conference-bot/blob/main/docs/importing-people.md'>import your participants &amp; team</a>.</p>"
+            );
         }
 
-        await simpleReply(client, roomId, event, "Conference initialized! Preparing rooms for later use (this will take a while)...");
+        const spacePill = await MentionPill.forRoom((await conference.getSpace()).roomId);
+        const messagePrefix = "Conference initialized! Preparing rooms for later use (this will take a while)...";
+        const reply = RichReply.createFor(roomId, event,
+            messagePrefix + "\n\nYour conference's space is at " + spacePill.text,
+            messagePrefix + "<br /><br />Your conference's space is at " + spacePill.html);
+        reply["msgtype"] = "m.notice";
+        await client.sendMessage(roomId, reply);
 
         let auditoriumsCreated = 0;
         let talksCreated = 0;

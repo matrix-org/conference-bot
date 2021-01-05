@@ -14,26 +14,27 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MatrixClient } from "matrix-bot-sdk";
+import { MatrixClient, MSC1772Space } from "matrix-bot-sdk";
 import {
+    AUDITORIUM_CREATION_TEMPLATE,
     CONFERENCE_ROOM_CREATION_TEMPLATE,
     mergeWithCreationTemplate,
     RoomKind,
+    RSC_AUDITORIUM_ID,
     RSC_CONFERENCE_ID,
     RSC_ROOM_KIND_FLAG,
     RSC_SPECIAL_INTEREST_ID,
-    RSC_AUDITORIUM_ID,
     RSC_TALK_ID,
-    AUDITORIUM_CREATION_TEMPLATE,
     TALK_CREATION_TEMPLATE
 } from "./models/room_kinds";
-import { IConference, IAuditorium, ITalk } from "./models/schedule";
+import { IAuditorium, IConference, ITalk } from "./models/schedule";
 import {
     makeParentRoom,
-    makeStoredConference,
     makeStoredAuditorium,
-    makeStoredTalk,
-    makeStoredPerson
+    makeStoredConference,
+    makeStoredPerson,
+    makeStoredSpace,
+    makeStoredTalk
 } from "./models/room_state";
 import { safeCreateRoom } from "./utils";
 import { assignAliasVariations } from "./utils/aliases";
@@ -93,6 +94,12 @@ export class Conference {
             throw new Error("Conference has already been created");
         }
 
+        const space = await this.client.unstableApis.createSpace({
+            isPublic: true,
+            localpart: config.conference.id,
+            name: config.conference.name,
+        });
+
         const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(CONFERENCE_ROOM_CREATION_TEMPLATE, {
             creation_content: {
                 [RSC_CONFERENCE_ID]: this.id,
@@ -100,16 +107,29 @@ export class Conference {
             name: `[DB] Conference ${conference.title}`,
             initial_state: [
                 makeStoredConference(this.id, conference),
+                makeStoredSpace(space.roomId),
             ],
         }));
 
         this.dbRoom = new MatrixRoom(roomId, this.client, this);
     }
 
+    public async getSpace(): Promise<MSC1772Space> {
+        return this.dbRoom.getSpace();
+    }
+
     public async createAuditorium(auditorium: IAuditorium): Promise<Auditorium> {
         if (this.auditoriums[auditorium.id]) {
             return this.auditoriums[auditorium.id];
         }
+
+        const audSpace = await this.client.unstableApis.createSpace({
+            localpart: "space-" + config.conference.prefixes.aliases + auditorium.name,
+            isPublic: true,
+            name: auditorium.name,
+        });
+        await (await this.getSpace()).addChildSpace(audSpace);
+
         const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_CREATION_TEMPLATE, {
             creation_content: {
                 [RSC_CONFERENCE_ID]: this.id,
@@ -118,6 +138,7 @@ export class Conference {
             initial_state: [
                 makeStoredAuditorium(this.id, auditorium),
                 makeParentRoom(this.dbRoom.roomId),
+                makeStoredSpace(audSpace.roomId),
             ],
         }));
         await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.name);
@@ -127,6 +148,8 @@ export class Conference {
         const widget = await LiveWidget.forAuditorium(this.auditoriums[auditorium.id], this.client);
         await this.client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
 
+        await audSpace.addChildRoom(roomId);
+
         return this.auditoriums[auditorium.id];
     }
 
@@ -134,6 +157,7 @@ export class Conference {
         if (this.talks[talk.id]) {
             return this.talks[talk.id];
         }
+
         const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(TALK_CREATION_TEMPLATE, {
             creation_content: {
                 [RSC_CONFERENCE_ID]: this.id,
@@ -151,6 +175,8 @@ export class Conference {
 
         const widget = await LiveWidget.forTalk(this.talks[talk.id], this.client);
         await this.client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
+
+        await (await auditorium.getSpace()).addChildRoom(roomId);
 
         return this.talks[talk.id];
     }

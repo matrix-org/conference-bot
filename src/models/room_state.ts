@@ -106,3 +106,15 @@ export function makeChildRoom(roomId: string): IStateEvent<IChildRoom> {
         content: {roomId: roomId},
     };
 }
+
+export const RS_STORED_SPACE = "org.matrix.confbot.space";
+export interface IStoredSpace {
+    roomId: string;
+}
+export function makeStoredSpace(roomId: string): IStateEvent<IStoredSpace> {
+    return {
+        type: RS_STORED_SPACE,
+        state_key: "",
+        content: {roomId: roomId},
+    };
+}

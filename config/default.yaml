@@ -34,8 +34,12 @@ webserver:
 # Information about the conference
 conference:
   # The ID of the conference to call this one. Data from other conferences
-  # will be ignored (such as past conferences).
+  # will be ignored (such as past conferences). This will also be used to create
+  # the Matrix Space.
   id: "fosdem2021"
+
+  # The name of the conference.
+  name: "FOSDEM 2021"
 
   # The URL to the XML which is updated with conference information.
   # This is read and parsed by the bot during the early stages of
