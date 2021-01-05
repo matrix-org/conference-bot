@@ -59,6 +59,7 @@ export const RSC_ROOM_KIND_FLAG = "org.matrix.confbot.kind";
 export enum RoomKind {
     Conference = "conference",
     Auditorium = "auditorium",
+    AuditoriumBackstage = "auditorium_backstage",
     Talk = "talk",
     SpecialInterest = "other",
 }
@@ -89,6 +90,19 @@ export const AUDITORIUM_CREATION_TEMPLATE = {
     ],
     creation_content: {
         [RSC_ROOM_KIND_FLAG]: RoomKind.Auditorium,
+    },
+    power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
+};
+
+export const AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE = {
+    preset: 'private_chat',
+    visibility: 'private',
+    initial_state: [
+        {type: "m.room.guest_access", state_key: "", content: {guest_access: "forbidden"}},
+        {type: "m.room.history_visibility", state_key: "", content: {history_visibility: "shared"}},
+    ],
+    creation_content: {
+        [RSC_ROOM_KIND_FLAG]: RoomKind.AuditoriumBackstage,
     },
     power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
 };

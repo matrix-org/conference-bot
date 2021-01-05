@@ -16,6 +16,7 @@ limitations under the License.
 
 import { MatrixClient, MSC1772Space } from "matrix-bot-sdk";
 import {
+    AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE,
     AUDITORIUM_CREATION_TEMPLATE,
     CONFERENCE_ROOM_CREATION_TEMPLATE,
     mergeWithCreationTemplate,
@@ -40,7 +41,7 @@ import { safeCreateRoom } from "./utils";
 import { assignAliasVariations } from "./utils/aliases";
 import config from "./config";
 import { MatrixRoom } from "./models/MatrixRoom";
-import { Auditorium } from "./models/Auditorium";
+import { Auditorium, AuditoriumBackstage } from "./models/Auditorium";
 import { Talk } from "./models/Talk";
 import { LiveWidget } from "./models/LiveWidget";
 
@@ -48,6 +49,9 @@ export class Conference {
     private dbRoom: MatrixRoom;
     private auditoriums: {
         [auditoriumId: string]: Auditorium;
+    } = {};
+    private auditoriumBackstages: {
+        [auditoriumId: string]: AuditoriumBackstage;
     } = {};
     private talks: {
         [talkId: string]: Talk;
@@ -150,7 +154,31 @@ export class Conference {
 
         await audSpace.addChildRoom(roomId);
 
+        // Now create the backstage
+        await this.createAuditoriumBackstage(auditorium, audSpace);
+
         return this.auditoriums[auditorium.id];
+    }
+
+    private async createAuditoriumBackstage(auditorium: IAuditorium, space: MSC1772Space): Promise<AuditoriumBackstage> {
+        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
+            creation_content: {
+                [RSC_CONFERENCE_ID]: this.id,
+                [RSC_AUDITORIUM_ID]: auditorium.id,
+            },
+            initial_state: [
+                makeStoredAuditorium(this.id, auditorium),
+                makeParentRoom(this.dbRoom.roomId),
+                makeStoredSpace(space.roomId),
+            ],
+        }));
+        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.name + "-backstage");
+        await this.dbRoom.addDirectChild(roomId);
+        this.auditoriumBackstages[auditorium.id] = new AuditoriumBackstage(roomId, this.client, this);
+
+        await space.addChildRoom(roomId);
+
+        return this.auditoriumBackstages[auditorium.id];
     }
 
     public async createTalk(talk: ITalk, auditorium: Auditorium): Promise<MatrixRoom> {

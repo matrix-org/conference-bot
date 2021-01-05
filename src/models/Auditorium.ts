@@ -50,3 +50,10 @@ export class Auditorium extends MatrixRoom {
         return (await this.getDefinition()).conferenceId;
     }
 }
+
+// It's the same but different
+export class AuditoriumBackstage extends Auditorium {
+    constructor(roomId: string, client: MatrixClient, conference: Conference) {
+        super(roomId, client, conference);
+    }
+}
