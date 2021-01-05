@@ -28,7 +28,13 @@ import {
     TALK_CREATION_TEMPLATE
 } from "./models/room_kinds";
 import { IConference, IAuditorium, ITalk } from "./models/schedule";
-import { makeParentRoom, makeStoredConference, makeStoredAuditorium, makeStoredTalk } from "./models/room_state";
+import {
+    makeParentRoom,
+    makeStoredConference,
+    makeStoredAuditorium,
+    makeStoredTalk,
+    makeStoredPerson
+} from "./models/room_state";
 import { safeCreateRoom } from "./utils";
 import { assignAliasVariations } from "./utils/aliases";
 import config from "./config";
@@ -135,6 +141,7 @@ export class Conference {
             },
             initial_state: [
                 makeStoredTalk(this.id, talk),
+                ...talk.speakers.map(s => makeStoredPerson(this.id, s)),
                 makeParentRoom(auditorium.roomId),
             ],
         }));
