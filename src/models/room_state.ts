@@ -16,6 +16,8 @@ limitations under the License.
 
 import { IConference, ITalk, IPerson, IAuditorium } from "./schedule";
 import { objectFastCloneWithout } from "../utils";
+import { MSC1772Space } from "matrix-bot-sdk";
+import { RoomMetadata } from "./room_meta";
 
 export interface IStateEvent<T> {
     type: string;
@@ -27,7 +29,7 @@ export const RS_STORED_PERSON = "org.matrix.confbot.person";
 export interface IStoredPerson extends IPerson {
     conferenceId: string;
 }
-export function makeStoredPerson(confId: string, person: IPerson): IStateEvent<IStoredPerson> {
+export function makeStoredPublicPerson(confId: string, person: IPerson): IStateEvent<IStoredPerson> {
     return {
         type: RS_STORED_PERSON,
         state_key: person.id,
@@ -35,6 +37,19 @@ export function makeStoredPerson(confId: string, person: IPerson): IStateEvent<I
             ...objectFastCloneWithout(person, []),
             conferenceId: confId,
         } as IStoredPerson,
+    };
+}
+
+// Interfaces and functions for this are in DbPerson
+export const RS_STORED_DB_PERSON = "org.matrix.confbot.db.person";
+
+export const RS_STORED_ROOM_META = "org.matrix.confbot.room_meta";
+export interface IStoredRoomMeta extends RoomMetadata {}
+export function makeStoredRoomMeta(roomId: string, meta: RoomMetadata): IStateEvent<IStoredRoomMeta> {
+    return {
+        type: RS_STORED_ROOM_META,
+        state_key: roomId,
+        content: meta,
     };
 }
 
@@ -116,5 +131,21 @@ export function makeStoredSpace(roomId: string): IStateEvent<IStoredSpace> {
         type: RS_STORED_SPACE,
         state_key: "",
         content: {roomId: roomId},
+    };
+}
+
+export const RS_STORED_ROLE = "org.matrix.confbot.role";
+export interface IStoredRole {
+    name: string;
+    spaceRoomId: string;
+}
+export function makeStoredRole(name: string, space: MSC1772Space): IStateEvent<IStoredRole> {
+    return {
+        type: RS_STORED_ROLE,
+        state_key: name,
+        content: {
+            name: name,
+            spaceRoomId: space.roomId,
+        },
     };
 }

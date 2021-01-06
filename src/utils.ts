@@ -30,6 +30,7 @@ import { logMessage } from "./LogProxy";
 import * as htmlEscape from "escape-html";
 import { htmlToText } from "html-to-text";
 import * as crypto from "crypto";
+import config from "./config";
 
 export async function replaceRoomIdsWithPills(client: MatrixClient, text: string, roomIds: string[] | string, msgtype: MessageType = "m.text"): Promise<TextualMessageEventContent> {
     if (!Array.isArray(roomIds)) roomIds = [roomIds];
@@ -103,7 +104,7 @@ export async function safeCreateRoom(client: MatrixClient, opts: any): Promise<s
         }
 
         let maxPl = 100;
-        const searchPls = (objOrVal:any|number) => {
+        const searchPls = (objOrVal: any | number) => {
             if (!Number.isInteger(objOrVal)) {
                 for (const val of Object.values(objOrVal)) {
                     searchPls(val);
@@ -123,4 +124,44 @@ export async function safeCreateRoom(client: MatrixClient, opts: any): Promise<s
 
 export function sha256(str: string): string {
     return crypto.createHash('sha256').update(str).digest('hex');
+}
+
+export interface IEncrypted {
+    iv: string;
+    content: string;
+}
+
+export function encrypt(str: string): IEncrypted {
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv("aes-256-ctr", config.secretKey, iv);
+    const encrypted = Buffer.concat([cipher.update(str), cipher.final()]);
+    return {
+        iv: iv.toString('hex'),
+        content: encrypted.toString('hex'),
+    };
+}
+
+export function decrypt(enc: IEncrypted): string {
+    const decipher = crypto.createDecipheriv("aes-256-ctr", config.secretKey, Buffer.from(enc.iv, 'hex'));
+    const decrypted = Buffer.concat([decipher.update(Buffer.from(enc.content, 'hex')), decipher.final()]);
+    return decrypted.toString();
+}
+
+export async function asyncFind<T>(a: T[], fn: (i: T) => Promise<boolean>): Promise<T> {
+    for (const i of a) {
+        if (await fn(i)) {
+            return i;
+        }
+    }
+    return null;
+}
+
+export async function asyncFilter<T>(a: T[], fn: (i: T) => Promise<boolean>): Promise<T[]> {
+    const r: T[] = [];
+    for (const i of a) {
+        if (await fn(i)) {
+            r.push(i);
+        }
+    }
+    return r;
 }

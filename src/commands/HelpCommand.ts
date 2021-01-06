@@ -28,8 +28,14 @@ export class HelpCommand implements ICommand {
             "<h4>General:</h4>" +
             "<pre><code>" +
             "!conference help   - This menu.\n" +
-            "!conference build  - Builds the basic conference structure needed to prepare the rest" +
+            "!conference build  - Builds the basic conference structure needed to prepare the rest\n" +
             "                     of the conference. This is based off the bot's config.\n" +
+            "</code></pre>" +
+            "<h4>People management:</h4>" +
+            "<pre><code>" +
+            "!conference export roles  - Exports a YAML file in the bot's storage for all of the roles.\n" +
+            "!conference import roles  - Imports the YAML file to set up structures.\n" +
+            "!conference invite        - Issues invites to all the people listed in an imported YAML.\n" +
             "</code></pre>" +
             "";
         return simpleHtmlReply(client, roomId, event, htmlHelp);

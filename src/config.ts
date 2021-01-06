@@ -22,6 +22,7 @@ interface IConfig {
     accessToken: string;
     dataPath: string;
     managementRoom: string;
+    secretKey: string;
     webserver: {
         address: string;
         port: number;

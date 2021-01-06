@@ -63,6 +63,12 @@ export enum RoomKind {
     Talk = "talk",
     SpecialInterest = "other",
 }
+export const ALL_USEFUL_ROOM_KINDS = [
+    RoomKind.Auditorium,
+    RoomKind.AuditoriumBackstage,
+    RoomKind.Talk,
+    RoomKind.SpecialInterest,
+];
 
 export const RSC_CONFERENCE_ID = "org.matrix.confbot.conference";
 export const RSC_AUDITORIUM_ID = "org.matrix.confbot.auditorium";

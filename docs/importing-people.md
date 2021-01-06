@@ -5,6 +5,7 @@ TODO:
 2. Run `!conference export roles` to dump the roles to disk.
 3. Edit the file / run a merge
 4. Run `!conference import roles` to (re-)import the roles from disk.
+5. Run `!conference invite` to issue invites
 
 TODO: Rationale for why we're storing the yaml on disk and not dumping it into the room (file size, PII in the media repo, other issues)
 
@@ -59,22 +60,16 @@ rooms:
     kind: "auditorium"
     # This the pentabarf ID for the room, if known.
     pentabarfId: "1234"
-    # The roles for which group flair should be exposed in the room.
-    flair:
-      - staff
-      - volunteers
-      - managers
-      - speakers
-      - moderators
     # These are the roles and users which will receive moderator status in the
     # room.
     mxModerators:
       - role: staff
       - role: volunteers
       - person: alice_example_01
-    # These are the roles and users which MUST be present in the room at all times.
-    # The bot will aggressively ensure that all of these people are present.
-    mxMustParticipate:
+    # These are the roles and people which the bot will be inviting to the room to
+    # allow them to participate. They can leave, though when the bot resynchronizes
+    # membership those users may be re-invited.
+    mxInvite:
       - role: staff
       - role: volunteers
       - person: alice_example_01
@@ -85,7 +80,7 @@ rooms:
       - role: staff
       - role: volunteers
       - person: alice_example_01
-    mxMustParticipate:
+    mxInvite:
       - role: staff
       - role: volunteers
       - person: alice_example_01

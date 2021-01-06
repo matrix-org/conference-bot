@@ -26,6 +26,8 @@ import { htmlMessage, simpleReply } from "./utils";
 import { HelpCommand } from "./commands/HelpCommand";
 import { BuildCommand } from "./commands/BuildCommand";
 import { Conference } from "./Conference";
+import { ExportCommand } from "./commands/ExportCommand";
+import { ImportCommand } from "./commands/ImportCommand";
 
 config.RUNTIME = {
     client: null,
@@ -83,6 +85,8 @@ function registerCommands() {
     const commands: ICommand[] = [
         new HelpCommand(),
         new BuildCommand(),
+        new ExportCommand(),
+        new ImportCommand(),
     ];
 
     client.on("room.message", async (roomId: string, event: any) => {

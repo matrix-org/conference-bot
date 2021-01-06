@@ -13,6 +13,14 @@ dataPath: "storage"
 # accept commands in here.
 managementRoom: "!room:example.org"
 
+# This secret is used to encrypt various details of information in the bot's
+# internal storage, such as MXIDs and Email Addresses. This information should
+# only ever be accessible to the bot, but extra measures are taken for these
+# sorts of identifiers.
+#
+# MUST BE 32 CHARACTERS EXACTLY. DO NOT CHANGE AFTER SETTING.
+secretKey: "SET_TO_RANDOM_VALUE"  # You should change this.
+
 # Configuration for the webserver (used to serve widgets for the conference's
 # rooms).
 webserver:
