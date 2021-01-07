@@ -38,12 +38,13 @@ people:
     # similar rooms. It is also used in advertisements for upcoming talks
     # and such.
     name: Alice Example
-    # One of email and mxid must be supplied. If a mxid is supplied (or the
-    # bot already knows of one) then the mxid will be used instead of email.
+    # One of emails and mxid must be supplied. If a mxid is supplied (or the
+    # bot already knows of one) then the mxid will be used instead of an email.
     # Otherwise, the bot will try email invites where possible and otherwise
     # wait to discover the user's mxid.
     mxid: "@alice:example.org"
-    email: "alice@example.org"
+    emails: 
+      - "alice@example.org"
     # Optional. This is the ID of the user in pentabarf.
     pentabarfId: "1234"
     # The roles the user should be assigned.

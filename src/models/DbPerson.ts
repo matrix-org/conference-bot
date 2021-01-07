@@ -24,7 +24,7 @@ export interface RSDbPerson {
     id: string;
     name: string;
     mxid?: IEncrypted;
-    email?: IEncrypted;
+    emails?: IEncrypted; // encrypted array of strings
     pentabarfId: string;
     roles: string[];
 }
@@ -39,15 +39,15 @@ export class DbPerson {
 
     public get yaml(): YamlPerson {
         return {
-            ...objectFastCloneWithout(this.person, ['mxid', 'email']),
+            ...objectFastCloneWithout(this.person, ['mxid', 'emails']),
             mxid: this.mxid,
-            email: this.email,
+            emails: this.emails,
         } as YamlPerson;
     }
 
-    public get email(): string {
-        if (this.person.email) {
-            return decrypt(this.person.email);
+    public get emails(): string[] {
+        if (this.person.emails) {
+            return JSON.parse(decrypt(this.person.emails));
         }
         return null;
     }
@@ -68,12 +68,12 @@ export class DbPerson {
     }
 
     public static fromYaml(person: YamlPerson): RSDbPerson {
-        const encEmail = person.email ? encrypt(person.email) : null;
+        const encEmail = person.emails ? encrypt(JSON.stringify(person.emails)) : null;
         const encMxid = person.mxid ? encrypt(person.mxid) : null;
         return {
-            ...objectFastCloneWithout(person, ['mxid', 'email']),
+            ...objectFastCloneWithout(person, ['mxid', 'emails']),
             mxid: encMxid,
-            email: encEmail,
+            emails: encEmail,
         } as RSDbPerson;
     }
 }

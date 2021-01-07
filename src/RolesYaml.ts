@@ -32,7 +32,7 @@ export interface YamlPerson {
     id: string;
     name: string;
     mxid?: string;
-    email?: string;
+    emails?: string[];
     pentabarfId: string;
     roles: string[];
 }
@@ -67,16 +67,17 @@ export class RolesYaml {
             const id = person['id'];
             const pentabarfId = person['pentabarfId'];
             const mxid = person['mxid'];
-            const email = person['email'];
+            const emails = person['emails'];
             const name = person['name'];
             const roles = person['roles'];
 
             if (!Array.isArray(roles)) throw new Error(`Person ${id} is invalid: roles not an array`);
             if ([id, name].some(i => !i)) throw new Error(`Person ${id} is invalid: missing ID or name`);
-            if (!mxid && !email) throw new Error(`Person ${id} is invalid: missing mxid or email`);
+            if (!mxid && !emails) throw new Error(`Person ${id} is invalid: missing mxid or email`);
+            if (emails && !Array.isArray(emails)) throw new Error(`Person ${id} is invalid: no emails`);
             if (!roles.every(r => roleNames.includes(r))) throw new Error(`Person ${id} is invalid: role not defined`);
 
-            peopleById[id] = <YamlPerson>{id, pentabarfId, mxid, email, name, roles};
+            peopleById[id] = <YamlPerson>{id, pentabarfId, mxid, emails, name, roles};
         }
 
         const rooms = parsed['rooms'];
@@ -168,7 +169,7 @@ export class RolesYaml {
                             id: sha256(speaker.conferenceId + speaker.id + speaker.name + Date.now()),
                             pentabarfId: speaker.id,
                             mxid: null,
-                            email: null,
+                            emails: [],
                             name: speaker.name,
                             roles: ["speakers"],
                         };
