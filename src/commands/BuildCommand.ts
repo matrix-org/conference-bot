@@ -42,7 +42,7 @@ export class BuildCommand implements ICommand {
             );
         }
 
-        const spacePill = await MentionPill.forRoom((await conference.getSpace()).roomId);
+        const spacePill = await MentionPill.forRoom((await conference.getSpace()).roomId, client);
         const messagePrefix = "Conference initialized! Preparing rooms for later use (this will take a while)...";
         const reply = RichReply.createFor(roomId, event,
             messagePrefix + "\n\nYour conference's space is at " + spacePill.text,
