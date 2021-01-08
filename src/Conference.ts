@@ -227,8 +227,9 @@ export class Conference {
         await this.dbRoom.addDirectChild(roomId);
         this.auditoriums[auditorium.id] = new Auditorium(roomId, this.client, this);
 
-        const widget = await LiveWidget.forAuditorium(this.auditoriums[auditorium.id], this.client);
-        await this.client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
+        // TODO: Send widgets after room creation
+        // const widget = await LiveWidget.forAuditorium(this.auditoriums[auditorium.id], this.client);
+        // await this.client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
 
         await audSpace.addChildRoom(roomId);
 
@@ -280,8 +281,9 @@ export class Conference {
         await auditorium.addDirectChild(roomId);
         this.talks[talk.id] = new Talk(roomId, this.client, this);
 
-        const widget = await LiveWidget.forTalk(this.talks[talk.id], this.client);
-        await this.client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
+        // TODO: Send widgets after creation
+        // const widget = await LiveWidget.forTalk(this.talks[talk.id], this.client);
+        // await this.client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
 
         await (await auditorium.getSpace()).addChildRoom(roomId);
 
