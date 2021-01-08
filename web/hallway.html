@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hallway widget</title>
+</head>
+<body>
+    <!-- xxx: fix this path - where does webpack copy plugin copy to? -->
+    <script src="srv/jitsi_external_api.min.js"></script>
+    <span id="holdingScreen">Waiting for stream...</span>
+    <div id="videoContainer">
+        <video id="video" autoplay muted controls></video>
+    </div>
+    <div id="controlBar">
+        Viewer mode<button id="joinButton">Join Conference</button>
+    </div>
+    <div id="jitsiContainer" />
+    <div id="widgetActionContainer" />
+</body>
+</html>

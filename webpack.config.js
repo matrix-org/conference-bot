@@ -1,18 +1,25 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
     mode: process.env.NODE_ENV || 'development',
     entry: {
-        'auditorium': './web/auditorium.ts'
+        'auditorium': './web/auditorium.ts',
+        'hallway': './web/hallway.ts',
     },
+    devtool: 'source-map',
     module: {
         rules: [
             {
                 test: /\.ts$/,
                 use: 'ts-loader',
                 exclude: /node_modules/,
+            },
+            {
+                test: /\.scss$/,
+                use: ["style-loader", "css-loader", "postcss-loader"],
             },
         ],
     },
@@ -26,6 +33,17 @@ module.exports = {
             inject: true,
             chunks: ['auditorium'],
             filename: "auditorium.liquid",
+        }),
+        new HtmlWebpackPlugin({
+            template: './web/hallway.html',
+            inject: true,
+            chunks: ['hallway'],
+            filename: "hallway.html",
+        }),
+        new CopyPlugin({
+          patterns: [
+            { from: "res/jitsi_external_api.min.js", to: "srv/jitsi_external_api.min.js" },
+          ],
         }),
     ],
     output: {

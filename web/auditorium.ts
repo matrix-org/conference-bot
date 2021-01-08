@@ -56,7 +56,10 @@ if (Hls.isSupported()) {
     hls.attachMedia(document.getElementById("livestream"));
     hls.loadSource(videoUrl);
 } else {
-    renderStatusMessage("Sorry, your browser cannot play this livestream.");
+    // hope the browser can play HLS natively
+    const video = document.getElementById("livestream") as HTMLVideoElement;
+    video.src = videoUrl;
+    showVideo();
 }
 
 function renderStatusMessage(message: string) {
