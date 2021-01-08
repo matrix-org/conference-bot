@@ -40,6 +40,7 @@ async function start() {
     const video = document.getElementById('video') as HTMLVideoElement;
     const joinButton = document.getElementById('joinButton');
     const jitsiContainer = document.getElementById('jitsiContainer');
+    const controlBar = document.getElementById('controlBar');
 
     const config = {
         liveSyncDurationCount: 2,
@@ -55,12 +56,15 @@ async function start() {
         hls.startLoad();
         video.play();
         videoContainer.style.display = 'block';
+        controlBar.style.display = 'block';
     };
 
     joinButton.addEventListener('click', () => {
         video.pause();
         hls.stopLoad();
         videoContainer.style.display = 'none';
+        controlBar.style.display = 'none';
+        holdingScreen.style.display = 'none';
         jitsiContainer.style.display = 'block';
         
         joinConference(query, widgetApi, onJitsiFinished);
