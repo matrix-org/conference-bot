@@ -21,6 +21,11 @@ managementRoom: "!room:example.org"
 # MUST BE 32 CHARACTERS EXACTLY. DO NOT CHANGE AFTER SETTING.
 secretKey: "SET_TO_RANDOM_VALUE"  # You should change this.
 
+# The identity server to use to send email invites to any participants. The
+# bot will accept all terms of service automatically - please ensure that it
+# has legal capability to do so before running the bot in this way.
+idServerDomain: "vector.im"
+
 # Configuration for the webserver (used to serve widgets for the conference's
 # rooms).
 webserver:

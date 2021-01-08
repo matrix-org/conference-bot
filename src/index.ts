@@ -28,6 +28,7 @@ import { BuildCommand } from "./commands/BuildCommand";
 import { Conference } from "./Conference";
 import { ExportCommand } from "./commands/ExportCommand";
 import { ImportCommand } from "./commands/ImportCommand";
+import { InviteCommand } from "./commands/InviteCommand";
 
 config.RUNTIME = {
     client: null,
@@ -87,6 +88,7 @@ function registerCommands() {
         new BuildCommand(),
         new ExportCommand(),
         new ImportCommand(),
+        new InviteCommand(),
     ];
 
     client.on("room.message", async (roomId: string, event: any) => {

@@ -324,4 +324,15 @@ export class Conference {
         return this.roomMeta[roomId];
     }
 
+    public getMetaFor(roomId: string): RoomMeta {
+        return this.roomMeta[roomId];
+    }
+
+    public getPeopleInRole(role: string): DbPerson[] {
+        return this.storedPeople.filter(p => p.definition.roles.includes(role));
+    }
+
+    public getPerson(personId: string): DbPerson {
+        return this.people[personId];
+    }
 }

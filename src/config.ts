@@ -23,6 +23,7 @@ interface IConfig {
     dataPath: string;
     managementRoom: string;
     secretKey: string;
+    idServerDomain: string;
     webserver: {
         address: string;
         port: number;

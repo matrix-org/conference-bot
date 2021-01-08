@@ -25,6 +25,8 @@ export interface IStateEvent<T> {
     content: T;
 }
 
+export const RS_3PID_PERSON_ID = "org.matrix.confbot.person";
+
 export const RS_STORED_PERSON = "org.matrix.confbot.person";
 export interface IStoredPerson extends IPerson {
     conferenceId: string;

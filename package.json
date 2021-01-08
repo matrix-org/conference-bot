@@ -9,7 +9,8 @@
   "private": true,
   "scripts": {
     "start": "yarn build && node lib/index.js",
-    "build": "tsc"
+    "build": "tsc",
+    "run:merge-roles": "yarn build && node lib/scripts/merge-roles.js"
   },
   "dependencies": {
     "config": "^3.3.3",
