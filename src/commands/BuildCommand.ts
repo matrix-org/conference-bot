@@ -34,7 +34,8 @@ export class BuildCommand implements ICommand {
 
         if (!conference.isCreated) {
             await conference.createDb(parsed.conference);
-        } else {
+        } else if (!args[0]) {
+            // TODO: We should just support incremental changes
             return await client.replyHtmlNotice(roomId, event, "" +
                 `<h4><span data-mx-color='${COLOR_RED}'>Conference already built</span></h4>` +
                 "<p>Now it's time to <a href='https://github.com/matrix-org/conference-bot/blob/main/docs/importing-people.md'>import your participants &amp; team</a>.</p>"
@@ -55,11 +56,13 @@ export class BuildCommand implements ICommand {
             const confAud = await conference.createAuditorium(auditorium);
             auditoriumsCreated++;
 
-            const allTalks: ITalk[] = [];
-            Object.values(auditorium.talksByDate).forEach(ea => allTalks.push(...ea));
-            for (const talk of allTalks) {
-                await conference.createTalk(talk, confAud);
-                talksCreated++;
+            if (args[0] !== "notalks") { // easter egg
+                const allTalks: ITalk[] = [];
+                Object.values(auditorium.talksByDate).forEach(ea => allTalks.push(...ea));
+                for (const talk of allTalks) {
+                    await conference.createTalk(talk, confAud);
+                    talksCreated++;
+                }
             }
         }
 
