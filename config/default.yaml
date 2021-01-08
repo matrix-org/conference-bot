@@ -26,6 +26,11 @@ secretKey: "SET_TO_RANDOM_VALUE"  # You should change this.
 # has legal capability to do so before running the bot in this way.
 idServerDomain: "vector.im"
 
+# This is the user ID of the moderator for all public-facing rooms the bot creates.
+# Note that this user will be granted power level 100 (the highest) in every room
+# and be invited.
+moderatorUserId: "@moderator:example.org"
+
 # Configuration for the webserver (used to serve widgets for the conference's
 # rooms).
 webserver:

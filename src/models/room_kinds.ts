@@ -22,6 +22,7 @@ import {
     RS_STORED_AUDITORIUM,
     RS_STORED_TALK
 } from "./room_state";
+import config from "../config";
 
 export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = {
     ban: 50,
@@ -51,6 +52,7 @@ export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = {
         "org.matrix.msc1772.space.child": 100,
     },
     users: {
+        [config.moderatorUserId]: 100,
         // should be populated with the creator
     },
 };
@@ -98,6 +100,7 @@ export const AUDITORIUM_CREATION_TEMPLATE = {
         [RSC_ROOM_KIND_FLAG]: RoomKind.Auditorium,
     },
     power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
+    invite: [config.moderatorUserId],
 };
 
 export const AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE = {
@@ -124,6 +127,7 @@ export const TALK_CREATION_TEMPLATE = { // before being opened up to the public
         [RSC_ROOM_KIND_FLAG]: RoomKind.Talk,
     },
     power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
+    invite: [config.moderatorUserId],
 }
 
 export const SPECIAL_INTEREST_CREATION_TEMPLATE = {
@@ -137,6 +141,7 @@ export const SPECIAL_INTEREST_CREATION_TEMPLATE = {
         [RSC_ROOM_KIND_FLAG]: RoomKind.SpecialInterest,
     },
     power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
+    invite: [config.moderatorUserId],
 };
 
 export function mergeWithCreationTemplate(template: any, addlProps: any): any {

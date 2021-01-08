@@ -24,6 +24,7 @@ interface IConfig {
     managementRoom: string;
     secretKey: string;
     idServerDomain: string;
+    moderatorUserId: string;
     webserver: {
         address: string;
         port: number;
