@@ -28,6 +28,9 @@ import { Conference } from "./Conference";
 import { ExportCommand } from "./commands/ExportCommand";
 import { ImportCommand } from "./commands/ImportCommand";
 import { InviteCommand } from "./commands/InviteCommand";
+import * as express from "express";
+import { Liquid } from "liquidjs";
+import { renderAuditoriumWidget } from "./web";
 
 config.RUNTIME = {
     client: null,
@@ -62,6 +65,7 @@ let userId;
     }
 
     registerCommands();
+    setupWebserver();
 
     await client.joinRoom(config.managementRoom);
 
@@ -130,5 +134,23 @@ function registerCommands() {
         }
 
         return await client.replyNotice(roomId, event, `Unknown command. Try ${prefixUsed.trim()} help`);
+    });
+}
+
+function setupWebserver() {
+    const app = express();
+    const tmplPath = process.env.CONF_TEMPLATES_PATH || './srv';
+    const engine = new Liquid({
+        root: tmplPath,
+        cache: process.env.NODE_ENV === 'production',
+    });
+    app.use('/assets', express.static(config.webserver.additionalAssetsPath));
+    app.use('/bundles', express.static(path.join(tmplPath, 'bundles')));
+    app.engine('liquid', engine.express());
+    app.set('views', tmplPath);
+    app.set('view engine', 'liquid');
+    app.get('/widgets/auditorium.html', renderAuditoriumWidget);
+    app.listen(config.webserver.port, config.webserver.address, () => {
+        LogService.info("web", `Webserver running at http://${config.webserver.address}:${config.webserver.port}`);
     });
 }

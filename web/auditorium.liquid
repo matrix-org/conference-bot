@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{{roomName}}</title>
+    <style type="text/css">
+        html, body {
+            padding: 0;
+            margin: 0;
+        }
+        #livestream {
+            display: none; /* changed later */
+        }
+        #livestream.widget {
+            height: 100% !important;
+            max-width: 100%;
+        }
+        #livestream.popout {
+            width: 100% !important;
+            max-height: 100%;
+        }
+        #messages {
+            font-style: italic;
+            text-align: center;
+            padding-top: 20px;
+            display: none; /* changed later */
+        }
+    </style>
+    <meta name="org.matrix.confbot.video_url" content="{{videoUrl}}" />
+</head>
+<body>
+    <noscript>Sorry, you'll need JavaScript to use this widget.</noscript>
+    <div id="messages">Waiting for stream...</div>
+    <video id="livestream" controls autoplay muted></video>
+</body>
+</html>

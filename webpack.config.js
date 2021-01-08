@@ -3,9 +3,9 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = {
-    mode: 'development',
+    mode: process.env.NODE_ENV || 'development',
     entry: {
-        'devroom': './web/devroom.ts'
+        'auditorium': './web/auditorium.ts'
     },
     module: {
         rules: [
@@ -22,14 +22,15 @@ module.exports = {
     plugins: [
         new CleanWebpackPlugin({ cleanStaleWebpackAssets: false }),
         new HtmlWebpackPlugin({
-            template: './web/devroom.html',
+            template: './web/auditorium.liquid',
             inject: true,
-            chunks: ['devroom'],
-            filename: "devroom.html",
+            chunks: ['auditorium'],
+            filename: "auditorium.liquid",
         }),
     ],
     output: {
         path: path.resolve(__dirname, 'srv'),
+        publicPath: '/',
         filename: "bundles/[chunkhash]/[name].js",
         chunkFilename: "bundles/[chunkhash]/[name].js",
     },
