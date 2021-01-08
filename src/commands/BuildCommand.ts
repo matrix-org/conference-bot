@@ -34,16 +34,10 @@ export class BuildCommand implements ICommand {
 
         if (!conference.isCreated) {
             await conference.createDb(parsed.conference);
-        } else if (!args[0]) {
-            // TODO: We should just support incremental changes
-            return await client.replyHtmlNotice(roomId, event, "" +
-                `<h4><span data-mx-color='${COLOR_RED}'>Conference already built</span></h4>` +
-                "<p>Now it's time to <a href='https://github.com/matrix-org/conference-bot/blob/main/docs/importing-people.md'>import your participants &amp; team</a>.</p>"
-            );
         }
 
         const spacePill = await MentionPill.forRoom((await conference.getSpace()).roomId, client);
-        const messagePrefix = "Conference initialized! Preparing rooms for later use (this will take a while)...";
+        const messagePrefix = "Conference prepared! Making rooms for later use (this will take a while)...";
         const reply = RichReply.createFor(roomId, event,
             messagePrefix + "\n\nYour conference's space is at " + spacePill.text,
             messagePrefix + "<br /><br />Your conference's space is at " + spacePill.html);
