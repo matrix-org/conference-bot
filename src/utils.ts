@@ -22,13 +22,11 @@ import {
     MatrixClient,
     MessageType,
     Permalinks,
-    RichReply,
     TextualMessageEventContent,
     UserID
 } from "matrix-bot-sdk";
 import { logMessage } from "./LogProxy";
 import * as htmlEscape from "escape-html";
-import { htmlToText } from "html-to-text";
 import * as crypto from "crypto";
 import config from "./config";
 
@@ -62,27 +60,6 @@ export async function replaceRoomIdsWithPills(client: MatrixClient, text: string
     }
 
     return content;
-}
-
-export async function simpleReply(client: MatrixClient, roomId: string, event: any, text: string) {
-    const reply = RichReply.createFor(roomId, event, text, htmlEscape(text));
-    reply['msgtype'] = 'm.notice';
-    return await client.sendMessage(roomId, reply);
-}
-
-export async function simpleHtmlReply(client: MatrixClient, roomId: string, event: any, html: string) {
-    const reply = RichReply.createFor(roomId, event, htmlToText(html, {wordwrap: false}), html);
-    reply['msgtype'] = 'm.notice';
-    return await client.sendMessage(roomId, reply);
-}
-
-export function htmlMessage(msgtype: string, html: string): any {
-    return {
-        body: htmlToText(html, {wordwrap: false}),
-        msgtype: msgtype,
-        format: "org.matrix.custom.html",
-        formatted_body: html,
-    };
 }
 
 export function objectFastCloneWithout<T>(obj: T, keys: (keyof T)[]): T | Partial<T> {

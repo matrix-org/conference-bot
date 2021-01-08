@@ -16,7 +16,6 @@ limitations under the License.
 
 import { ICommand } from "./ICommand";
 import { LogService, MatrixClient } from "matrix-bot-sdk";
-import { simpleReply } from "../utils";
 import { Conference } from "../Conference";
 import { RolesYaml } from "../RolesYaml";
 
@@ -31,18 +30,18 @@ export class ImportCommand implements ICommand {
                 await this.importRoles(conference, client, roomId, event, args);
                 break;
             default:
-                return await simpleReply(client, roomId, event, "Unknown command - try !conference help");
+                return await client.replyNotice(roomId, event, "Unknown command - try !conference help");
         }
     }
 
     private async importRoles(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
         try {
-            await simpleReply(client, roomId, event, "Importing YAML... This could be a while.");
+            await client.replyNotice(roomId, event, "Importing YAML... This could be a while.");
             await (new RolesYaml(conference)).load();
-            await simpleReply(client, roomId, event, "Imported and ready for invites!");
+            await client.replyNotice(roomId, event, "Imported and ready for invites!");
         } catch (e) {
             LogService.error("ImportCommand", e);
-            return await simpleReply(client, roomId, event, `Error processing YAML: ${e.message}`);
+            return await client.replyNotice(roomId, event, `Error processing YAML: ${e.message}`);
         }
     }
 }

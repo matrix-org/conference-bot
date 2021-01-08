@@ -22,7 +22,6 @@ import { LogLevel, LogService, MatrixClient, RichConsoleLogger, SimpleFsStorageP
 import * as path from "path";
 import config from "./config";
 import { ICommand } from "./commands/ICommand";
-import { htmlMessage, simpleReply } from "./utils";
 import { HelpCommand } from "./commands/HelpCommand";
 import { BuildCommand } from "./commands/BuildCommand";
 import { Conference } from "./Conference";
@@ -68,15 +67,15 @@ let userId;
 
     await conference.construct();
     if (!conference.isCreated) {
-        await client.sendMessage(config.managementRoom, htmlMessage("m.notice", "" +
+        await client.sendHtmlNotice(config.managementRoom, "" +
             "<h4>Welcome!</h4>" +
             "<p>Your conference hasn't been built yet (or I don't know of it). If your config is correct, run <code>!conference build</code> to start building your conference.</p>"
-        ));
+        );
     } else {
-        await client.sendMessage(config.managementRoom, htmlMessage("m.notice", "" +
+        await client.sendHtmlNotice(config.managementRoom, "" +
             "<h4>Bot restarted</h4>" +
             "<p>Your conference has been built already, but I appear to have restarted. If this is unexpected, please contact a support representative.</p>"
-        ));
+        );
     }
 
     await client.start();
@@ -115,7 +114,7 @@ function registerCommands() {
         const restOfBody = content['body'].substring(prefixUsed.length).trim();
         const args = restOfBody.split(' ');
         if (args.length <= 0) {
-            return await simpleReply(client, roomId, event, `Invalid command. Try ${prefixUsed.trim()} help`);
+            return await client.replyNotice(roomId, event, `Invalid command. Try ${prefixUsed.trim()} help`);
         }
 
         try {
@@ -127,9 +126,9 @@ function registerCommands() {
             }
         } catch (e) {
             LogService.error("index", "Error processing command: ", e);
-            return await simpleReply(client, roomId, event, `There was an error processing your command: ${e.message}`);
+            return await client.replyNotice(roomId, event, `There was an error processing your command: ${e.message}`);
         }
 
-        return await simpleReply(client, roomId, event, `Unknown command. Try ${prefixUsed.trim()} help`);
+        return await client.replyNotice(roomId, event, `Unknown command. Try ${prefixUsed.trim()} help`);
     });
 }

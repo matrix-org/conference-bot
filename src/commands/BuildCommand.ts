@@ -17,7 +17,6 @@ limitations under the License.
 import { ICommand } from "./ICommand";
 import { MatrixClient, MentionPill, RichReply } from "matrix-bot-sdk";
 import * as fetch from "node-fetch";
-import { htmlMessage, simpleHtmlReply } from "../utils";
 import { PentabarfParser } from "../parsers/PentabarfParser";
 import { ITalk } from "../models/schedule";
 import config from "../config";
@@ -36,7 +35,7 @@ export class BuildCommand implements ICommand {
         if (!conference.isCreated) {
             await conference.createDb(parsed.conference);
         } else {
-            return await simpleHtmlReply(client, roomId, event, "" +
+            return await client.replyHtmlNotice(roomId, event, "" +
                 `<h4><span data-mx-color='${COLOR_RED}'>Conference already built</span></h4>` +
                 "<p>Now it's time to <a href='https://github.com/matrix-org/conference-bot/blob/main/docs/importing-people.md'>import your participants &amp; team</a>.</p>"
             );
@@ -66,9 +65,9 @@ export class BuildCommand implements ICommand {
 
         await client.sendNotice(roomId, `${auditoriumsCreated} auditoriums have been created`);
         await client.sendNotice(roomId, `${talksCreated} talks have been created`);
-        await client.sendMessage(roomId, htmlMessage("m.notice", "" +
+        await client.sendHtmlNotice(roomId, "" +
             "<h4>Conference built</h4>" +
             "<p>Now it's time to <a href='https://github.com/matrix-org/conference-bot/blob/main/docs/importing-people.md'>import your participants &amp; team</a>.</p>"
-        ));
+        );
     }
 }

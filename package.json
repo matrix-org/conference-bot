@@ -16,7 +16,6 @@
     "config": "^3.3.3",
     "escape-html": "^1.0.3",
     "fast-xml-parser": "^3.17.6",
-    "html-to-text": "^6.0.0",
     "js-yaml": "^3.14.1",
     "matrix-bot-sdk": "^0.5.9",
     "matrix-widget-api": "^0.1.0-beta.10",

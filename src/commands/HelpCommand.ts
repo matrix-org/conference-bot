@@ -16,7 +16,6 @@ limitations under the License.
 
 import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
-import { simpleHtmlReply } from "../utils";
 import { Conference } from "../Conference";
 
 export class HelpCommand implements ICommand {
@@ -38,6 +37,6 @@ export class HelpCommand implements ICommand {
             "!conference invite        - Issues invites to all the people listed in an imported YAML.\n" +
             "</code></pre>" +
             "";
-        return simpleHtmlReply(client, roomId, event, htmlHelp);
+        return client.replyHtmlNotice(roomId, event, htmlHelp);
     }
 }

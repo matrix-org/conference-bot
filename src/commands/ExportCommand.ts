@@ -16,7 +16,6 @@ limitations under the License.
 
 import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
-import { htmlMessage, simpleHtmlReply, simpleReply } from "../utils";
 import { Conference } from "../Conference";
 import { RolesYaml } from "../RolesYaml";
 
@@ -31,12 +30,12 @@ export class ExportCommand implements ICommand {
                 await this.exportRoles(conference, client, roomId, event, args);
                 break;
             default:
-                return await simpleReply(client, roomId, event, "Unknown command - try !conference help");
+                return await client.replyNotice(roomId, event, "Unknown command - try !conference help");
         }
     }
 
     private async exportRoles(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
         const fpath = await (new RolesYaml(conference)).save();
-        return await simpleHtmlReply(client, roomId, event, `Roles exported to <code>${fpath}</code>`);
+        return await client.replyHtmlNotice(roomId, event, `Roles exported to <code>${fpath}</code>`);
     }
 }

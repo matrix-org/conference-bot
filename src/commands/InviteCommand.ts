@@ -16,9 +16,7 @@ limitations under the License.
 
 import { ICommand } from "./ICommand";
 import { MatrixClient, MembershipEvent } from "matrix-bot-sdk";
-import { htmlMessage, simpleHtmlReply, simpleReply } from "../utils";
 import { Conference } from "../Conference";
-import { RolesYaml } from "../RolesYaml";
 import { invitePersonToRoom, resolveIdentifiers } from "../invites";
 import { RS_3PID_PERSON_ID } from "../models/room_state";
 
@@ -26,7 +24,7 @@ export class InviteCommand implements ICommand {
     public readonly prefixes = ["invite", "inv"];
 
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
-        await simpleReply(client, roomId, event, "Sending invites to participants. This might take a while.");
+        await client.replyNotice(roomId, event, "Sending invites to participants. This might take a while.");
 
         // This is called invite but it's really membership sync in a way. We're iterating over
         // every possible room the bot knows about and making sure that we have the right people
