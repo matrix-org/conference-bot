@@ -59,6 +59,7 @@ if (Hls.isSupported()) {
     // hope the browser can play HLS natively
     const video = document.getElementById("livestream") as HTMLVideoElement;
     video.src = videoUrl;
+    showVideo();
 }
 
 function renderStatusMessage(message: string) {
