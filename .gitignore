@@ -4,6 +4,7 @@ config/*
 .idea/
 storage/
 lib/
+srv/
 
 # Logs
 logs
