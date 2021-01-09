@@ -326,6 +326,14 @@ export class Conference {
         return this.roomMeta[roomId];
     }
 
+    public getAuditorium(audId: string): Auditorium {
+        return this.auditoriums[audId];
+    }
+
+    public getTalk(talkId: string): Talk {
+        return this.talks[talkId];
+    }
+
     public getMetaFor(roomId: string): RoomMeta {
         return this.roomMeta[roomId];
     }

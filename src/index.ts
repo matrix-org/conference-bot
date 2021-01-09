@@ -30,10 +30,12 @@ import { ImportCommand } from "./commands/ImportCommand";
 import { InviteCommand } from "./commands/InviteCommand";
 import * as express from "express";
 import { Liquid } from "liquidjs";
-import { renderAuditoriumWidget } from "./web";
+import { renderAuditoriumWidget, renderTalkWidget } from "./web";
+import { DevCommand } from "./commands/DevCommand";
 
 config.RUNTIME = {
     client: null,
+    conference: null,
 };
 
 LogService.setLogger(new RichConsoleLogger());
@@ -45,6 +47,7 @@ const client = new MatrixClient(config.homeserverUrl, config.accessToken, storag
 config.RUNTIME.client = client;
 
 const conference = new Conference(config.conference.id, client);
+config.RUNTIME.conference = conference;
 
 let localpart;
 let displayName;
@@ -92,6 +95,7 @@ function registerCommands() {
         new ExportCommand(),
         new ImportCommand(),
         new InviteCommand(),
+        new DevCommand(),
     ];
 
     client.on("room.message", async (roomId: string, event: any) => {
@@ -150,6 +154,7 @@ function setupWebserver() {
     app.set('views', tmplPath);
     app.set('view engine', 'liquid');
     app.get('/widgets/auditorium.html', renderAuditoriumWidget);
+    app.get('/widgets/talk.html', renderTalkWidget);
     app.listen(config.webserver.port, config.webserver.address, () => {
         LogService.info("web", `Webserver running at http://${config.webserver.address}:${config.webserver.port}`);
     });

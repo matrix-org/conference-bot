@@ -21,9 +21,6 @@ import {
 
 const JITSI_OPENIDTOKEN_JWT_AUTH = 'openidtoken-jwt';
 
-// Dev note: we use raw JS without many dependencies to reduce bundle size.
-// We do not need all of React to render a Jitsi conference.
-
 declare let JitsiMeetExternalAPI: any;
 
 let meetApi: any; // JitsiMeetExternalAPI
@@ -67,7 +64,7 @@ function createJWTToken(jitsiDomain, roomId, avatarUrl, displayName, openIdToken
     );
 }
 
-export async function joinConference(opts, widgetApi, onCallback) { // event handler bound in HTML
+export async function joinConference(opts, widgetApi, onCallback) {
     const jitsiDomain = opts.conferenceDomain;
     const conferenceId = opts.conferenceId;
     const displayName = opts.displayName;
@@ -117,5 +114,6 @@ export async function joinConference(opts, widgetApi, onCallback) { // event han
     meetApi.on("readyToClose", () => {
         document.getElementById("jitsiContainer").innerHTML = "";
         meetApi = null;
+        onCallback();
     });
 }

@@ -14,16 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import "./common.scss";
+import { ICommand } from "./ICommand";
+import { MatrixClient } from "matrix-bot-sdk";
+import { Conference } from "../Conference";
+import { LiveWidget } from "../models/LiveWidget";
 
-import { makeLivestream, videoEl } from "./hls";
+export class DevCommand implements ICommand {
+    public readonly prefixes = ["dev"];
 
-const messagesEl = document.getElementById("messages");
-
-messagesEl.style.display = 'block';
-makeLivestream(() => showVideo());
-
-function showVideo() {
-    messagesEl.style.display = 'none';
-    videoEl.style.display = 'block';
+    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
+        const widget = await LiveWidget.forTalk(conference.storedTalks[0], client);
+        await client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
+    }
 }

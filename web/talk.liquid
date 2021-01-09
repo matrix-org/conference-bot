@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>{{talkName}}</title>
+    <meta name="org.matrix.confbot.video_url" content="{{videoUrl}}" />
+    <meta name="org.matrix.confbot.conf_domain" content="{{conferenceDomain}}" />
+    <meta name="org.matrix.confbot.conf_id" content="{{conferenceId}}" />
+</head>
+<body>
+    <noscript>Sorry, you'll need JavaScript to use this widget.</noscript>
+    <div id="messages">Waiting for stream...</div>
+    <video id="livestream" controls autoplay muted></video>
+    <div id="controlBar">
+        <button id="joinButton">Join Conference</button>
+    </div>
+    <div id="jitsiContainer"><!-- populated by jitsi --></div>
+    <script src="https://{{conferenceDomain}}/libs/external_api.min.js"></script>
+</body>
+</html>

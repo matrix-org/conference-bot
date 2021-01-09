@@ -15,12 +15,63 @@ limitations under the License.
 */
 
 import { Response, Request } from "express";
+import * as template from "string-template";
+import config from "./config";
+import { base32 } from "rfc4648";
 
 export function renderAuditoriumWidget(req: Request, res: Response) {
-    // TODO
-    // "https://stream.matrix.org/hls/" + conferenceName + ".m3u8"
+    const audId = req.query?.['auditoriumId'] as string;
+    if (!audId || Array.isArray(audId)) {
+        return res.sendStatus(404);
+    }
+
+    if (!config.RUNTIME.conference.getAuditorium(audId)) {
+        return res.sendStatus(404);
+    }
+
+    const streamUrl = template(config.livestream.auditoriumUrl, {
+        id: audId.toLowerCase(),
+    });
+
     return res.render('auditorium.liquid', {
-        videoUrl: 'https://ftp.osuosl.org/pub/fosdem/2020/Janson/keynotes_welcome.mp4',
-        roomName: 'example auditorium',
+        videoUrl: streamUrl,
+        roomName: audId,
+    });
+}
+
+export async function renderTalkWidget(req: Request, res: Response) {
+    const audId = req.query?.['auditoriumId'] as string;
+    if (!audId || Array.isArray(audId)) {
+        return res.sendStatus(404);
+    }
+    const talkId = req.query?.['talkId'] as string;
+    if (!talkId || Array.isArray(talkId)) {
+        return res.sendStatus(404);
+    }
+
+    const aud = config.RUNTIME.conference.getAuditorium(audId);
+    if (!aud) {
+        return res.sendStatus(404);
+    }
+
+    const talk = config.RUNTIME.conference.getTalk(talkId);
+    if (!talk) {
+        return res.sendStatus(404);
+    }
+
+    if (await talk.getAuditoriumId() !== await aud.getId()) {
+        return res.sendStatus(404);
+    }
+
+    const streamUrl = template(config.livestream.talkUrl, {
+        audId: audId.toLowerCase(),
+        slug: (await talk.getDefinition()).slug.toLowerCase(),
+    });
+
+    return res.render('talk.liquid', {
+        videoUrl: streamUrl,
+        roomName: await talk.getName(),
+        conferenceDomain: config.livestream.jitsiDomain,
+        conferenceId: base32.stringify(Buffer.from(talk.roomId), { pad: false }),
     });
 }

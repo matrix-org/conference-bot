@@ -39,13 +39,13 @@ export class LiveWidget {
                 type: "m.custom",
                 waitForIframeLoad: true,
                 name: "Livestream",
-                url: config.webserver.publicBaseUrl + "/widgets/auditorium.html?widgetId=$matrix_widget_id&$auditoriumId=$auditoriumId&conferenceId=$conferenceId&jitsiB32=$jitsiB32",
+                avatar_url: config.livestream.widgetAvatar,
+                url: config.webserver.publicBaseUrl + "/widgets/auditorium.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId",
                 data: {
                     title: await aud.getName(),
                     auditoriumId: await aud.getId(),
-                    conferenceId: await aud.getConferenceId(),
                 },
-            },
+            } as IWidget,
         };
     }
 
@@ -59,17 +59,15 @@ export class LiveWidget {
                 id: widgetId,
                 type: "m.custom",
                 waitForIframeLoad: true,
-                name: "Livestream",
-                url: config.webserver.publicBaseUrl + "/widgets/talk.html?widgetId=$matrix_widget_id&$auditoriumId=$auditoriumId&conferenceId=$conferenceId&jitsiB32=$jitsiB32",
+                name: "Livestream / Q&A",
+                avatar_url: config.livestream.widgetAvatar,
+                url: config.webserver.publicBaseUrl + "/widgets/talk.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&talkId=$talkId#displayName=$matrix_display_name&avatarUrl=$matrix_avatar_url&userId=$matrix_user_id&roomId=$matrix_room_id&auth=openidtoken-jwt",
                 data: {
                     title: await talk.getName(),
+                    auditoriumId: await talk.getAuditoriumId(),
                     talkId: await talk.getId(),
-                    conferenceId: await talk.getConferenceId(),
-
-                    // https://github.com/matrix-org/prosody-mod-auth-matrix-user-verification
-                    jitsiB32: base32.stringify(Buffer.from(talk.roomId), {pad: false}),
                 },
-            },
+            } as IWidget,
         };
     }
 }

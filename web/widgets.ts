@@ -14,16 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import "./common.scss";
+import * as qs from 'querystring';
 
-import { makeLivestream, videoEl } from "./hls";
+export const urlParams = (new URL(window.location.href)).searchParams;
+export const widgetId = urlParams.get("widgetId");
+export const isWidget = widgetId && widgetId !== "$matrix_widget_id";
 
-const messagesEl = document.getElementById("messages");
-
-messagesEl.style.display = 'block';
-makeLivestream(() => showVideo());
-
-function showVideo() {
-    messagesEl.style.display = 'none';
-    videoEl.style.display = 'block';
-}
+const widgetQuery = qs.parse(window.location.hash.substring(1));
+export const addlQuery = Object.assign({}, qs.parse(window.location.search.substring(1)), widgetQuery);

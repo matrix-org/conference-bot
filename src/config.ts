@@ -16,6 +16,7 @@ limitations under the License.
 
 import * as config from "config";
 import { MatrixClient } from "matrix-bot-sdk";
+import { Conference } from "./Conference";
 
 interface IConfig {
     homeserverUrl: string;
@@ -25,6 +26,12 @@ interface IConfig {
     secretKey: string;
     idServerDomain: string;
     moderatorUserId: string;
+    livestream: {
+        auditoriumUrl: string;
+        talkUrl: string;
+        jitsiDomain: string;
+        widgetAvatar: string;
+    };
     webserver: {
         address: string;
         port: number;
@@ -45,6 +52,7 @@ interface IConfig {
 
     RUNTIME: {
         client: MatrixClient;
+        conference: Conference;
     };
 }
 

@@ -1,0 +1,67 @@
+/*
+Copyright 2021 The Matrix.org Foundation C.I.C.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+html, body {
+  padding: 0;
+  margin: 0;
+}
+
+#livestream {
+  display: none; /* changed later */
+}
+
+#livestream.widget {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+#livestream.popout {
+  width: 100% !important;
+  max-height: 100%;
+}
+
+#messages {
+  font-style: italic;
+  text-align: center;
+  padding-top: 20px;
+  display: none; /* changed later */
+}
+
+#controlBar {
+  display: none; /* changed later */
+}
+
+#joinButton {
+  border: none;
+  color: #ffffff;
+  background-color: #2a9d8f;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+}
+
+#jitsiContainer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: none; /* changed later */
+}
