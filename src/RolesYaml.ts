@@ -152,7 +152,34 @@ export class RolesYaml {
         const audBackstages = this.conference.storedAuditoriumBackstages;
         const metas = this.conference.storedRoomMeta;
 
+        const makeAudMeta = (forRoomId: string, kind: RoomKind, pid: string, allSpeakerIds: string[]): RoomMeta => {
+            return new RoomMeta(forRoomId, {
+                kind: kind,
+                mxInvite: [
+                    ...allSpeakerIds.map(s => ({person: s})),
+                    {role: "staff"},
+                ],
+                mxModerators: [
+                    ...allSpeakerIds.map(s => ({person: s})),
+                    {role: "staff"},
+                ],
+                pentabarfId: pid,
+            }, this.conference.client, this.conference);
+        };
+
         // Iterate over the auditoriums to link up the talks properly
+        if (!auditoriums.length) {
+            for (const backstage of audBackstages) {
+                let backstageMeta = metas.find(m => m.forRoomId === backstage.roomId);
+                if (!backstageMeta) backstageMeta = makeAudMeta(backstage.roomId, RoomKind.AuditoriumBackstage, await backstage.getId(), []);
+
+                obj.rooms[backstage.roomId] = {
+                    ...backstageMeta.meta,
+                    kind: RoomKind.AuditoriumBackstage,
+                    pentabarfId: await backstage.getId(),
+                };
+            }
+        }
         for (const aud of auditoriums) {
             const backstage = await asyncFind(audBackstages, async i => (await i.getId()) === (await aud.getId()));
             if (!backstage) throw new Error(`Failed to find backstage for auditorium: ${aud.roomId}`);
@@ -202,25 +229,10 @@ export class RolesYaml {
                 obj.rooms[talk.roomId] = talkMeta.meta;
             }
 
-            const makeAudMeta = (forRoomId: string, kind: RoomKind, pid: string): RoomMeta => {
-                return new RoomMeta(forRoomId, {
-                    kind: kind,
-                    mxInvite: [
-                        ...allSpeakerIds.map(s => ({person: s})),
-                        {role: "staff"},
-                    ],
-                    mxModerators: [
-                        ...allSpeakerIds.map(s => ({person: s})),
-                        {role: "staff"},
-                    ],
-                    pentabarfId: pid,
-                }, this.conference.client, this.conference);
-            };
-
             let audMeta = metas.find(m => m.forRoomId === aud.roomId);
             let backstageMeta = metas.find(m => m.forRoomId === backstage.roomId);
-            if (!audMeta) audMeta = makeAudMeta(aud.roomId, RoomKind.Auditorium, await aud.getId());
-            if (!backstageMeta) backstageMeta = makeAudMeta(backstage.roomId, RoomKind.AuditoriumBackstage, await backstage.getId());
+            if (!audMeta) audMeta = makeAudMeta(aud.roomId, RoomKind.Auditorium, await aud.getId(), allSpeakerIds);
+            if (!backstageMeta) backstageMeta = makeAudMeta(backstage.roomId, RoomKind.AuditoriumBackstage, await backstage.getId(), allSpeakerIds);
 
             obj.rooms[aud.roomId] = {
                 ...audMeta.meta,
@@ -229,7 +241,7 @@ export class RolesYaml {
             };
             obj.rooms[backstage.roomId] = {
                 ...backstageMeta.meta,
-                kind: RoomKind.Auditorium,
+                kind: RoomKind.AuditoriumBackstage,
                 pentabarfId: await backstage.getId(),
             };
         }

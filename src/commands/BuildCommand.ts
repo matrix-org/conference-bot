@@ -21,12 +21,14 @@ import { PentabarfParser } from "../parsers/PentabarfParser";
 import { ITalk } from "../models/schedule";
 import config from "../config";
 import { Conference } from "../Conference";
-import { COLOR_RED } from "../models/colors";
+import { sleep } from "../utils";
 
 export class BuildCommand implements ICommand {
     public readonly prefixes = ["build", "b"];
 
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
+        if (!args) args = [];
+
         await client.sendReadReceipt(roomId, event['event_id']);
 
         const xml = await fetch(config.conference.pentabarfDefinition).then(r => r.text());
@@ -47,10 +49,16 @@ export class BuildCommand implements ICommand {
         let auditoriumsCreated = 0;
         let talksCreated = 0;
         for (const auditorium of parsed.auditoriums) {
+            if (args.includes("backstages")) {
+                await conference.createAuditoriumBackstage(auditorium);
+                auditoriumsCreated++;
+                continue;
+            }
+
             const confAud = await conference.createAuditorium(auditorium);
             auditoriumsCreated++;
 
-            if (args[0] !== "notalks") { // easter egg
+            if (args.includes("notalks")) { // easter egg
                 const allTalks: ITalk[] = [];
                 Object.values(auditorium.talksByDate).forEach(ea => allTalks.push(...ea));
                 for (const talk of allTalks) {

@@ -142,3 +142,9 @@ export async function asyncFilter<T>(a: T[], fn: (i: T) => Promise<boolean>): Pr
     }
     return r;
 }
+
+export function sleep(ms: number): Promise<void> {
+    return new Promise<void>(resolve => {
+        setTimeout(() => resolve(), ms);
+    });
+}

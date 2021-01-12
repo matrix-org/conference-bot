@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MatrixClient, MSC1772Space } from "matrix-bot-sdk";
+import { LogService, MatrixClient, MSC1772Space } from "matrix-bot-sdk";
 import {
     AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE,
     AUDITORIUM_CREATION_TEMPLATE,
@@ -42,13 +42,12 @@ import {
     RS_STORED_ROLE,
     RS_STORED_ROOM_META
 } from "./models/room_state";
-import { safeCreateRoom } from "./utils";
+import { safeCreateRoom, sleep } from "./utils";
 import { assignAliasVariations } from "./utils/aliases";
 import config from "./config";
 import { MatrixRoom } from "./models/MatrixRoom";
 import { Auditorium, AuditoriumBackstage } from "./models/Auditorium";
 import { Talk } from "./models/Talk";
-import { LiveWidget } from "./models/LiveWidget";
 import { Role } from "./models/Role";
 import { DbPerson } from "./models/DbPerson";
 import { RoomMeta } from "./models/RoomMeta";
@@ -205,6 +204,8 @@ export class Conference {
             return this.auditoriums[auditorium.id];
         }
 
+        await sleep(1500);
+
         const audSpace = await this.client.unstableApis.createSpace({
             localpart: "space-" + config.conference.prefixes.aliases + auditorium.name,
             isPublic: true,
@@ -234,12 +235,19 @@ export class Conference {
         await audSpace.addChildRoom(roomId);
 
         // Now create the backstage
-        await this.createAuditoriumBackstage(auditorium, audSpace);
+        const backstage = await this.createAuditoriumBackstage(auditorium);
+        await audSpace.addChildRoom(backstage.roomId);
 
         return this.auditoriums[auditorium.id];
     }
 
-    private async createAuditoriumBackstage(auditorium: IAuditorium, space: MSC1772Space): Promise<AuditoriumBackstage> {
+    public async createAuditoriumBackstage(auditorium: IAuditorium): Promise<AuditoriumBackstage> {
+        if (this.auditoriumBackstages[auditorium.id]) {
+            return this.auditoriumBackstages[auditorium.id];
+        }
+
+        await sleep(1500);
+
         const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
             creation_content: {
                 [RSC_CONFERENCE_ID]: this.id,
@@ -248,14 +256,11 @@ export class Conference {
             initial_state: [
                 makeStoredAuditorium(this.id, auditorium),
                 makeParentRoom(this.dbRoom.roomId),
-                makeStoredSpace(space.roomId),
             ],
         }));
         await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.name + "-backstage");
         await this.dbRoom.addDirectChild(roomId);
         this.auditoriumBackstages[auditorium.id] = new AuditoriumBackstage(roomId, this.client, this);
-
-        await space.addChildRoom(roomId);
 
         return this.auditoriumBackstages[auditorium.id];
     }
@@ -264,6 +269,8 @@ export class Conference {
         if (this.talks[talk.id]) {
             return this.talks[talk.id];
         }
+
+        await sleep(1500);
 
         const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(TALK_CREATION_TEMPLATE, {
             creation_content: {
