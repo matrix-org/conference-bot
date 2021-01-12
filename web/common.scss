@@ -17,14 +17,16 @@ limitations under the License.
 html, body {
   padding: 0;
   margin: 0;
+  height: 100%; /* to trick the layout into working */
 }
 
 #livestream {
   display: none; /* changed later */
+  margin: auto;
 }
 
 #livestream.widget {
-  width: 100% !important;
+  height: 100% !important;
   max-width: 100%;
 }
 

@@ -30,14 +30,24 @@ if (isWidget) {
 }
 
 let hls: Hls;
+let haveManifest = false;
+let isVideoMode = true;
 
 export function pause() {
+    isVideoMode = false;
     if (hls) hls.stopLoad();
     videoEl.pause();
 }
 
 export function play() {
-    if (hls) hls.startLoad();
+    isVideoMode = true;
+    if (hls) {
+        if (haveManifest) {
+            hls.startLoad();
+        } else {
+            hls.loadSource(videoUrl);
+        }
+    }
     videoEl.play();
 }
 
@@ -56,11 +66,15 @@ export function makeLivestream(readyFn: () => void) {
             if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
                 console.log("Network error - trying again in 5s");
                 setTimeout(() => {
+                    if (!isVideoMode) {
+                        return;
+                    }
                     hls.loadSource(videoUrl);
                 }, 5000);
             }
         });
         hls.on(Hls.Events.MANIFEST_LOADED, (e, data) => {
+            haveManifest = true;
             readyFn();
         });
         hls.attachMedia(videoEl);
