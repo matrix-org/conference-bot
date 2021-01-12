@@ -204,7 +204,7 @@ export class Conference {
             return this.auditoriums[auditorium.id];
         }
 
-        await sleep(1500);
+        await sleep(5500);
 
         const audSpace = await this.client.unstableApis.createSpace({
             localpart: "space-" + config.conference.prefixes.aliases + auditorium.name,
@@ -246,7 +246,7 @@ export class Conference {
             return this.auditoriumBackstages[auditorium.id];
         }
 
-        await sleep(1500);
+        await sleep(5500);
 
         const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
             creation_content: {
@@ -270,7 +270,7 @@ export class Conference {
             return this.talks[talk.id];
         }
 
-        await sleep(1500);
+        await sleep(5500);
 
         const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(TALK_CREATION_TEMPLATE, {
             creation_content: {
@@ -301,6 +301,8 @@ export class Conference {
         if (this.roles[name]) {
             return this.roles[name];
         }
+
+        await sleep(5500);
 
         const space = await (await this.getSpace()).createChildSpace({
             name: name,
