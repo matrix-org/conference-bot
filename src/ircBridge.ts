@@ -1,12 +1,15 @@
 import { MatrixClient, MatrixEvent } from "matrix-bot-sdk";
-import irc from "irc-upd";
+import * as irc from "irc-upd";
 
 export interface IRCBridgeOpts {
     botNick: string;
+    botPassword?: string;
     serverName: string;
     port: number;
     botUserId: string;
     channelPrefix: string;
+    moderationBotNick: string;
+    ircBridgeNick: string;
 }
 
 interface IrcBridgeData {
@@ -43,6 +46,16 @@ export class IRCBridge {
 
         // This should timeout if the connection is broken
         await this.executeCommand("bridgeversion");
+
+        this.ircClient = new irc.Client(this.config.serverName, this.config.botNick, {
+            port: this.config.port,
+            password: this.config.botPassword,
+            userName: 'mx-conf-bot',
+            realName: 'matrix-conference-bot',
+        });
+        this.ircClient.on("error", (...args) => {
+            console.warn("irc client got an error:", args)
+        });
     }
 
     public isChannelAllowed(channel: string) {
@@ -51,11 +64,14 @@ export class IRCBridge {
 
     public async plumbChannelToRoom(channel: string, roomId: string) {
         await this.mxClient.inviteUser(this.config.botUserId, roomId);
+        await this.ircClient.join(channel);
         const result = await this.executeCommand(`plumb ${roomId} ${this.config.serverName} ${channel}`);
         const resultText = result.content.body;
         if (resultText !== 'Room plumbed.') {
             throw Error(`IRC bridge gave an error: ${resultText}`);
         }
+        await this.ircClient.send("MODE", channel, "+o", this.config.ircBridgeNick);
+        await this.ircClient.send("MODE", channel, "+o", this.config.moderationBotNick);
     }
 
     public async executeCommand(command: string): Promise<MatrixEvent<any>> {

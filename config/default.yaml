@@ -105,6 +105,7 @@ conference:
 ircBridge:
   # The nick to use when taking ownership of channels
   botNick: 'confbot'
+  botPassword: 'a_secret_password'
   # The server name of the IRCd
   serverName: 'localhost'
   # The port of the IRCd
