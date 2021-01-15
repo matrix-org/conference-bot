@@ -30,6 +30,11 @@ interface IConfig {
         talkUrl: string;
         jitsiDomain: string;
         widgetAvatar: string;
+        onpublish: {
+            rtmpHostnameTemplate: string;
+            rtmpUrlTemplate: string;
+            salt: string;
+        };
     };
     webserver: {
         address: string;

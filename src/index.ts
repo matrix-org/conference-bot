@@ -28,7 +28,7 @@ import { Conference } from "./Conference";
 import { InviteCommand } from "./commands/InviteCommand";
 import * as express from "express";
 import { Liquid } from "liquidjs";
-import { renderAuditoriumWidget, renderTalkWidget } from "./web";
+import { renderAuditoriumWidget, renderTalkWidget, rtmpRedirect } from "./web";
 import { DevCommand } from "./commands/DevCommand";
 import { PermissionsCommand } from "./commands/PermissionsCommand";
 import { VerifyCommand } from "./commands/VerifyCommand";
@@ -149,6 +149,7 @@ function setupWebserver() {
         root: tmplPath,
         cache: process.env.NODE_ENV === 'production',
     });
+    app.use(express.urlencoded({extended: true}));
     app.use('/assets', express.static(config.webserver.additionalAssetsPath));
     app.use('/bundles', express.static(path.join(tmplPath, 'bundles')));
     app.engine('liquid', engine.express());
@@ -156,6 +157,7 @@ function setupWebserver() {
     app.set('view engine', 'liquid');
     app.get('/widgets/auditorium.html', renderAuditoriumWidget);
     app.get('/widgets/talk.html', renderTalkWidget);
+    app.post('/onpublish', rtmpRedirect);
     app.listen(config.webserver.port, config.webserver.address, () => {
         LogService.info("web", `Webserver running at http://${config.webserver.address}:${config.webserver.port}`);
     });
