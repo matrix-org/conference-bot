@@ -91,13 +91,19 @@ conference:
   prefixes:
     # The prefixes for the rooms listed in the pentabarf definition which
     # describe the rooms that are 'auditorium' rooms. The prefixes will be
-    # trimmed when naming the room.
+    # trimmed when naming the room (unless an override is present).
     auditoriumRooms: ["D."]
 
     # The prefixes for the rooms listed in the pentabarf definition which
     # describe the rooms that are 'special interest' rooms. The prefixes will
-    # be trimmed when naming the room.
+    # be trimmed when naming the room (unless an override is present).
     interestRooms: ["S.", "B."]
+
+    # Simple mapping of room IDs to chosen names. The names should not contain
+    # spaces or any complex characters. This is typically used to resolve naming
+    # conflicts after trimming the prefix.
+    nameOverrides:
+      #"D.example": "example-room"
 
     # The prefix to apply to all generated room aliases.
     aliases: ""

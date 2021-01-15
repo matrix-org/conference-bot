@@ -47,6 +47,9 @@ interface IConfig {
             auditoriumRooms: string[];
             interestRooms: string[];
             aliases: string;
+            nameOverrides: {
+                [auditoriumId: string]: string;
+            };
         };
     };
 
