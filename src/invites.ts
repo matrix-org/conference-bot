@@ -21,6 +21,8 @@ import { IDbPerson } from "./db/DbPerson";
 
 let idClient: IdentityClient;
 
+const MAX_EMAILS_PER_BATCH = 1000;
+
 export interface ResolvedPersonIdentifier {
     mxid?: string;
     emails?: string[];
@@ -35,10 +37,33 @@ async function ensureIdentityClient() {
     }
 }
 
+async function resolveBatch(batch: IDbPerson[]): Promise<ResolvedPersonIdentifier[]> {
+    if (batch.length <= 0) return [];
+    const results = await idClient.lookup(batch.map(p => ({address: p.email, kind: "email"})));
+    const resolved: ResolvedPersonIdentifier[] = [];
+    for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        const person = batch[i];
+        resolved.push({
+            person: person,
+            emails: [person.email],
+            mxid: result,
+        });
+    }
+    return resolved;
+}
+
 export async function resolveIdentifiers(people: IDbPerson[]): Promise<ResolvedPersonIdentifier[]> {
     await ensureIdentityClient();
 
     const resolved: ResolvedPersonIdentifier[] = [];
+
+    const pendingLookups: IDbPerson[] = [];
+
+    const doResolve = async () => {
+        const results = await resolveBatch(pendingLookups);
+        resolved.push(...results);
+    };
 
     for (const person of people) {
         if (person.matrix_id) {
@@ -46,16 +71,13 @@ export async function resolveIdentifiers(people: IDbPerson[]): Promise<ResolvedP
             continue;
         }
 
-        const idLookups = [{address: person.email, kind: "email"}];
-        const results = await idClient.lookup(idLookups);
-        const mxid = results.find(i => !!i);
-        if (mxid) {
-            resolved.push({mxid: mxid, person});
-        } else {
-            resolved.push({emails: [person.email], person});
+        pendingLookups.push(person);
+        if (pendingLookups.length >= MAX_EMAILS_PER_BATCH) {
+            await doResolve();
         }
     }
 
+    await doResolve(); // just in case we have a partial batch
     return resolved;
 }
 
