@@ -18,6 +18,10 @@ managementRoom: "!room:example.org"
 # has legal capability to do so before running the bot in this way.
 idServerDomain: "vector.im"
 
+# The brand to supply to the identity server when performing actions which may
+# result in emails or other communications to the user.
+idServerBrand: "vector-im"
+
 # This is the user ID of the moderator for all public-facing rooms the bot creates.
 # Note that this user will be granted power level 100 (the highest) in every room
 # and be invited.

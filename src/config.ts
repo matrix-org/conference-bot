@@ -24,6 +24,7 @@ interface IConfig {
     dataPath: string;
     managementRoom: string;
     idServerDomain: string;
+    idServerBrand: string;
     moderatorUserId: string;
     livestream: {
         auditoriumUrl: string;

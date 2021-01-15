@@ -31,6 +31,7 @@ async function ensureIdentityClient() {
     if (!idClient) {
         idClient = await config.RUNTIME.client.getIdentityServerClient(config.idServerDomain);
         await idClient.acceptAllTerms();
+        idClient.brand = config.idServerBrand;
     }
 }
 
