@@ -15,10 +15,10 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { MatrixClient, MembershipEvent } from "matrix-bot-sdk";
+import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
-import { invitePersonToRoom, resolveIdentifiers } from "../invites";
-import { RS_3PID_PERSON_ID } from "../models/room_state";
+import { ResolvedPersonIdentifier } from "../invites";
+import { runRoleCommand } from "./actions/roles";
 
 export class PermissionsCommand implements ICommand {
     public readonly prefixes = ["permissions", "perms"];
@@ -26,20 +26,22 @@ export class PermissionsCommand implements ICommand {
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
         await client.replyNotice(roomId, event, "Updating member permissions. This might take a while.");
 
-        // // Much like the invite command, we iterate over pretty much every room and promote anyone
-        // // we think should be promoted. Everyone else gets removed from the power levels.
-        //
-        // const allRoomIds = [
-        //     ...conference.storedAuditoriumBackstages.map(r => r.roomId),
-        //     ...conference.storedAuditoriums.map(r => r.roomId),
-        //     ...conference.storedTalks.map(r => r.roomId),
-        //     // TODO: Special interest rooms
-        // ];
-        //
-        // for (const roomId of allRoomIds) {
-        //     await conference.fixPermissionsIn(roomId);
-        // }
+        // Much like the invite command, we iterate over pretty much every room and promote anyone
+        // we think should be promoted. We don't remove people from power levels (that's left to the
+        // existing room moderators/admins to deal with).
+
+        await runRoleCommand(PermissionsCommand.ensureModerator, conference, client, roomId, event, args);
 
         await client.sendNotice(roomId, "Member permissions updated");
+    }
+
+    public static async ensureModerator(client: MatrixClient, roomId: string, people: ResolvedPersonIdentifier[]) {
+        const powerLevels = await client.getRoomStateEvent(roomId, "m.room.power_levels", "");
+        for (const person of people) {
+            if (!person.mxid) continue;
+            if (powerLevels['users'][person.mxid]) continue;
+            powerLevels['users'][person.mxid] = 50;
+        }
+        await client.sendStateEvent(roomId, "m.room.power_levels", "", powerLevels);
     }
 }

@@ -17,10 +17,9 @@ limitations under the License.
 import { ICommand } from "./ICommand";
 import { MatrixClient, MembershipEvent } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
-import { invitePersonToRoom, ResolvedPersonIdentifier, resolveIdentifiers } from "../invites";
+import { invitePersonToRoom, ResolvedPersonIdentifier } from "../invites";
 import { RS_3PID_PERSON_ID } from "../models/room_state";
-import { Auditorium } from "../models/Auditorium";
-import { asyncFilter } from "../utils";
+import { runRoleCommand } from "./actions/roles";
 
 export class InviteCommand implements ICommand {
     public readonly prefixes = ["invite", "inv"];
@@ -33,50 +32,12 @@ export class InviteCommand implements ICommand {
         // in it. We don't remove anyone and don't care about extras - we just want to make sure
         // that a subset of people are joined.
 
-        const backstageOnly = args.includes("backstage");
-
-        if (args[0] && args[0] !== "backstage") {
-            const aud = backstageOnly ? conference.getAuditoriumBackstage(args[0]) : conference.getAuditorium(args[0]);
-            if (!aud) return client.replyNotice(roomId, event, "Unknown auditorium");
-            await this.doInvites(client, aud, conference, backstageOnly);
-        } else {
-            for (const auditorium of conference.storedAuditoriums) {
-                await this.doInvites(client, auditorium, conference, backstageOnly);
-            }
-        }
+        await runRoleCommand(InviteCommand.ensureInvited, conference, client, roomId, event, args);
 
         await client.sendNotice(roomId, "Invites sent!");
     }
 
-    private async doInvites(client: MatrixClient, aud: Auditorium, conference: Conference, backstageOnly = false): Promise<void> {
-        // We know that everyone should be in the backstage room, so resolve that list of people
-        // to make the identity server lookup efficient.
-        const backstagePeople = await conference.getInviteTargetsForAuditorium(aud, true);
-        const resolvedBackstagePeople = await resolveIdentifiers(backstagePeople);
-        const backstage = conference.getAuditoriumBackstage(await aud.getId());
-
-        await this.sendResolvedInvites(client, backstage.roomId, resolvedBackstagePeople);
-
-        if (backstageOnly) return;
-
-        const realAud = conference.getAuditorium(await aud.getId());
-        const audPeople = await conference.getInviteTargetsForAuditorium(realAud);
-        const resolvedAudPeople = audPeople.map(p => resolvedBackstagePeople.find(b => p.person_id === b.person.person_id));
-        if (resolvedAudPeople.some(p => !p)) throw new Error("Failed to resolve all invite targets for auditorium");
-
-        await this.sendResolvedInvites(client, realAud.roomId, resolvedAudPeople);
-
-        const talks = await asyncFilter(conference.storedTalks, async t => (await t.getAuditoriumId()) === (await aud.getId()));
-        for (const talk of talks) {
-            const talkPeople = await conference.getInviteTargetsForTalk(talk);
-            const resolvedTalkPeople = talkPeople.map(p => resolvedBackstagePeople.find(b => p.person_id === b.person.person_id));
-            if (resolvedTalkPeople.some(p => !p)) throw new Error("Failed to resolve all invite targets for talk");
-
-            await this.sendResolvedInvites(client, talk.roomId, resolvedTalkPeople);
-        }
-    }
-
-    private async sendResolvedInvites(client: MatrixClient, roomId: string, people: ResolvedPersonIdentifier[]) {
+    public static async ensureInvited(client: MatrixClient, roomId: string, people: ResolvedPersonIdentifier[]) {
         // We don't want to invite anyone we have already invited or that has joined though, so
         // avoid those people. We do this by querying the room state and filtering.
         const state = await client.getRoomState(roomId);

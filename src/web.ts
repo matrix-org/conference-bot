@@ -111,3 +111,7 @@ export async function rtmpRedirect(req: Request, res: Response) {
         return res.sendStatus(500);
     }
 }
+
+export function renderHealthz(req: Request, res: Response) {
+    return res.sendStatus(200);
+}
