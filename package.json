@@ -30,13 +30,14 @@
     "matrix-widget-api": "^0.1.0-beta.10",
     "moment": "^2.29.1",
     "node-fetch": "^2.6.1",
+    "pg": "^8.5.1",
     "postcss-preset-env": "^6.7.0",
     "rfc4648": "^1.4.0",
-    "string-template": "^1.0.0",
-    "yaml": "^1.10.0"
+    "string-template": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "12",
+    "@types/pg": "^7.14.7",
     "clean-webpack-plugin": "^3.0.0",
     "css-loader": "^5.0.1",
     "html-webpack-plugin": "^4.5.1",

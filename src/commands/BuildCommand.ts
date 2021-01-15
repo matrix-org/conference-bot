@@ -21,7 +21,6 @@ import { PentabarfParser } from "../parsers/PentabarfParser";
 import { ITalk } from "../models/schedule";
 import config from "../config";
 import { Conference } from "../Conference";
-import { sleep } from "../utils";
 
 export class BuildCommand implements ICommand {
     public readonly prefixes = ["build", "b"];
@@ -58,7 +57,7 @@ export class BuildCommand implements ICommand {
             const confAud = await conference.createAuditorium(auditorium);
             auditoriumsCreated++;
 
-            if (args.includes("notalks")) { // easter egg
+            if (!args.includes("notalks")) { // easter egg
                 const allTalks: ITalk[] = [];
                 Object.values(auditorium.talksByDate).forEach(ea => allTalks.push(...ea));
                 for (const talk of allTalks) {

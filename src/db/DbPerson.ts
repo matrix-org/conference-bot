@@ -1,5 +1,5 @@
 /*
-Copyright 2020, 2021 The Matrix.org Foundation C.I.C.
+Copyright 2021 The Matrix.org Foundation C.I.C.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,17 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { RoomKind } from "./room_kinds";
-
-export interface RoleOrPerson {
-    role?: string;
-    person?: string;
+export enum Role {
+    Speaker = "speaker",
+    Host = "host",
+    Coordinator = "coordinator",
 }
 
-export interface RoomMetadata {
-    kind: RoomKind; // not safe to rely upon when interacting with the db - used for yaml only
-    pentabarfId?: string;
-    mxModerators: RoleOrPerson[];
-    mxInvite: RoleOrPerson[];
-    mxRequirePresent?: RoleOrPerson[];
+export interface IDbPerson {
+    event_id: string; // penta talk ID
+    person_id: string;
+    event_role: Role;
+    name: string;
+    email: string;
+    matrix_id: string;
+    conference_room: string;
 }

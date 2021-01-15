@@ -15,16 +15,16 @@ limitations under the License.
 */
 
 import { IdentityClient } from "matrix-bot-sdk";
-import { DbPerson } from "./models/DbPerson";
 import config from "./config";
 import { RS_3PID_PERSON_ID } from "./models/room_state";
+import { IDbPerson } from "./db/DbPerson";
 
 let idClient: IdentityClient;
 
 export interface ResolvedPersonIdentifier {
     mxid?: string;
     emails?: string[];
-    person: DbPerson;
+    person: IDbPerson;
 }
 
 async function ensureIdentityClient() {
@@ -34,24 +34,24 @@ async function ensureIdentityClient() {
     }
 }
 
-export async function resolveIdentifiers(people: DbPerson[]): Promise<ResolvedPersonIdentifier[]> {
+export async function resolveIdentifiers(people: IDbPerson[]): Promise<ResolvedPersonIdentifier[]> {
     await ensureIdentityClient();
 
     const resolved: ResolvedPersonIdentifier[] = [];
 
     for (const person of people) {
-        if (person.mxid) {
-            resolved.push({mxid: person.mxid, person});
+        if (person.matrix_id) {
+            resolved.push({mxid: person.matrix_id, person});
             continue;
         }
 
-        const idLookups = person.emails.map(e => ({address: e, kind: "email"}));
+        const idLookups = [{address: person.email, kind: "email"}];
         const results = await idClient.lookup(idLookups);
         const mxid = results.find(i => !!i);
         if (mxid) {
             resolved.push({mxid: mxid, person});
         } else {
-            resolved.push({emails: person.emails, person});
+            resolved.push({emails: [person.email], person});
         }
     }
 
@@ -73,7 +73,7 @@ export async function invitePersonToRoom(resolvedPerson: ResolvedPersonIdentifie
             key_validity_url: `${idClient.serverUrl}/_matrix/identity/v2/pubkey/ephemeral/isvalid`,
             public_key: idInvite.public_key,
             public_keys: idInvite.public_keys,
-            [RS_3PID_PERSON_ID]: resolvedPerson.person.definition.id,
+            [RS_3PID_PERSON_ID]: resolvedPerson.person.person_id,
         };
         const stateKey = idInvite.token; // not included in the content
         await config.RUNTIME.client.sendStateEvent(roomId, "m.room.third_party_invite", stateKey, content);

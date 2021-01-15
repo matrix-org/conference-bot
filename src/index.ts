@@ -25,8 +25,6 @@ import { ICommand } from "./commands/ICommand";
 import { HelpCommand } from "./commands/HelpCommand";
 import { BuildCommand } from "./commands/BuildCommand";
 import { Conference } from "./Conference";
-import { ExportCommand } from "./commands/ExportCommand";
-import { ImportCommand } from "./commands/ImportCommand";
 import { InviteCommand } from "./commands/InviteCommand";
 import * as express from "express";
 import { Liquid } from "liquidjs";
@@ -34,6 +32,8 @@ import { renderAuditoriumWidget, renderTalkWidget } from "./web";
 import { DevCommand } from "./commands/DevCommand";
 import { IRCBridge } from "./ircBridge";
 import { IrcPlumbCommand } from "./commands/IrcPlumbCommand";
+import { PermissionsCommand } from "./commands/PermissionsCommand";
+import { VerifyCommand } from "./commands/VerifyCommand";
 
 config.RUNTIME = {
     client: null,
@@ -47,6 +47,7 @@ LogService.info("index", "Bot starting...");
 const storage = new SimpleFsStorageProvider(path.join(config.dataPath, "bot.json"));
 const client = new MatrixClient(config.homeserverUrl, config.accessToken, storage);
 config.RUNTIME.client = client;
+client.impersonateUserId("@fosdem:localdev.t2host.io");
 
 const conference = new Conference(config.conference.id, client);
 config.RUNTIME.conference = conference;
@@ -99,11 +100,11 @@ function registerCommands() {
     const commands: ICommand[] = [
         new HelpCommand(),
         new BuildCommand(),
-        new ExportCommand(),
-        new ImportCommand(),
+        new VerifyCommand(),
         new InviteCommand(),
         new DevCommand(),
         new IrcPlumbCommand(ircBridge),
+        new PermissionsCommand(),
     ];
 
     client.on("room.message", async (roomId: string, event: any) => {

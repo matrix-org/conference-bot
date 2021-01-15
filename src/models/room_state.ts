@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { IConference, ITalk, IPerson, IAuditorium } from "./schedule";
+import { IConference, ITalk, IAuditorium } from "./schedule";
 import { objectFastCloneWithout } from "../utils";
 import { MSC1772Space } from "matrix-bot-sdk";
-import { RoomMetadata } from "./room_meta";
+import { IDbPerson } from "../db/DbPerson";
 
 export interface IStateEvent<T> {
     type: string;
@@ -25,35 +25,7 @@ export interface IStateEvent<T> {
     content: T;
 }
 
-export const RS_3PID_PERSON_ID = "org.matrix.confbot.person";
-
-export const RS_STORED_PERSON = "org.matrix.confbot.person";
-export interface IStoredPerson extends IPerson {
-    conferenceId: string;
-}
-export function makeStoredPublicPerson(confId: string, person: IPerson): IStateEvent<IStoredPerson> {
-    return {
-        type: RS_STORED_PERSON,
-        state_key: person.id,
-        content: {
-            ...objectFastCloneWithout(person, []),
-            conferenceId: confId,
-        } as IStoredPerson,
-    };
-}
-
-// Interfaces and functions for this are in DbPerson
-export const RS_STORED_DB_PERSON = "org.matrix.confbot.db.person";
-
-export const RS_STORED_ROOM_META = "org.matrix.confbot.room_meta";
-export interface IStoredRoomMeta extends RoomMetadata {}
-export function makeStoredRoomMeta(roomId: string, meta: RoomMetadata): IStateEvent<IStoredRoomMeta> {
-    return {
-        type: RS_STORED_ROOM_META,
-        state_key: roomId,
-        content: meta,
-    };
-}
+export const RS_3PID_PERSON_ID = "org.matrix.confbot.person.v2";
 
 export const RS_STORED_TALK = "org.matrix.confbot.talk";
 export interface IStoredTalk extends Omit<ITalk, "speakers"> {
@@ -67,6 +39,26 @@ export function makeStoredTalk(confId: string, talk: ITalk): IStateEvent<IStored
             ...objectFastCloneWithout(talk, ['speakers']),
             conferenceId: confId,
         } as IStoredTalk,
+    };
+}
+
+export const RS_STORED_PERSON = "org.matrix.confbot.person.v2";
+export interface IStoredPerson {
+    pentaId: string;
+    name: string;
+    userId?: string;
+    conferenceId: string;
+}
+export function makeStoredPerson(confId: string, person: IDbPerson): IStateEvent<IStoredPerson> {
+    return {
+        type: RS_STORED_PERSON,
+        state_key: person.person_id.toString(),
+        content: {
+            pentaId: person.person_id.toString(),
+            name: person.name,
+            userId: person.matrix_id,
+            conferenceId: confId,
+        },
     };
 }
 

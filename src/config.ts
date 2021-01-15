@@ -24,7 +24,6 @@ interface IConfig {
     accessToken: string;
     dataPath: string;
     managementRoom: string;
-    secretKey: string;
     idServerDomain: string;
     moderatorUserId: string;
     livestream: {
@@ -48,6 +47,13 @@ interface IConfig {
             auditoriumRooms: string[];
             interestRooms: string[];
             aliases: string;
+            nameOverrides: {
+                [auditoriumId: string]: string;
+            };
+        };
+        database: {
+            connectionString: string;
+            tblPeople: string;
         };
     };
     ircBridge: IRCBridgeOpts;

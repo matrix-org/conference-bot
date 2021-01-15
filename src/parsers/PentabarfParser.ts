@@ -93,17 +93,19 @@ function simpleTimeParse(str: string): { hours: number, minutes: number } {
 }
 
 function deprefix(id: string): {kind: RoomKind, name: string} {
+    const override = config.conference.prefixes.nameOverrides[id];
+
     const auditoriumPrefix = config.conference.prefixes.auditoriumRooms.find(p => id.startsWith(p));
     if (auditoriumPrefix) {
-        return {kind: RoomKind.Auditorium, name: id.substring(auditoriumPrefix.length)};
+        return {kind: RoomKind.Auditorium, name: override || id.substring(auditoriumPrefix.length)};
     }
 
     const interestPrefix = config.conference.prefixes.interestRooms.find(p => id.startsWith(p));
     if (interestPrefix) {
-        return {kind: RoomKind.SpecialInterest, name: id.substring(interestPrefix.length)};
+        return {kind: RoomKind.SpecialInterest, name: override || id.substring(interestPrefix.length)};
     }
 
-    return {kind: RoomKind.SpecialInterest, name: id};
+    return {kind: RoomKind.SpecialInterest, name: override || id};
 }
 
 export class PentabarfParser {
