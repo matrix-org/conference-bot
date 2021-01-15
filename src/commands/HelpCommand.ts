@@ -32,9 +32,11 @@ export class HelpCommand implements ICommand {
             "</code></pre>" +
             "<h4>People management:</h4>" +
             "<pre><code>" +
-            "!conference export roles  - Exports a YAML file in the bot's storage for all of the roles.\n" +
-            "!conference import roles  - Imports the YAML file to set up structures.\n" +
-            "!conference invite        - Issues invites to all the people listed in an imported YAML.\n" +
+            "!conference verify &lt;aud&gt;  - Dumps information about who would be invited to which rooms when\n" +
+            "                            the invite command is run for the auditorium.\n" +
+            "!conference invite [aud]  - Issues invites to all the people to their relevant rooms. If an [aud] is\n" +
+            "                            supplied, only that auditorium will receive invites.\n" +
+            "!conference permissions   - Updates moderator status for everyone that is supposed to have it.\n" +
             "</code></pre>" +
             "";
         return client.replyHtmlNotice(roomId, event, htmlHelp);

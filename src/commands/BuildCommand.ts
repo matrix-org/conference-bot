@@ -21,7 +21,6 @@ import { PentabarfParser } from "../parsers/PentabarfParser";
 import { ITalk } from "../models/schedule";
 import config from "../config";
 import { Conference } from "../Conference";
-import { sleep } from "../utils";
 
 export class BuildCommand implements ICommand {
     public readonly prefixes = ["build", "b"];

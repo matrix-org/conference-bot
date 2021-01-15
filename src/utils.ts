@@ -71,6 +71,14 @@ export function objectFastCloneWithout<T>(obj: T, keys: (keyof T)[]): T | Partia
     return repl;
 }
 
+export function objectFastClone<T>(obj: T): T {
+    const repl = <T>{};
+    for (const key of <(keyof T)[]>Object.keys(obj)) {
+        repl[key] = obj[key];
+    }
+    return repl;
+}
+
 export async function safeCreateRoom(client: MatrixClient, opts: any): Promise<string> {
     if (opts) {
         opts = JSON.parse(JSON.stringify(opts)); // clone for safety
@@ -108,22 +116,6 @@ export interface IEncrypted {
     content: string;
 }
 
-export function encrypt(str: string): IEncrypted {
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv("aes-256-ctr", config.secretKey, iv);
-    const encrypted = Buffer.concat([cipher.update(str), cipher.final()]);
-    return {
-        iv: iv.toString('hex'),
-        content: encrypted.toString('hex'),
-    };
-}
-
-export function decrypt(enc: IEncrypted): string {
-    const decipher = crypto.createDecipheriv("aes-256-ctr", config.secretKey, Buffer.from(enc.iv, 'hex'));
-    const decrypted = Buffer.concat([decipher.update(Buffer.from(enc.content, 'hex')), decipher.final()]);
-    return decrypted.toString();
-}
-
 export async function asyncFind<T>(a: T[], fn: (i: T) => Promise<boolean>): Promise<T> {
     for (const i of a) {
         if (await fn(i)) {
@@ -141,10 +133,4 @@ export async function asyncFilter<T>(a: T[], fn: (i: T) => Promise<boolean>): Pr
         }
     }
     return r;
-}
-
-export function sleep(ms: number): Promise<void> {
-    return new Promise<void>(resolve => {
-        setTimeout(() => resolve(), ms);
-    });
 }

@@ -23,7 +23,6 @@ interface IConfig {
     accessToken: string;
     dataPath: string;
     managementRoom: string;
-    secretKey: string;
     idServerDomain: string;
     moderatorUserId: string;
     livestream: {
@@ -50,6 +49,10 @@ interface IConfig {
             nameOverrides: {
                 [auditoriumId: string]: string;
             };
+        };
+        database: {
+            connectionString: string;
+            tblPeople: string;
         };
     };
 

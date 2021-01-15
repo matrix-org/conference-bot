@@ -13,14 +13,6 @@ dataPath: "storage"
 # accept commands in here.
 managementRoom: "!room:example.org"
 
-# This secret is used to encrypt various details of information in the bot's
-# internal storage, such as MXIDs and Email Addresses. This information should
-# only ever be accessible to the bot, but extra measures are taken for these
-# sorts of identifiers.
-#
-# MUST BE 32 CHARACTERS EXACTLY. DO NOT CHANGE AFTER SETTING.
-secretKey: "SET_TO_RANDOM_VALUE"  # You should change this.
-
 # The identity server to use to send email invites to any participants. The
 # bot will accept all terms of service automatically - please ensure that it
 # has legal capability to do so before running the bot in this way.
@@ -86,6 +78,50 @@ conference:
 
   # The timezone that the pentabarf definition is in.
   timezone: "Europe/Brussels"
+
+  # Connection information to get data about the conference during the conference.
+  # This can be readonly.
+  database:
+    # The connection string for the database. Currently only postgresql is supported.
+    connectionString: "postgres://username:password@host/database?sslmode=require"
+
+    # The table/view for the bot to access for information about people involved in the conference.
+    # Must at least have the following columns:
+    #  event_id         - TEXT(like) - The penta ID for the talk (event) associated with
+    #                                  the person, if relevant. Null if a coordinator.
+    #  person_id        - TEXT(like) - The penta ID for the person.
+    #  event_role       - TEXT(like) - One of [speaker, coordinator, host]. See roles later on.
+    #  name             - TEXT(like) - The full name, or otherwise useful name, for the person.
+    #  email            - TEXT(like) - The preferred email address for the person.
+    #  matrix_id        - TEXT(like) - If known, the Matrix User ID for the person, otherwise null.
+    #  conference_room  - TEXT(like) - The relevant room. This should match the event_id or be
+    #                                  the room where coordinators are assigned.
+    #
+    # People may be assigned multiple roles with multiple rows.
+    #
+    # Roles:
+    #  speaker      - A speaker for event_id. This person will get moderator in their talk's
+    #                 room, and invited to the auditorium backstage room. They will be required
+    #                 to check in before their talk starts.
+    #
+    #  host         - Someone who is moderating the talk itself in collaboration with the speakers
+    #                 for the event_id. One host must check in before the talk starts, otherwise
+    #                 the issue will be raised to the management room and coordinators will be
+    #                 asked to take over. Hosts will get moderator in their talk's room, and be
+    #                 invited to the public auditorium room, backstage room, and talk room.
+    #
+    #  coordinator  - These are typically people responsible for scheduling the auditorium's
+    #                 talks. They'll get moderator in the auditorium room, backstage room, and all
+    #                 talk rooms for their auditorium, though will only be invited to the auditorium
+    #                 and backstage room (and the talk rooms on-demand if needed to fill in for a
+    #                 missing host).
+    #
+    # The bot will ignore unknown events, rooms, and roles.
+    #
+    # CAUTION: Although the bot uses parameterized queries, it is unable to use the table name as
+    # a parameter. As such, this particular config value is vulnerable to SQL injection. Seeing as
+    # how you (the bot's admin) are the one entering it: don't do that to yourself.
+    tblPeople: "view_matrix_bot_export_people"
 
   # Various prefixes used by the bot when parsing information.
   prefixes:
