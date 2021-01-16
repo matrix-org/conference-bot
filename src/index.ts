@@ -112,6 +112,13 @@ function registerCommands() {
         if (event['content']['msgtype'] !== 'm.text') return;
         if (!event['content']['body']) return;
 
+        // Check age just in case we recently started
+        const now = Date.now();
+        if (Math.abs(now - event['origin_server_ts']) >= 900000) { // 15min
+            LogService.warn("index", `Ignoring ${event['event_id']} in management room due to age`);
+            return;
+        }
+
         const content = event['content'];
 
         const prefixes = [
