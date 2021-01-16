@@ -21,6 +21,7 @@ import { Conference } from "./Conference";
 interface IConfig {
     homeserverUrl: string;
     accessToken: string;
+    userId: string;
     dataPath: string;
     managementRoom: string;
     idServerDomain: string;

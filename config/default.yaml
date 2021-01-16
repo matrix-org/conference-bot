@@ -2,9 +2,13 @@
 # is where clients would be connecting to in order to send messages.
 homeserverUrl: "https://matrix-client.matrix.org"
 
-# An access token for the bot to use. Learn how to get an access token
-# at https://t2bot.io/docs/access_tokens
+# An access token for the bot to use. This should be the as_token from the
+# appservice registration.
 accessToken: "YOUR_TOKEN_HERE"
+
+# Set this to the desired name for the bot. The account must already be
+# registered and accessible as an impersonatable user ID by the accessToken.
+userId: "@bot:example.org"
 
 # Location on disk for where to store various bot information.
 dataPath: "storage"

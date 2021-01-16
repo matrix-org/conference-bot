@@ -52,7 +52,7 @@ LogService.info("index", "Bot starting...");
 const storage = new SimpleFsStorageProvider(path.join(config.dataPath, "bot.json"));
 const client = new MatrixClient(config.homeserverUrl, config.accessToken, storage);
 config.RUNTIME.client = client;
-client.impersonateUserId("@fosdem:localdev.t2host.io");
+client.impersonateUserId(config.userId);
 
 const conference = new Conference(config.conference.id, client);
 config.RUNTIME.conference = conference;
