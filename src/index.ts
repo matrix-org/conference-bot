@@ -158,6 +158,7 @@ function setupWebserver() {
     app.get('/widgets/auditorium.html', renderAuditoriumWidget);
     app.get('/widgets/talk.html', renderTalkWidget);
     app.post('/onpublish', rtmpRedirect);
+    app.get('/healthz', renderHealthz);
     app.listen(config.webserver.port, config.webserver.address, () => {
         LogService.info("web", `Webserver running at http://${config.webserver.address}:${config.webserver.port}`);
     });
