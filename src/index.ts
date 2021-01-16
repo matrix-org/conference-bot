@@ -18,7 +18,7 @@ limitations under the License.
 // TODO: Timezones!! (Europe-Brussels)
 // TODO: Start webserver
 
-import { LogLevel, LogService, MatrixClient, RichConsoleLogger, SimpleFsStorageProvider, UserID } from "matrix-bot-sdk";
+import { LogLevel, LogService, MatrixClient, SimpleFsStorageProvider, UserID } from "matrix-bot-sdk";
 import * as path from "path";
 import config from "./config";
 import { ICommand } from "./commands/ICommand";
@@ -28,17 +28,24 @@ import { Conference } from "./Conference";
 import { InviteCommand } from "./commands/InviteCommand";
 import * as express from "express";
 import { Liquid } from "liquidjs";
-import { renderAuditoriumWidget, renderTalkWidget, rtmpRedirect } from "./web";
+import { renderAuditoriumWidget, renderHealthz, renderTalkWidget, rtmpRedirect } from "./web";
 import { DevCommand } from "./commands/DevCommand";
 import { PermissionsCommand } from "./commands/PermissionsCommand";
 import { VerifyCommand } from "./commands/VerifyCommand";
+import { CustomLogger } from "./CustomLogger";
 
 config.RUNTIME = {
     client: null,
     conference: null,
 };
 
-LogService.setLogger(new RichConsoleLogger());
+process.on('SIGINT', () => {
+    // Die immediately
+    // TODO: Wait for pending tasks
+    process.exit();
+});
+
+LogService.setLogger(new CustomLogger());
 LogService.setLevel(LogLevel.DEBUG);
 LogService.info("index", "Bot starting...");
 
