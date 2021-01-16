@@ -13,9 +13,35 @@ using [matrix-bot-sdk](https://github.com/turt2live/matrix-bot-sdk) as a base.
 ## Production (Docker)
 
 TODO:
-* These instructions
-* Note about rate limiting (and how there shall not be any)
 * Information for what the bot does
+
+This bot is best deployed with Docker. Note that the steps required to get the bot into production are
+complicated.
+
+1. First, register a user on your homeserver for the bot to use. In Synapse, this would be `register_new_matrix_user`.
+2. Set up any profile data for that user (displayname and avatar).
+3. On your homeserver, prepare and install an appservice registration like so:
+   ```yaml
+    id: conference_bot # Can be any helpful identifier
+    hs_token: CHANGE_ME # hs_token and as_token must be unique and secret
+    as_token: CHANGE_ME
+    namespaces:
+      users:
+        - exclusive: true
+          regex: '@yourbot:example.org'  # Set this to your bot's user ID.
+      aliases:
+        - exclusive: false
+          regex: '#.*:example.org'  # Change the domain to match your server.
+      rooms: []
+    url: null  # Important! The bot doesn't receive transactions, so set this explicitly to null.
+    sender_localpart: not_confbot  # Use something other than your bot's localpart.
+    rate_limited: false  # Important! The bot is noisy.
+   ```
+4. Create `/etc/conference-bot` or wherever you are comfortable with mapping a volume for the bot.
+5. Copy `config/default.yaml` from this repo to `/etc/conference-bot/config/production.yaml` and edit
+   accordingly.
+6. Run the container with Docker. For example: `docker run -d --rm --name conference-bot -v /etc/conference-bot:/data -p 8080:8080 matrixdotorg/conference-bot`
+7. Reverse proxy port `8080` as appropriate, using SSL if needed.
 
 ## Usage
 
@@ -29,7 +55,7 @@ TODO:
 
 The conference bot uses the following terminology for defining what purpose a Matrix room serves:
 
-* `Stage` - A place where talks are held with a static livestream for the whole event. In a physical
+* `Auditorium` - A place where talks are held with a static livestream for the whole event. In a physical
   world, this would be the location where attendees go to see a talk.
 * `Talk` - A presentation. During the talk, the talk room will be closed to only the speakers and other
   relevant people (questions would be asked in the stage room). After the talk, the talk room is opened
