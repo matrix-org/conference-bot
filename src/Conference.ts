@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MatrixClient, MSC1772Space } from "matrix-bot-sdk";
+import { LogService, MatrixClient, MSC1772Space } from "matrix-bot-sdk";
 import {
     AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE,
     AUDITORIUM_CREATION_TEMPLATE,
@@ -37,6 +37,7 @@ import {
     makeStoredPerson,
     makeStoredSpace,
     makeStoredTalk,
+    RS_3PID_PERSON_ID,
     RS_STORED_PERSON,
 } from "./models/room_state";
 import { objectFastClone, safeCreateRoom } from "./utils";
@@ -45,9 +46,10 @@ import config from "./config";
 import { MatrixRoom } from "./models/MatrixRoom";
 import { Auditorium, AuditoriumBackstage } from "./models/Auditorium";
 import { Talk } from "./models/Talk";
-import { ResolvedPersonIdentifier } from "./invites";
+import { ResolvedPersonIdentifier, resolveIdentifiers } from "./invites";
 import { IDbPerson, Role } from "./db/DbPerson";
 import { PentaDb } from "./db/PentaDb";
+import { PermissionsCommand } from "./commands/PermissionsCommand";
 
 export class Conference {
     private dbRoom: MatrixRoom;
@@ -69,6 +71,57 @@ export class Conference {
     } = {};
 
     constructor(public readonly id: string, public readonly client: MatrixClient) {
+        this.client.on("room.event", async (roomId: string, event) => {
+            if (event['type'] === 'm.room.member' && event['content']?.['third_party_invite']) {
+                const emailInviteToken = event['content']['third_party_invite']['signed']?.['token'];
+                const emailInvite = await this.client.getRoomStateEvent(roomId, "m.room.third_party_invite", emailInviteToken);
+                if (emailInvite[RS_3PID_PERSON_ID]) {
+                    // We have enough information to know that we probably sent the invite, but
+                    // to be sure we'll grab the whole room state and check the senders of the
+                    // create event and 3pid invite.
+                    const state = await this.client.getRoomState(roomId);
+                    const verifiableCreateEvent = state.find(e => e['type'] === 'm.room.create');
+                    const verifiable3pidInvite = state.find(e => e['type'] === 'm.room.third_party_invite' && e['state_key'] === emailInviteToken);
+                    if (verifiableCreateEvent?.['sender'] === (await this.client.getUserId())) {
+                        if (verifiable3pidInvite?.['sender'] === (await this.client.getUserId())) {
+                            // Alright, we know it's us who sent it. Now let's check the database.
+                            const people = await (await this.getPentaDb()).findPeopleWithId(emailInvite[RS_3PID_PERSON_ID]);
+                            if (people?.length) {
+                                // Finally, associate the users.
+                                for (const person of people) {
+                                    const clonedPerson = objectFastClone(person);
+                                    clonedPerson.matrix_id = event['state_key'];
+                                    await this.createUpdatePerson(clonedPerson);
+                                    LogService.info("Conference", `Updated ${clonedPerson.person_id} to be associated with ${clonedPerson.matrix_id}`);
+                                }
+
+                                // Update permissions while we're here (if we can identify the room kind)
+                                const aud = this.storedAuditoriums.find(a => a.roomId === roomId);
+                                if (aud) {
+                                    const mods = await this.getModeratorsForAuditorium(aud);
+                                    const resolved = await resolveIdentifiers(mods);
+                                    await PermissionsCommand.ensureModerator(this.client, roomId, resolved);
+                                } else {
+                                    const audBackstage = this.storedAuditoriumBackstages.find(a => a.roomId === roomId);
+                                    if (audBackstage) {
+                                        const mods = await this.getModeratorsForAuditorium(audBackstage);
+                                        const resolved = await resolveIdentifiers(mods);
+                                        await PermissionsCommand.ensureModerator(this.client, roomId, resolved);
+                                    } else {
+                                        const talk = this.storedTalks.find(a => a.roomId === roomId);
+                                        if (talk) {
+                                            const mods = await this.getModeratorsForTalk(talk);
+                                            const resolved = await resolveIdentifiers(mods);
+                                            await PermissionsCommand.ensureModerator(this.client, roomId, resolved);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 
     public get isCreated(): boolean {

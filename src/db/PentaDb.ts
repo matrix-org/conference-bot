@@ -40,6 +40,17 @@ export class PentaDb {
         this.isConnected = false;
     }
 
+    public async findPeopleWithId(personId: string): Promise<IDbPerson[]> {
+        const numericPersonId = Number(personId);
+        if (Number.isSafeInteger(numericPersonId)) {
+            const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} WHERE person_id = $1 OR person_id = $2`, [personId, numericPersonId]);
+            return result.rows;
+        } else {
+            const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} WHERE person_id = $1`, [personId]);
+            return result.rows;
+        }
+    }
+
     public async findAllPeople(): Promise<IDbPerson[]> {
         const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT}`);
         return result.rows;
