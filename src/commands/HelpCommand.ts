@@ -34,6 +34,7 @@ export class HelpCommand implements ICommand {
             "<pre><code>" +
             "!conference export roles  - Exports a YAML file in the bot's storage for all of the roles.\n" +
             "!conference import roles  - Imports the YAML file to set up structures.\n" +
+            "!conference plumb-irc all - Plumbs all auditoriums into IRC channels.\n" +
             "!conference plumb-irc #irchannel !room:id    - Plumbs an IRC channel into a given room.\n" +
             "!conference verify &lt;aud&gt;  - Dumps information about who would be invited to which rooms when\n" +
             "                            the invite command is run for the auditorium.\n" +

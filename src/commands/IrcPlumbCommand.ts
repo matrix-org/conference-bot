@@ -15,11 +15,11 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { LogService, MatrixClient } from "matrix-bot-sdk";
+import { MatrixClient, LogService } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
-import { RolesYaml } from "../RolesYaml";
 import { IRCBridge } from "../ircBridge";
 
+const PLUMB_WAIT_MS = 1000;
 export class IrcPlumbCommand implements ICommand {
     constructor(private readonly ircBridge: IRCBridge) {
 
@@ -27,9 +27,31 @@ export class IrcPlumbCommand implements ICommand {
 
     public readonly prefixes = ["plumb-irc"];
 
+    private async plumbAll(conference: Conference, client: MatrixClient, roomId: string) {
+        for (const auditorium of conference.storedAuditoriums) {
+            const channelName = await this.ircBridge.deriveChannelName(auditorium);
+            try {
+                await this.ircBridge.plumbChannelToRoom(channelName, auditorium.roomId);
+                // Wait before plumbing the next one so as to not overwhelm the poor bridge.
+                await new Promise(r => setTimeout(r, PLUMB_WAIT_MS));
+            } catch (ex) {
+                LogService.warn(`Could not plumb channel ${channelName} to ${roomId}:`, ex);
+                return client.sendNotice(roomId, `Could not plumb ${channelName} to ${roomId}. See logs for details`);
+            }
+        }
+    }
+
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
         await client.sendReadReceipt(roomId, event['event_id']);
         const [channel, requestedRoomIdOrAlias] = args;
+        if (channel === 'all') {
+            try {
+                await this.plumbAll(conference, client, roomId);
+            } catch (ex) {
+                return client.sendNotice(roomId, "Failed to bridge all auditorums, see logs");
+            }
+            return;
+        }
         if (!this.ircBridge.isChannelAllowed(channel)) {
             return client.sendNotice(roomId, "Sorry, that channel is not allowed");
         }

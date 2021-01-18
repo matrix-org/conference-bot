@@ -1,5 +1,6 @@
 import { MatrixClient, MatrixEvent } from "matrix-bot-sdk";
 import * as irc from "irc-upd";
+import { Auditorium } from "./models/Auditorium";
 
 export interface IRCBridgeOpts {
     botNick: string;
@@ -19,12 +20,21 @@ interface IrcBridgeData {
 const COMMAND_TIMEOUT_MS = 60000;
 
 export class IRCBridge {
+
     private botRoomId?: string;
     private ircClient: any;
     constructor(private readonly config: IRCBridgeOpts, private readonly mxClient: MatrixClient) {
         if (!config.botNick || !config.botUserId || !config.channelPrefix || !config.port || !config.serverName) {
             throw Error('Missing configuration options for IRC bridge');
         }
+    }
+
+    public async deriveChannelName(auditorium: Auditorium) {
+        const name = await auditorium.getName();
+        if (!name) {
+            throw Error('Auditorium name is empty');
+        }
+        return `${this.config.channelPrefix}${name}`;
     }
 
     public async setup() {
