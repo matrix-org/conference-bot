@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import * as parser from 'fast-xml-parser';
-import { IConference, IPerson, IAuditorium, ITalk } from "../models/schedule";
+import { IAuditorium, IConference, IPerson, ITalk } from "../models/schedule";
 import * as moment from "moment";
 import { RoomKind } from "../models/room_kinds";
 import config from "../config";
@@ -139,6 +139,7 @@ export class PentabarfParser {
                 if (!pRoom) continue;
 
                 const metadata = deprefix(pRoom.attr?.["@_name"] || "org.matrix.confbot.unknown");
+                if (metadata.kind !== RoomKind.Auditorium) continue;
                 let auditorium: IAuditorium = {
                     id: pRoom.attr?.["@_name"],
                     name: metadata.name,
