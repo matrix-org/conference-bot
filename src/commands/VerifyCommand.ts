@@ -51,8 +51,12 @@ export class VerifyCommand implements ICommand {
         const audBackstageToInvite = await conference.getInviteTargetsForAuditorium(aud, true);
         const audToMod = await conference.getModeratorsForAuditorium(aud);
 
-        html += "<b>Public-facing room:</b><ul>";
-        appendPeople(audToInvite, audToMod);
+        const publicAud = conference.getAuditorium(audId);
+        if (publicAud) {
+            html += "<b>Public-facing room:</b><ul>";
+            appendPeople(audToInvite, audToMod);
+        }
+
         html += "</ul><b>Backstage room:</b><ul>";
         appendPeople(audBackstageToInvite, audToMod);
         html += "</ul>";
@@ -61,9 +65,11 @@ export class VerifyCommand implements ICommand {
         for (const talk of talks) {
             const talkToInvite = await conference.getInviteTargetsForTalk(talk);
             const talkToMod = await conference.getModeratorsForTalk(talk);
-            html += `<b>Talk: ${await talk.getName()} (${await talk.getId()})</b><ul>`;
-            appendPeople(talkToInvite, talkToMod);
-            html += "</ul>";
+            if (talkToMod.length || talkToInvite.length) {
+                html += `<b>Talk: ${await talk.getName()} (${await talk.getId()})</b><ul>`;
+                appendPeople(talkToInvite, talkToMod);
+                html += "</ul>";
+            }
         }
 
         await client.sendHtmlNotice(roomId, html);
