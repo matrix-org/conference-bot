@@ -19,6 +19,7 @@ import config from "../config";
 import { IDbPerson, Role } from "./DbPerson";
 
 const PEOPLE_SELECT = "SELECT event_id::text, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM " + config.conference.database.tblPeople;
+const NONEVENT_PEOPLE_SELECT = "SELECT DISTINCT 'ignore' AS event_id, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM " + config.conference.database.tblPeople;
 
 export class PentaDb {
     private client: Client;
@@ -68,7 +69,7 @@ export class PentaDb {
     }
 
     public async findAllPeopleForAuditorium(auditoriumId: string): Promise<IDbPerson[]> {
-        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} WHERE conference_room = $1`, [auditoriumId]);
+        const result = await this.client.query<IDbPerson>(`${NONEVENT_PEOPLE_SELECT} WHERE conference_room = $1`, [auditoriumId]);
         return result.rows;
     }
 
