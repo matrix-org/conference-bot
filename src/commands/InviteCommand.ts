@@ -15,11 +15,15 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { MatrixClient, MembershipEvent } from "matrix-bot-sdk";
+import { MatrixClient, MembershipEvent, RoomAlias } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
-import { invitePersonToRoom, ResolvedPersonIdentifier } from "../invites";
+import { invitePersonToRoom, ResolvedPersonIdentifier, resolveIdentifiers } from "../invites";
 import { RS_3PID_PERSON_ID } from "../models/room_state";
 import { runRoleCommand } from "./actions/roles";
+import { Role } from "../db/DbPerson";
+import config from "../config";
+import { safeCreateRoom } from "../utils";
+import { AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, mergeWithCreationTemplate } from "../models/room_kinds";
 
 export class InviteCommand implements ICommand {
     public readonly prefixes = ["invite", "inv"];
@@ -32,7 +36,25 @@ export class InviteCommand implements ICommand {
         // in it. We don't remove anyone and don't care about extras - we just want to make sure
         // that a subset of people are joined.
 
-        await runRoleCommand(InviteCommand.ensureInvited, conference, client, roomId, event, args);
+        if (args[0] && args[0] === "speakers-support") {
+            const people = await (await conference.getPentaDb()).findAllPeopleWithRole(Role.Speaker);
+            const resolved = await resolveIdentifiers(people);
+
+            let speakersRoomId: string;
+            try {
+                speakersRoomId = await client.resolveRoom(config.conference.supportRooms.speakers);
+            } catch (e) {
+                // probably doesn't exist
+                speakersRoomId = await safeCreateRoom(client, mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
+                    room_alias_name: (new RoomAlias(config.conference.supportRooms.speakers)).localpart,
+                    invite: [config.moderatorUserId],
+                }));
+            }
+
+            await InviteCommand.ensureInvited(client, speakersRoomId, resolved);
+        } else {
+            await runRoleCommand(InviteCommand.ensureInvited, conference, client, roomId, event, args);
+        }
 
         await client.sendNotice(roomId, "Invites sent!");
     }

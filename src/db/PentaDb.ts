@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import {Client} from "pg";
+import { Client } from "pg";
 import config from "../config";
-import { IDbPerson } from "./DbPerson";
+import { IDbPerson, Role } from "./DbPerson";
 
 const PEOPLE_SELECT = "SELECT event_id::text, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM " + config.conference.database.tblPeople;
 
@@ -63,6 +63,11 @@ export class PentaDb {
 
     public async findAllPeopleForTalk(talkId: string): Promise<IDbPerson[]> {
         const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} WHERE event_id = $1`, [talkId]);
+        return result.rows;
+    }
+
+    public async findAllPeopleWithRole(role: Role): Promise<IDbPerson[]> {
+        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} WHERE event_role = $1`, [role]);
         return result.rows;
     }
 }

@@ -50,6 +50,9 @@ interface IConfig {
         name: string;
         pentabarfDefinition: string;
         timezone: string;
+        supportRooms: {
+            speakers: string;
+        };
         prefixes: {
             auditoriumRooms: string[];
             interestRooms: string[];

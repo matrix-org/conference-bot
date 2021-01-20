@@ -116,6 +116,11 @@ conference:
   # The timezone that the pentabarf definition is in.
   timezone: "Europe/Brussels"
 
+  # The various support rooms the bot supports. They will be created if they
+  # haven't already.
+  supportRooms:
+    speakers: "#speakers:example.org"
+
   # Connection information to get data about the conference during the conference.
   # This can be readonly.
   database:
