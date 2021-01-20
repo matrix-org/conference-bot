@@ -30,7 +30,7 @@ import * as express from "express";
 import { Liquid } from "liquidjs";
 import { renderAuditoriumWidget, renderHealthz, renderTalkWidget, rtmpRedirect } from "./web";
 import { DevCommand } from "./commands/DevCommand";
-import { IRCBridge } from "./ircBridge";
+import { IRCBridge } from "./IRCBridge";
 import { IrcPlumbCommand } from "./commands/IrcPlumbCommand";
 import { PermissionsCommand } from "./commands/PermissionsCommand";
 import { VerifyCommand } from "./commands/VerifyCommand";

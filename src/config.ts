@@ -17,7 +17,7 @@ limitations under the License.
 import * as config from "config";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "./Conference";
-import { IRCBridgeOpts } from "./ircBridge";
+import { IRCBridgeOpts } from "./IRCBridge";
 
 interface IConfig {
     homeserverUrl: string;

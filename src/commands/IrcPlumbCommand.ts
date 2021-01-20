@@ -17,7 +17,7 @@ limitations under the License.
 import { ICommand } from "./ICommand";
 import { MatrixClient, LogService } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
-import { IRCBridge } from "../ircBridge";
+import { IRCBridge } from "../IRCBridge";
 
 const PLUMB_WAIT_MS = 1000;
 export class IrcPlumbCommand implements ICommand {
@@ -48,8 +48,9 @@ export class IrcPlumbCommand implements ICommand {
             try {
                 await this.plumbAll(conference, client, roomId);
             } catch (ex) {
-                return client.sendNotice(roomId, "Failed to bridge all auditorums, see logs");
+                return client.sendNotice(roomId, "Failed to bridge all auditoriums, see logs");
             }
+            await client.sendNotice(roomId, "Auditoriums bridged to IRC");
             return;
         }
         if (!this.ircBridge.isChannelAllowed(channel)) {
