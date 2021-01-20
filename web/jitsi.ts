@@ -46,6 +46,7 @@ function createJWTToken(jitsiDomain, roomId, avatarUrl, displayName, openIdToken
             matrix: {
                 token: openIdToken.access_token,
                 room_id: roomId,
+                server_name: openIdToken.matrix_server_name,
             },
             user: {
                 avatar: avatarUrl,
