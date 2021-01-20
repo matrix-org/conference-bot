@@ -111,7 +111,7 @@ export class IRCBridge {
                 if (roomId !== this.botRoomId) {
                     return;
                 }
-                if (event.content && event.content["m.relates_to"] && event.content["m.relates_to"]["m.in_reply_to"].event_id === requestEventId) {
+                if (event.content?.["m.relates_to"]?.["m.in_reply_to"]?.event_id === requestEventId) {
                     resolve(new MatrixEvent(event));
                     clearTimeout(timeout);
                 }

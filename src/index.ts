@@ -35,6 +35,7 @@ import { IrcPlumbCommand } from "./commands/IrcPlumbCommand";
 import { PermissionsCommand } from "./commands/PermissionsCommand";
 import { VerifyCommand } from "./commands/VerifyCommand";
 import { CustomLogger } from "./CustomLogger";
+import { InviteMeCommand } from "./commands/InviteMeCommand";
 
 config.RUNTIME = {
     client: null,
@@ -112,6 +113,7 @@ function registerCommands() {
         new DevCommand(),
         new IrcPlumbCommand(ircBridge),
         new PermissionsCommand(),
+        new InviteMeCommand(),
     ];
 
     client.on("room.message", async (roomId: string, event: any) => {
@@ -150,7 +152,7 @@ function registerCommands() {
 
         try {
             for (const command of commands) {
-                if (command.prefixes.includes(args[0])) {
+                if (command.prefixes.includes(args[0].toLowerCase())) {
                     LogService.info("index", `${event['sender']} is running command: ${content['body']}`);
                     return await command.run(conference, client, roomId, event, args.slice(1));
                 }

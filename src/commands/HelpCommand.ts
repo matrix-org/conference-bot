@@ -43,6 +43,11 @@ export class HelpCommand implements ICommand {
             "!conference plumb-irc all               - Plumbs all auditoriums into IRC channels.\n" +
             "!conference plumb-irc &lt;channel&gt; &lt;room&gt;  - Plumbs an IRC channel into a given room.\n" +
             "</code></pre>" +
+            "<h4>General management:</h4>" +
+            "<pre><code>" +
+            "!conference inviteme &lt;room&gt;         - Asks the bot to invite you to the given room.\n" +
+            "!conference inviteto &lt;room&gt; &lt;user&gt;  - Asks the bot to invite the given user to the given room.\n" +
+            "</code></pre>" +
             "";
         return client.replyHtmlNotice(roomId, event, htmlHelp);
     }
