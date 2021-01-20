@@ -62,7 +62,12 @@ interface IConfig {
             };
         };
         database: {
-            connectionString: string;
+            host: string;
+            port: number;
+            username: string;
+            password: string;
+            database: string;
+            sslmode: string;
             tblPeople: string;
         };
     };

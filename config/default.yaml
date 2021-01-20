@@ -122,10 +122,14 @@ conference:
     speakers: "#speakers:example.org"
 
   # Connection information to get data about the conference during the conference.
-  # This can be readonly.
+  # This can be readonly. Currently the bot only supports postgresql.
   database:
-    # The connection string for the database. Currently only postgresql is supported.
-    connectionString: "postgres://username:password@host/database?sslmode=require"
+    host: "localhost"
+    port: 5432
+    username: "db_username"
+    password: "db_password"
+    database: "your_db"
+    sslmode: "require"
 
     # The table/view for the bot to access for information about people involved in the conference.
     # Must at least have the following columns:

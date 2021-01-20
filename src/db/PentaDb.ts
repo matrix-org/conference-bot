@@ -25,7 +25,18 @@ export class PentaDb {
     private isConnected = false;
 
     constructor() {
-        this.client = new Client(config.conference.database.connectionString);
+        this.client = new Client({
+            host: config.conference.database.host,
+            port: config.conference.database.port,
+            user: config.conference.database.username,
+            password: config.conference.database.password,
+            database: config.conference.database.database,
+
+            // sslmode parsing is largely interpreted from pg-connection-string handling
+            ssl: config.conference.database.sslmode === 'disable' ? false : {
+                rejectUnauthorized: config.conference.database.sslmode === 'no-verify',
+            },
+        });
     }
 
     public async connect() {
