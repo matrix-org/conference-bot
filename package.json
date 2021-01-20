@@ -22,6 +22,7 @@
     "express": "^4.17.1",
     "fast-xml-parser": "^3.17.6",
     "hls.js": "^0.14.17",
+    "irc-upd": "^0.11.0",
     "js-yaml": "^3.14.1",
     "jsrsasign": "^10.1.4",
     "liquidjs": "^9.19.0",

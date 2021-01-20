@@ -30,6 +30,8 @@ import * as express from "express";
 import { Liquid } from "liquidjs";
 import { renderAuditoriumWidget, renderHealthz, renderTalkWidget, rtmpRedirect } from "./web";
 import { DevCommand } from "./commands/DevCommand";
+import { IRCBridge } from "./ircBridge";
+import { IrcPlumbCommand } from "./commands/IrcPlumbCommand";
 import { PermissionsCommand } from "./commands/PermissionsCommand";
 import { VerifyCommand } from "./commands/VerifyCommand";
 import { CustomLogger } from "./CustomLogger";
@@ -56,6 +58,8 @@ client.impersonateUserId(config.userId);
 
 const conference = new Conference(config.conference.id, client);
 config.RUNTIME.conference = conference;
+
+const ircBridge = new IRCBridge(config.ircBridge, client);
 
 let localpart;
 let displayName;
@@ -94,6 +98,9 @@ let userId;
     }
 
     await client.start();
+
+    // Needs to happen after the sync loop has started
+    await ircBridge.setup();
 })();
 
 function registerCommands() {
@@ -103,6 +110,7 @@ function registerCommands() {
         new VerifyCommand(),
         new InviteCommand(),
         new DevCommand(),
+        new IrcPlumbCommand(ircBridge),
         new PermissionsCommand(),
     ];
 
