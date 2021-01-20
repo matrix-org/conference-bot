@@ -27,6 +27,7 @@ export interface IRCBridgeOpts {
     channelPrefix: string;
     moderationBotNick: string;
     ircBridgeNick: string;
+    secure: boolean;
 }
 
 interface IrcBridgeData {
@@ -78,6 +79,7 @@ export class IRCBridge {
             password: this.config.botPassword,
             userName: 'mx-conf-bot',
             realName: 'matrix-conference-bot',
+            secure: this.config.secure !== undefined ? this.config.secure : true, // Default to true
         });
         this.ircClient.on("error", (...args) => {
             console.warn("irc client got an error:", args)
