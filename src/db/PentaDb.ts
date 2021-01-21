@@ -17,6 +17,8 @@ limitations under the License.
 import { Client, Pool } from "pg";
 import config from "../config";
 import { IDbPerson, Role } from "./DbPerson";
+import { LogService, UserID } from "matrix-bot-sdk";
+import { objectFastClone } from "../utils";
 
 const PEOPLE_SELECT = "SELECT event_id::text, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM " + config.conference.database.tblPeople;
 const NONEVENT_PEOPLE_SELECT = "SELECT DISTINCT 'ignore' AS event_id, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM " + config.conference.database.tblPeople;
@@ -56,30 +58,49 @@ export class PentaDb {
         const numericPersonId = Number(personId);
         if (Number.isSafeInteger(numericPersonId)) {
             const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} WHERE person_id = $1 OR person_id = $2`, [personId, numericPersonId]);
-            return result.rows;
+            return this.sanitizeRecords(result.rows);
         } else {
             const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} WHERE person_id = $1`, [personId]);
-            return result.rows;
+            return this.sanitizeRecords(result.rows);
         }
     }
 
     public async findAllPeople(): Promise<IDbPerson[]> {
         const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT}`);
-        return result.rows;
+        return this.sanitizeRecords(result.rows);
     }
 
     public async findAllPeopleForAuditorium(auditoriumId: string): Promise<IDbPerson[]> {
         const result = await this.client.query<IDbPerson>(`${NONEVENT_PEOPLE_SELECT} WHERE conference_room = $1`, [auditoriumId]);
-        return result.rows;
+        return this.sanitizeRecords(result.rows);
     }
 
     public async findAllPeopleForTalk(talkId: string): Promise<IDbPerson[]> {
         const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} WHERE event_id = $1`, [talkId]);
-        return result.rows;
+        return this.sanitizeRecords(result.rows);
     }
 
     public async findAllPeopleWithRole(role: Role): Promise<IDbPerson[]> {
         const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} WHERE event_role = $1`, [role]);
-        return result.rows;
+        return this.sanitizeRecords(result.rows);
+    }
+
+    private sanitizeRecords(rows: IDbPerson[]): IDbPerson[] {
+        return rows.map(r => {
+            r = objectFastClone(r);
+            const userId = r.matrix_id;
+            try {
+                if (userId) {
+                    // we use the variable even though it's a no-op just to avoid
+                    // the compiler optimizing us out.
+                    const parsed = new UserID(userId);
+                    r.matrix_id = parsed.toString();
+                }
+            } catch (e) {
+                LogService.warn("PentaDb", "Invalid user ID: " + userId, e);
+                r.matrix_id = null; // force clear
+            }
+            return r;
+        });
     }
 }
