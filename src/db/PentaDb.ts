@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Client } from "pg";
+import { Client, Pool } from "pg";
 import config from "../config";
 import { IDbPerson, Role } from "./DbPerson";
 
@@ -22,11 +22,11 @@ const PEOPLE_SELECT = "SELECT event_id::text, person_id::text, event_role::text,
 const NONEVENT_PEOPLE_SELECT = "SELECT DISTINCT 'ignore' AS event_id, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM " + config.conference.database.tblPeople;
 
 export class PentaDb {
-    private client: Client;
+    private client: Pool;
     private isConnected = false;
 
     constructor() {
-        this.client = new Client({
+        this.client = new Pool({
             host: config.conference.database.host,
             port: config.conference.database.port,
             user: config.conference.database.username,
