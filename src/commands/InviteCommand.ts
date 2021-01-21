@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { MatrixClient, MembershipEvent, RoomAlias } from "matrix-bot-sdk";
+import { LogLevel, LogService, MatrixClient, MembershipEvent, RoomAlias } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { invitePersonToRoom, ResolvedPersonIdentifier, resolveIdentifiers } from "../invites";
 import { RS_3PID_PERSON_ID } from "../models/room_state";
@@ -24,6 +24,7 @@ import { Role } from "../db/DbPerson";
 import config from "../config";
 import { safeCreateRoom } from "../utils";
 import { AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, mergeWithCreationTemplate } from "../models/room_kinds";
+import { logMessage } from "../LogProxy";
 
 export class InviteCommand implements ICommand {
     public readonly prefixes = ["invite", "inv"];
@@ -69,7 +70,12 @@ export class InviteCommand implements ICommand {
         for (const target of people) {
             if (target.mxid && effectiveJoinedUserIds.includes(target.mxid)) continue;
             if (emailInvitePersonIds.includes(target.person.person_id)) continue;
-            await invitePersonToRoom(target, roomId);
+            try {
+                await invitePersonToRoom(target, roomId);
+            } catch (e) {
+                LogService.error("InviteCommand", e);
+                await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${target.mxid} / ${target.person.person_id} to ${roomId} - ignoring`);
+            }
         }
     }
 }
