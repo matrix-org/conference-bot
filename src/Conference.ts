@@ -306,6 +306,7 @@ export class Conference {
             ],
         }));
         await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + (await auditorium.getName()) + '-' + talk.slug);
+        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + 'talk-' + talk.id);
         await auditorium.addDirectChild(roomId);
         this.talks[talk.id] = new Talk(roomId, this.client, this);
 

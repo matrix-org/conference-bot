@@ -15,12 +15,13 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { MatrixClient, MentionPill, RichReply } from "matrix-bot-sdk";
+import { LogLevel, MatrixClient, MentionPill, RichReply } from "matrix-bot-sdk";
 import * as fetch from "node-fetch";
 import { PentabarfParser } from "../parsers/PentabarfParser";
 import { ITalk } from "../models/schedule";
 import config from "../config";
 import { Conference } from "../Conference";
+import { logMessage } from "../LogProxy";
 
 export class BuildCommand implements ICommand {
     public readonly prefixes = ["build", "b"];
@@ -44,6 +45,26 @@ export class BuildCommand implements ICommand {
             messagePrefix + "<br /><br />Your conference's space is at " + spacePill.html);
         reply["msgtype"] = "m.notice";
         await client.sendMessage(roomId, reply);
+
+        if (args[0] === "talk") {
+            const audId = args[1];
+            const talkId = args[2];
+
+            const pentaAud = parsed.auditoriums.find(a => a.id === audId);
+            if (!pentaAud) return await logMessage(LogLevel.ERROR, "BuildCommand", `Cannot find auditorium: ${audId}`);
+
+            const allTalks: ITalk[] = [];
+            Object.values(pentaAud.talksByDate).forEach(ea => allTalks.push(...ea));
+            const pentaTalk =  allTalks.find(t => t.id === talkId);
+            if (!pentaTalk) return await logMessage(LogLevel.ERROR, "BuildCommand", `Cannot find talk in room: ${audId} ${talkId}`);
+
+            await conference.createAuditoriumBackstage(pentaAud);
+            const aud = await conference.createAuditorium(pentaAud);
+            await conference.createTalk(pentaTalk, aud);
+
+            await client.sendNotice(roomId, "Talk room created");
+            return;
+        }
 
         let auditoriumsCreated = 0;
         let talksCreated = 0;
