@@ -69,7 +69,7 @@ export async function renderTalkWidget(req: Request, res: Response) {
     const streamUrl = template(config.livestream.talkUrl, {
         audId: audId.toLowerCase(),
         slug: (await talk.getDefinition()).slug.toLowerCase(),
-        //slug: base32.stringify(Buffer.from(talk.roomId), { pad: false }).toLowerCase(),
+        jitsi: base32.stringify(Buffer.from(talk.roomId), { pad: false }).toLowerCase(),
     });
 
     return res.render('talk.liquid', {

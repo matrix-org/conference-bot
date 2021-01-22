@@ -42,6 +42,7 @@ livestream:
   # Available variables (allow lowercase values):
   #  slug  - The shorthand version of the talk name (eg: "matrix-p2p")
   #  audId - The auditorium ID the talk is held in (eg: "D.collab")
+  #  jitsi - The Jitsi conference name in lowercase.
   talkUrl: "https://stream.example.org/conference-talks/hls/{slug}.m3u8"
 
   # The domain of the Jitsi server to use. It will be assumed to be using
