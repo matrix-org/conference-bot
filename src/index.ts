@@ -36,6 +36,7 @@ import { PermissionsCommand } from "./commands/PermissionsCommand";
 import { VerifyCommand } from "./commands/VerifyCommand";
 import { CustomLogger } from "./CustomLogger";
 import { InviteMeCommand } from "./commands/InviteMeCommand";
+import { WidgetsCommand } from "./commands/WidgetsCommand";
 
 config.RUNTIME = {
     client: null,
@@ -114,6 +115,7 @@ function registerCommands() {
         new IrcPlumbCommand(ircBridge),
         new PermissionsCommand(),
         new InviteMeCommand(),
+        new WidgetsCommand(),
     ];
 
     client.on("room.message", async (roomId: string, event: any) => {

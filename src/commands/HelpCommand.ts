@@ -47,6 +47,7 @@ export class HelpCommand implements ICommand {
             "<pre><code>" +
             "!conference inviteme &lt;room&gt;         - Asks the bot to invite you to the given room.\n" +
             "!conference inviteto &lt;room&gt; &lt;user&gt;  - Asks the bot to invite the given user to the given room.\n" +
+            "!conference widgets &lt;aud&gt;           - Creates all widgets for the auditorium and its talks.\n" +
             "</code></pre>" +
             "";
         return client.replyHtmlNotice(roomId, event, htmlHelp);

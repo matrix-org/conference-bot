@@ -23,6 +23,17 @@ import { MatrixClient } from "matrix-bot-sdk";
 import { base32 } from "rfc4648";
 import { Talk } from "./Talk";
 
+export interface ILayout {
+    widgets: {
+        [widgetId: string]: {
+            container: "top"|"right";
+            index?: number;
+            width?: number;
+            height?: number;
+        };
+    };
+}
+
 export class LiveWidget {
     private constructor() {
         // nothing
@@ -68,6 +79,23 @@ export class LiveWidget {
                     talkId: await talk.getId(),
                 },
             } as IWidget,
+        };
+    }
+
+    public static layoutOf(widget: IStateEvent<IWidget>): IStateEvent<ILayout> {
+        return {
+            type: "io.element.widgets.layout",
+            state_key: "",
+            content: {
+                widgets: {
+                    [widget.state_key]: {
+                        container: "top",
+                        index: 0,
+                        width: 100,
+                        height: 40,
+                    },
+                },
+            },
         };
     }
 }
