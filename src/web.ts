@@ -34,6 +34,7 @@ export function renderAuditoriumWidget(req: Request, res: Response) {
 
     const streamUrl = template(config.livestream.auditoriumUrl, {
         id: audId.toLowerCase(),
+        sId: audId.toLowerCase().replace(/[^a-z0-9]/g, ''),
     });
 
     return res.render('auditorium.liquid', {

@@ -36,6 +36,8 @@ livestream:
   # The template for livestreams in auditorium rooms
   # Available variables (allow lowercase values):
   #  id  - The room ID/name (eg: "D.collab")
+  #  sId - The room ID/name, but lowercase and only alphanumeric characters
+  #        are included (eg: "dcollab")
   auditoriumUrl: "https://stream.example.org/conference/hls/{id}.m3u8"
 
   # The template for livestreams in talk rooms
