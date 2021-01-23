@@ -73,48 +73,55 @@ export async function joinConference(opts, widgetApi, onCallback) {
     const userId = opts.userId;
     const jitsiAuth = opts.auth;
     const roomId = opts.roomId;
+    const title = opts.title;
 
-    let jwt;
-    let openIdToken: IOpenIDCredentials;
-    if (jitsiAuth === JITSI_OPENIDTOKEN_JWT_AUTH) {
-        openIdToken = await widgetApi.requestOpenIDConnectToken();
-        console.log("Got OpenID Connect token");
-        if (!openIdToken?.access_token) { // eslint-disable-line camelcase
-            // We've failed to get a token, don't try to init conference
-            console.warn('Expected to have an OpenID credential, cannot initialize widget.');
-            document.getElementById("widgetActionContainer").innerText = "Failed to load Jitsi widget";
-            return;
+    try {
+        let jwt;
+        let openIdToken: IOpenIDCredentials;
+        if (jitsiAuth === JITSI_OPENIDTOKEN_JWT_AUTH) {
+            openIdToken = await widgetApi.requestOpenIDConnectToken();
+            console.log("Got OpenID Connect token");
+            if (!openIdToken?.access_token) { // eslint-disable-line camelcase
+                // We've failed to get a token, don't try to init conference
+                console.warn('Expected to have an OpenID credential, cannot initialize widget.');
+                document.getElementById("widgetActionContainer").innerText = "Failed to load Jitsi widget";
+                return;
+            }
+            jwt = createJWTToken(jitsiDomain, roomId, avatarUrl, displayName, openIdToken);
         }
-        jwt = createJWTToken(jitsiDomain, roomId, avatarUrl, displayName, openIdToken);
-    }
 
-    console.warn(
-        "[Jitsi Widget] The next few errors about failing to parse URL parameters are fine if " +
-        "they mention 'external_api' or 'jitsi' in the stack. They're just Jitsi Meet trying to parse " +
-        "our fragment values and not recognizing the options.",
-    );
-    const options = {
-        width: "100%",
-        height: "100%",
-        parentNode: document.querySelector("#jitsiContainer"),
-        roomName: conferenceId,
-        interfaceConfigOverwrite: {
-            SHOW_JITSI_WATERMARK: false,
-            SHOW_WATERMARK_FOR_GUESTS: false,
-            MAIN_TOOLBAR_BUTTONS: [],
-            VIDEO_LAYOUT_FIT: "height",
-        },
-        jwt: jwt,
-    };
+        console.warn(
+            "[Jitsi Widget] The next few errors about failing to parse URL parameters are fine if " +
+            "they mention 'external_api' or 'jitsi' in the stack. They're just Jitsi Meet trying to parse " +
+            "our fragment values and not recognizing the options.",
+        );
+        const options = {
+            width: "100%",
+            height: "100%",
+            parentNode: document.querySelector("#jitsiContainer"),
+            roomName: conferenceId,
+            interfaceConfigOverwrite: {
+                SHOW_JITSI_WATERMARK: false,
+                SHOW_WATERMARK_FOR_GUESTS: false,
+                MAIN_TOOLBAR_BUTTONS: [],
+                VIDEO_LAYOUT_FIT: "height",
+            },
+            jwt: jwt,
+        };
 
-    meetApi = new JitsiMeetExternalAPI(jitsiDomain, options);
-    if (displayName) meetApi.executeCommand("displayName", displayName);
-    if (avatarUrl) meetApi.executeCommand("avatarUrl", avatarUrl);
-    if (userId) meetApi.executeCommand("email", userId);
+        meetApi = new JitsiMeetExternalAPI(jitsiDomain, options);
+        if (displayName) meetApi.executeCommand("displayName", displayName);
+        if (avatarUrl) meetApi.executeCommand("avatarUrl", avatarUrl);
+        if (userId) meetApi.executeCommand("email", userId);
+        if (title) meetApi.executeCommand("subject", title);
 
-    meetApi.on("readyToClose", () => {
-        document.getElementById("jitsiContainer").innerHTML = "";
-        meetApi = null;
+        meetApi.on("readyToClose", () => {
+            document.getElementById("jitsiContainer").innerHTML = "";
+            meetApi = null;
+            onCallback();
+        });
+    } catch (e) {
+        console.error(e);
         onCallback();
-    });
+    }
 }

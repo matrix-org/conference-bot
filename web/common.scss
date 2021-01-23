@@ -14,10 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
 html, body {
   padding: 0;
   margin: 0;
   height: 100%; /* to trick the layout into working */
+  font-family: 'Inter', sans-serif;
 }
 
 #livestream {
@@ -36,7 +39,6 @@ html, body {
 }
 
 #messages {
-  font-style: italic;
   text-align: center;
   padding-top: 20px;
   display: none; /* changed later */
@@ -66,4 +68,41 @@ html, body {
   left: 0;
   right: 0;
   display: none; /* changed later */
+}
+
+#jitsiUnderlay {
+  display: none; /* changed later */
+  text-align: center;
+  margin-top: 40px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+#liveBanner {
+  display: none; /* changed later */
+  text-align: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 375px;
+  background-color: tomato;
+  padding: 2px;
+  border-bottom-right-radius: 8px;
+}
+
+#liveBanner > span::after {
+  content: 'This conference is livestreamed/recorded.';
+}
+
+@media only screen and (max-width: 600px) {
+  #liveBanner {
+    width: 75px;
+  }
+
+  #liveBanner > span::after {
+    content: 'LIVE';
+  }
 }

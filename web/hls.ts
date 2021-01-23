@@ -32,6 +32,7 @@ if (isWidget) {
 let hls: Hls;
 let haveManifest = false;
 let isVideoMode = true;
+let lastReadyFn: () => void;
 
 export function pause() {
     isVideoMode = false;
@@ -39,19 +40,14 @@ export function pause() {
     videoEl.pause();
 }
 
-export function play() {
+export function play(readyFn: () => void = null) {
     isVideoMode = true;
-    if (hls) {
-        if (haveManifest) {
-            hls.startLoad();
-        } else {
-            hls.loadSource(videoUrl);
-        }
-    }
-    videoEl.play();
+    if (hls) hls.destroy();
+    makeLivestream(readyFn || lastReadyFn);
 }
 
 export function makeLivestream(readyFn: () => void) {
+    lastReadyFn = readyFn;
     if (Hls.isSupported()) {
         hls = new Hls({
             liveSyncDurationCount: 2,

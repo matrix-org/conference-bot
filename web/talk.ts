@@ -24,6 +24,8 @@ import { addlQuery, isWidget, widgetId } from "./widgets";
 const messagesEl = document.getElementById("messages");
 const controlsEl = document.getElementById("controlBar");
 const jitsiContainer = document.getElementById("jitsiContainer");
+const jitsiUnderlay = document.getElementById("jitsiUnderlay");
+const liveWarning = document.getElementById("liveBanner");
 const joinButton = document.getElementById('joinButton');
 
 let widgetApi: WidgetApi = null;
@@ -49,11 +51,13 @@ if (isWidget) {
 
 makeLivestream(() => showVideo());
 
-function showVideo() {
+function showVideo(ready = false) {
     if (widgetApi) widgetApi.setAlwaysOnScreen(false);
     jitsiContainer.style.display = 'none';
-    messagesEl.style.display = 'none';
-    videoEl.style.display = 'block';
+    jitsiUnderlay.style.display = 'none';
+    messagesEl.style.display = ready ? 'none' : 'block';
+    videoEl.style.display = ready ? 'block' : 'none';
+    liveWarning.style.display = 'none';
     if (isWidget) {
         controlsEl.style.display = 'block';
     }
@@ -63,14 +67,16 @@ function showJitsi() {
     pause();
     if (widgetApi) widgetApi.setAlwaysOnScreen(true);
     jitsiContainer.style.display = 'block';
+    jitsiUnderlay.style.display = 'block';
     messagesEl.style.display = 'none';
     videoEl.style.display = 'none';
     controlsEl.style.display = 'none';
+    liveWarning.style.display = 'block';
 }
 
 function onJitsiEnd() {
     showVideo();
-    play();
+    play(() => showVideo(true));
 }
 
 const jitsiOpts = {
@@ -79,6 +85,9 @@ const jitsiOpts = {
         .getAttribute('content'),
     conferenceDomain: Array.from(document.getElementsByTagName('meta'))
         .find(t => t.name === 'org.matrix.confbot.conf_domain')
+        .getAttribute('content'),
+    title: Array.from(document.getElementsByTagName('meta'))
+        .find(t => t.name === 'org.matrix.confbot.conf_name')
         .getAttribute('content'),
     displayName: addlQuery["displayName"],
     avatarUrl: addlQuery["avatarUrl"],
