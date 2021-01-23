@@ -50,9 +50,9 @@ if (isWidget) {
     controlsEl.style.display = 'block';
 }
 
-makeLivestream(() => showVideo());
+makeLivestream(() => showVideo(true));
 
-function showVideo(ready = false) {
+function showVideo(ready = true) {
     if (widgetApi) widgetApi.setAlwaysOnScreen(false);
     jitsiContainer.style.display = 'none';
     jitsiUnderlay.style.display = 'none';
@@ -76,7 +76,7 @@ function showJitsi() {
 }
 
 function onJitsiEnd() {
-    showVideo();
+    showVideo(false);
     play(() => showVideo(true));
 }
 
