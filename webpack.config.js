@@ -23,6 +23,7 @@ module.exports = {
     entry: {
         'auditorium': './web/auditorium.ts',
         'talk': './web/talk.ts',
+        'scoreboard': './web/scoreboard.ts',
     },
     devtool: 'source-map',
     module: {
@@ -54,6 +55,12 @@ module.exports = {
             inject: true,
             chunks: ['talk'],
             filename: "talk.liquid",
+        }),
+        new HtmlWebpackPlugin({
+            template: './web/scoreboard.liquid',
+            inject: true,
+            chunks: ['scoreboard'],
+            filename: "scoreboard.liquid",
         }),
     ],
     output: {

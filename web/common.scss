@@ -21,6 +21,7 @@ html, body {
   margin: 0;
   height: 100%; /* to trick the layout into working */
   font-family: 'Inter', sans-serif;
+  background-color: #fff;
 }
 
 #livestream {
@@ -105,4 +106,37 @@ html, body {
   #liveBanner > span::after {
     content: 'LIVE';
   }
+}
+
+#scoreboard {
+  padding: 8px;
+}
+
+#scoreboard a {
+  text-decoration: none;
+}
+
+#upvoted .message {
+  margin-bottom: 12px;
+}
+
+#upvoted .message .sender .avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 24px;
+  vertical-align: text-top;
+  margin-right: 4px;
+}
+
+#upvoted .message .sender .avatar.none {
+  background-color: #ccc;
+  display: inline-block;
+}
+
+#upvoted .message .body .votes {
+  width: 24px; /* same as avatar */
+  display: inline-block;
+  text-align: center;
+  margin-right: 4px;
+  border-right: 1px solid #ccc;
 }

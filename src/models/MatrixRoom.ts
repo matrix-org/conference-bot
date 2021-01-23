@@ -14,12 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MatrixClient, MSC1772Space } from "matrix-bot-sdk";
+import { LogService, MatrixClient, MSC1772Space } from "matrix-bot-sdk";
 import { makeChildRoom, RS_STORED_SPACE } from "./room_state";
 import { Conference } from "../Conference";
 
 export class MatrixRoom {
     protected space: MSC1772Space;
+    protected canonicalAlias: string;
 
     constructor(public readonly roomId: string, protected client: MatrixClient, protected conference: Conference) {
     }
@@ -37,4 +38,23 @@ export class MatrixRoom {
         this.space = await this.client.unstableApis.getSpace(spaceState.roomId);
         return this.space;
     }
+
+    public async getCanonicalAlias(): Promise<string> {
+        if (this.canonicalAlias) {
+            return this.canonicalAlias;
+        }
+
+        try {
+            const ev = await this.client.getRoomStateEvent(this.roomId, "m.room.canonical_alias", "");
+            if (ev['alias']) {
+                this.canonicalAlias = ev['alias'];
+                return this.canonicalAlias;
+            }
+        } catch (e) {
+            LogService.warn("MatrixRoom", e);
+        }
+
+        return null;
+    }
 }
+

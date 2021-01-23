@@ -20,6 +20,7 @@ import { joinConference } from "./jitsi";
 import { VideoConferenceCapabilities, WidgetApi } from "matrix-widget-api";
 import { makeLivestream, pause, play, videoEl } from "./hls";
 import { addlQuery, isWidget, widgetId } from "./widgets";
+import { getAttr } from "./common";
 
 const messagesEl = document.getElementById("messages");
 const controlsEl = document.getElementById("controlBar");
@@ -80,15 +81,9 @@ function onJitsiEnd() {
 }
 
 const jitsiOpts = {
-    conferenceId: Array.from(document.getElementsByTagName('meta'))
-        .find(t => t.name === 'org.matrix.confbot.conf_id')
-        .getAttribute('content'),
-    conferenceDomain: Array.from(document.getElementsByTagName('meta'))
-        .find(t => t.name === 'org.matrix.confbot.conf_domain')
-        .getAttribute('content'),
-    title: Array.from(document.getElementsByTagName('meta'))
-        .find(t => t.name === 'org.matrix.confbot.conf_name')
-        .getAttribute('content'),
+    conferenceId: getAttr('org.matrix.confbot.conf_id'),
+    conferenceDomain: getAttr('org.matrix.confbot.conf_domain'),
+    title: getAttr('org.matrix.confbot.conf_name'),
     displayName: addlQuery["displayName"],
     avatarUrl: addlQuery["avatarUrl"],
     userId: addlQuery["userId"],

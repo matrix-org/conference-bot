@@ -30,15 +30,17 @@ export class WidgetsCommand implements ICommand {
         }
 
         const audWidget = await LiveWidget.forAuditorium(aud, client);
-        const audLayout = LiveWidget.layoutOf(audWidget);
+        const audLayout = LiveWidget.layoutForAuditorium(audWidget);
         await client.sendStateEvent(aud.roomId, audWidget.type, audWidget.state_key, audWidget.content);
         await client.sendStateEvent(aud.roomId, audLayout.type, audLayout.state_key, audLayout.content);
 
         const talks = await asyncFilter(conference.storedTalks, async t => (await t.getAuditoriumId()) === (await aud.getId()));
         for (const talk of talks) {
             const talkWidget = await LiveWidget.forTalk(talk, client);
-            const talkLayout = LiveWidget.layoutOf(talkWidget);
+            const scoreboardWidget = await LiveWidget.scoreboardForTalk(talk, client);
+            const talkLayout = LiveWidget.layoutForTalk(talkWidget, scoreboardWidget);
             await client.sendStateEvent(talk.roomId, talkWidget.type, talkWidget.state_key, talkWidget.content);
+            await client.sendStateEvent(talk.roomId, scoreboardWidget.type, scoreboardWidget.state_key, scoreboardWidget.content);
             await client.sendStateEvent(talk.roomId, talkLayout.type, talkLayout.state_key, talkLayout.content);
         }
 

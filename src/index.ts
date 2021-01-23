@@ -28,7 +28,14 @@ import { Conference } from "./Conference";
 import { InviteCommand } from "./commands/InviteCommand";
 import * as express from "express";
 import { Liquid } from "liquidjs";
-import { renderAuditoriumWidget, renderHealthz, renderTalkWidget, rtmpRedirect } from "./web";
+import {
+    renderAuditoriumWidget,
+    renderHealthz,
+    renderScoreboard,
+    renderScoreboardWidget,
+    renderTalkWidget,
+    rtmpRedirect
+} from "./web";
 import { DevCommand } from "./commands/DevCommand";
 import { IRCBridge } from "./IRCBridge";
 import { IrcPlumbCommand } from "./commands/IrcPlumbCommand";
@@ -37,6 +44,7 @@ import { VerifyCommand } from "./commands/VerifyCommand";
 import { CustomLogger } from "./CustomLogger";
 import { InviteMeCommand } from "./commands/InviteMeCommand";
 import { WidgetsCommand } from "./commands/WidgetsCommand";
+import { Scoreboard } from "./Scoreboard";
 
 config.RUNTIME = {
     client: null,
@@ -60,6 +68,8 @@ client.impersonateUserId(config.userId);
 
 const conference = new Conference(config.conference.id, client);
 config.RUNTIME.conference = conference;
+
+const scoreboard = new Scoreboard(conference, client);
 
 const ircBridge = new IRCBridge(config.ircBridge, client);
 
@@ -183,8 +193,10 @@ function setupWebserver() {
     app.set('view engine', 'liquid');
     app.get('/widgets/auditorium.html', renderAuditoriumWidget);
     app.get('/widgets/talk.html', renderTalkWidget);
+    app.get('/widgets/scoreboard.html', renderScoreboardWidget);
     app.post('/onpublish', rtmpRedirect);
     app.get('/healthz', renderHealthz);
+    app.get('/scoreboard/:roomId', (rq, rs) => renderScoreboard(rq, rs, scoreboard));
     app.listen(config.webserver.port, config.webserver.address, () => {
         LogService.info("web", `Webserver running at http://${config.webserver.address}:${config.webserver.port}`);
     });

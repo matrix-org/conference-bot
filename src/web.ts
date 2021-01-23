@@ -21,6 +21,7 @@ import { base32 } from "rfc4648";
 import { LogService } from "matrix-bot-sdk";
 import { sha256 } from "./utils";
 import * as dns from "dns";
+import { Scoreboard } from "./Scoreboard";
 
 export function renderAuditoriumWidget(req: Request, res: Response) {
     const audId = req.query?.['auditoriumId'] as string;
@@ -70,7 +71,8 @@ export async function renderTalkWidget(req: Request, res: Response) {
     const streamUrl = template(config.livestream.talkUrl, {
         audId: audId.toLowerCase(),
         slug: (await talk.getDefinition()).slug.toLowerCase(),
-        jitsi: base32.stringify(Buffer.from(talk.roomId), { pad: false }).toLowerCase(),
+        //jitsi: base32.stringify(Buffer.from(talk.roomId), { pad: false }).toLowerCase(),
+        jitsi: base32.stringify(Buffer.from("!ofdfrbTAMoYWLxAkWp:fosdem.org"), { pad: false }).toLowerCase(),
     });
 
     return res.render('talk.liquid', {
@@ -115,4 +117,45 @@ export async function rtmpRedirect(req: Request, res: Response) {
 
 export function renderHealthz(req: Request, res: Response) {
     return res.sendStatus(200);
+}
+
+export async function renderScoreboardWidget(req: Request, res: Response) {
+    const audId = req.query?.['auditoriumId'] as string;
+    if (!audId || Array.isArray(audId)) {
+        return res.sendStatus(404);
+    }
+    const talkId = req.query?.['talkId'] as string;
+    if (!talkId || Array.isArray(talkId)) {
+        return res.sendStatus(404);
+    }
+
+    const aud = config.RUNTIME.conference.getAuditorium(audId);
+    if (!aud) {
+        return res.sendStatus(404);
+    }
+
+    const talk = config.RUNTIME.conference.getTalk(talkId);
+    if (!talk) {
+        return res.sendStatus(404);
+    }
+
+    if (await talk.getAuditoriumId() !== await aud.getId()) {
+        return res.sendStatus(404);
+    }
+
+    return res.render('scoreboard.liquid', {
+        trackingAlias: await aud.getCanonicalAlias(),
+        trackingId: aud.roomId,
+    });
+}
+
+export function renderScoreboard(req: Request, res: Response, scoreboard: Scoreboard) {
+    const roomId = req.params['roomId'];
+    if (!roomId) return res.sendStatus(400);
+
+    const auditorium = config.RUNTIME.conference.storedAuditoriums.find(a => a.roomId === roomId);
+    if (!auditorium) return res.sendStatus(404);
+
+    const sb = scoreboard.getScoreboard(auditorium.roomId);
+    res.send(sb || {ordered: []});
 }

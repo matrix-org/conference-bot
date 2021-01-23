@@ -16,10 +16,9 @@ limitations under the License.
 
 import * as Hls from "hls.js/dist/hls.light.js";
 import { isWidget } from "./widgets";
+import { getAttr } from "./common";
 
-const videoUrl = Array.from(document.getElementsByTagName('meta'))
-    .find(t => t.name === 'org.matrix.confbot.video_url')
-    .getAttribute('content');
+const videoUrl = getAttr('org.matrix.confbot.video_url');
 
 export const videoEl = document.getElementById("livestream") as HTMLVideoElement;
 

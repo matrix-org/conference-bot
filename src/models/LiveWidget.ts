@@ -82,7 +82,31 @@ export class LiveWidget {
         };
     }
 
-    public static layoutOf(widget: IStateEvent<IWidget>): IStateEvent<ILayout> {
+    public static async scoreboardForTalk(talk: Talk, client: MatrixClient): Promise<IStateEvent<IWidget>> {
+        const widgetId = sha256(JSON.stringify(await talk.getDefinition()) + "_SCOREBOARD");
+        const aud = await config.RUNTIME.conference.getAuditorium(await talk.getAuditoriumId());
+        const title = aud ? `Messages from ${await aud.getCanonicalAlias()}` : `Messages from ${await talk.getAuditoriumId()}`;
+        return {
+            type: "im.vector.modular.widgets",
+            state_key: widgetId,
+            content: {
+                creatorUserId: await client.getUserId(),
+                id: widgetId,
+                type: "m.custom",
+                waitForIframeLoad: true,
+                name: "Upvoted messages",
+                avatar_url: config.livestream.widgetAvatar,
+                url: config.webserver.publicBaseUrl + "/widgets/scoreboard.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&talkId=$talkId",
+                data: {
+                    title: title,
+                    auditoriumId: await talk.getAuditoriumId(),
+                    talkId: await talk.getId(),
+                },
+            } as IWidget,
+        };
+    }
+
+    public static layoutForAuditorium(widget: IStateEvent<IWidget>): IStateEvent<ILayout> {
         return {
             type: "io.element.widgets.layout",
             state_key: "",
@@ -93,6 +117,29 @@ export class LiveWidget {
                         index: 0,
                         width: 100,
                         height: 40,
+                    },
+                },
+            },
+        };
+    }
+
+    public static layoutForTalk(qa: IStateEvent<IWidget>, scoreboard: IStateEvent<IWidget>): IStateEvent<ILayout> {
+        return {
+            type: "io.element.widgets.layout",
+            state_key: "",
+            content: {
+                widgets: {
+                    [qa.state_key]: {
+                        container: "top",
+                        index: 0,
+                        width: 65,
+                        height: 50,
+                    },
+                    [scoreboard.state_key]: {
+                        container: "top",
+                        index: 1,
+                        width: 34,
+                        height: 50,
                     },
                 },
             },

@@ -74,6 +74,11 @@
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-0.0.45.tgz#e9387572998e5ecdac221950dab3e8c3b16af884"
   integrity sha512-jnqIUKDUqJbDIUxm0Uj7bnlMnRm1T/eZ9N+AVMqhPgzrba2GhGG5o/jCTwmdPK709nEZsGoMzXEDUjcXHa3W0g==
 
+"@types/events@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@types/events/-/events-3.0.0.tgz#2862f3f58a9a7f7c3e78d79f130dd4d71c25c2a7"
+  integrity sha512-EaObqwIvayI5a8dCzhFrjKzVwKLxjoG9T6Ppd5CEo07LRKfQ8Yokw54r5+Wq7FaBQ+yXRvQAYPrHwya1/UFt9g==
+
 "@types/express-serve-static-core@*":
   version "4.17.17"
   resolved "https://registry.yarnpkg.com/@types/express-serve-static-core/-/express-serve-static-core-4.17.17.tgz#6ba02465165b6c9c3d8db3a28def6b16fc9b70f5"
@@ -2743,11 +2748,12 @@ matrix-bot-sdk@^0.5.12:
     request-promise "^4.2.6"
     sanitize-html "^1.27.2"
 
-matrix-widget-api@^0.1.0-beta.10:
-  version "0.1.0-beta.10"
-  resolved "https://registry.yarnpkg.com/matrix-widget-api/-/matrix-widget-api-0.1.0-beta.10.tgz#2e4d658d90ff3152c5567089b4ddd21fb44ec1dd"
-  integrity sha512-yX2UURjM1zVp7snPiOFcH9+FDBdHfAdt5HEAyDUHGJ7w/F2zOtcK/y0dMlZ1+XhxY7Wv0IBZH0US8X/ioJRX1A==
+matrix-widget-api@^0.1.0-beta.11:
+  version "0.1.0-beta.11"
+  resolved "https://registry.yarnpkg.com/matrix-widget-api/-/matrix-widget-api-0.1.0-beta.11.tgz#3658e244bf82eebea36e64475ebfce86b778b476"
+  integrity sha512-RxIghopRKTQdmYMJzZg/QR+wcPcKe9S1pZZ31zN/M1LKsvTLThBYdMcP1idKh7MkhpO9eCdCVjJOMJTrqxNzbQ==
   dependencies:
+    "@types/events" "^3.0.0"
     events "^3.2.0"
 
 media-typer@0.3.0:
