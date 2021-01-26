@@ -45,4 +45,11 @@ export interface IAuditorium {
 export interface IConference {
     title: string;
     auditoriums: IAuditorium[];
+    interestRooms: IInterestRoom[];
+}
+
+export interface IInterestRoom {
+    id: string;
+    name: string;
+    kind: RoomKind;
 }

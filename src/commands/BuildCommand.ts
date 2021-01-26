@@ -68,28 +68,38 @@ export class BuildCommand implements ICommand {
 
         let auditoriumsCreated = 0;
         let talksCreated = 0;
-        for (const auditorium of parsed.auditoriums) {
-            if (args.includes("backstages")) {
-                await conference.createAuditoriumBackstage(auditorium);
-                auditoriumsCreated++;
-                continue;
-            }
-
-            const confAud = await conference.createAuditorium(auditorium);
-            auditoriumsCreated++;
-
-            if (!args.includes("notalks")) { // easter egg
-                const allTalks: ITalk[] = [];
-                Object.values(auditorium.talksByDate).forEach(ea => allTalks.push(...ea));
-                for (const talk of allTalks) {
-                    await conference.createTalk(talk, confAud);
-                    talksCreated++;
+        let specialInterestRoomsCreated = 0;
+        if (!args.includes("sionly")) {
+            for (const auditorium of parsed.auditoriums) {
+                if (args.includes("backstages")) {
+                    await conference.createAuditoriumBackstage(auditorium);
+                    auditoriumsCreated++;
+                    continue;
                 }
+
+                const confAud = await conference.createAuditorium(auditorium);
+                auditoriumsCreated++;
+
+                if (!args.includes("notalks")) {
+                    const allTalks: ITalk[] = [];
+                    Object.values(auditorium.talksByDate).forEach(ea => allTalks.push(...ea));
+                    for (const talk of allTalks) {
+                        await conference.createTalk(talk, confAud);
+                        talksCreated++;
+                    }
+                }
+            }
+        }
+        if (!args.includes("nosi")) {
+            for (const siRoom of parsed.interestRooms) {
+                await conference.createInterestRoom(siRoom);
+                specialInterestRoomsCreated++;
             }
         }
 
         await client.sendNotice(roomId, `${auditoriumsCreated} auditoriums have been created`);
         await client.sendNotice(roomId, `${talksCreated} talks have been created`);
+        await client.sendNotice(roomId, `${specialInterestRoomsCreated} interest rooms have been created`);
         await client.sendHtmlNotice(roomId, "" +
             "<h4>Conference built</h4>" +
             "<p>Now it's time to <a href='https://github.com/matrix-org/conference-bot/blob/main/docs/importing-people.md'>import your participants &amp; team</a>.</p>"

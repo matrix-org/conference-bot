@@ -20,6 +20,8 @@ import { Conference } from "../Conference";
 import { asyncFilter } from "../utils";
 import { IDbPerson } from "../db/DbPerson";
 import { Auditorium } from "../models/Auditorium";
+import { PhysicalRoom } from "../models/PhysicalRoom";
+import { InterestRoom } from "../models/InterestRoom";
 
 export class VerifyCommand implements ICommand {
     public readonly prefixes = ["verify", "v"];
@@ -27,13 +29,16 @@ export class VerifyCommand implements ICommand {
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
         const audId = args[0];
 
-        let aud = conference.getAuditorium(audId);
+        let aud: PhysicalRoom = conference.getAuditorium(audId);
         if (args.includes("backstage")) {
             aud = conference.getAuditoriumBackstage(audId);
         }
 
         if (!aud) {
-            return await client.replyNotice(roomId, event, "Unknown auditorium");
+            aud = conference.getInterestRoom(audId);
+            if (!aud) {
+                return await client.replyNotice(roomId, event, "Unknown auditorium/interest room");
+            }
         }
 
         await client.replyNotice(roomId, event, "Calculating list of people...");
@@ -47,28 +52,42 @@ export class VerifyCommand implements ICommand {
             }
         };
 
-        const audToInvite = await conference.getInviteTargetsForAuditorium(aud);
-        const audBackstageToInvite = await conference.getInviteTargetsForAuditorium(aud, true);
-        const audToMod = await conference.getModeratorsForAuditorium(aud);
+        let audToInvite: IDbPerson[];
+        let audBackstageToInvite: IDbPerson[];
+        let audToMod: IDbPerson[];
+
+        if (aud instanceof Auditorium) {
+            audToInvite = await conference.getInviteTargetsForAuditorium(aud);
+            audBackstageToInvite = await conference.getInviteTargetsForAuditorium(aud, true);
+            audToMod = await conference.getModeratorsForAuditorium(aud);
+        } else if (aud instanceof InterestRoom) {
+            audToInvite = await conference.getInviteTargetsForInterest(aud);
+            audBackstageToInvite = [];
+            audToMod = await conference.getModeratorsForInterest(aud);
+        } else {
+            return await client.replyNotice(roomId, event, "Unknown room kind");
+        }
 
         const publicAud = conference.getAuditorium(audId);
-        if (publicAud) {
+        if (publicAud || !(aud instanceof Auditorium)) {
             html += "<b>Public-facing room:</b><ul>";
             appendPeople(audToInvite, audToMod);
         }
 
-        html += "</ul><b>Backstage room:</b><ul>";
-        appendPeople(audBackstageToInvite, audToMod);
-        html += "</ul>";
+        if (aud instanceof Auditorium) {
+            html += "</ul><b>Backstage room:</b><ul>";
+            appendPeople(audBackstageToInvite, audToMod);
+            html += "</ul>";
 
-        const talks = await asyncFilter(conference.storedTalks, async t => (await t.getAuditoriumId()) === (await aud.getId()));
-        for (const talk of talks) {
-            const talkToInvite = await conference.getInviteTargetsForTalk(talk);
-            const talkToMod = await conference.getModeratorsForTalk(talk);
-            if (talkToMod.length || talkToInvite.length) {
-                html += `<b>Talk: ${await talk.getName()} (${await talk.getId()})</b><ul>`;
-                appendPeople(talkToInvite, talkToMod);
-                html += "</ul>";
+            const talks = await asyncFilter(conference.storedTalks, async t => (await t.getAuditoriumId()) === (await aud.getId()));
+            for (const talk of talks) {
+                const talkToInvite = await conference.getInviteTargetsForTalk(talk);
+                const talkToMod = await conference.getModeratorsForTalk(talk);
+                if (talkToMod.length || talkToInvite.length) {
+                    html += `<b>Talk: ${await talk.getName()} (${await talk.getId()})</b><ul>`;
+                    appendPeople(talkToInvite, talkToMod);
+                    html += "</ul>";
+                }
             }
         }
 

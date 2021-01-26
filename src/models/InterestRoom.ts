@@ -15,46 +15,35 @@ limitations under the License.
 */
 
 import { MatrixClient } from "matrix-bot-sdk";
-import { IStoredAuditorium, RS_STORED_AUDITORIUM } from "./room_state";
 import { Conference } from "../Conference";
 import { MatrixRoom } from "./MatrixRoom";
-import { RSC_AUDITORIUM_ID } from "./room_kinds";
+import { RSC_SPECIAL_INTEREST_ID } from "./room_kinds";
+import { deprefix } from "../parsers/PentabarfParser";
 import { PhysicalRoom } from "./PhysicalRoom";
 
-export class Auditorium extends MatrixRoom implements PhysicalRoom {
-    private storedAud: IStoredAuditorium;
+export class InterestRoom extends MatrixRoom implements PhysicalRoom {
+    private id: string;
+    private name: string;
 
     constructor(roomId: string, client: MatrixClient, conference: Conference) {
         super(roomId, client, conference);
     }
 
-    public async getDefinition(): Promise<IStoredAuditorium> {
-        if (this.storedAud) {
-            return this.storedAud;
-        }
+    private async doFetch() {
+        if (this.id || this.name) return;
 
         const createEvent = await this.client.getRoomStateEvent(this.roomId, "m.room.create", "");
-        const audId = createEvent[RSC_AUDITORIUM_ID];
-        this.storedAud = await this.client.getRoomStateEvent(this.roomId, RS_STORED_AUDITORIUM, audId);
-        return this.storedAud;
+        this.id = createEvent[RSC_SPECIAL_INTEREST_ID];
+        this.name = deprefix(this.id).name;
     }
 
     public async getName(): Promise<string> {
-        return (await this.getDefinition()).name;
+        await this.doFetch();
+        return this.name;
     }
 
     public async getId(): Promise<string> {
-        return (await this.getDefinition()).id;
-    }
-
-    public async getConferenceId(): Promise<string> {
-        return (await this.getDefinition()).conferenceId;
-    }
-}
-
-// It's the same but different
-export class AuditoriumBackstage extends Auditorium {
-    constructor(roomId: string, client: MatrixClient, conference: Conference) {
-        super(roomId, client, conference);
+        await this.doFetch();
+        return this.id;
     }
 }

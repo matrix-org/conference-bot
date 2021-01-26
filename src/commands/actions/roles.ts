@@ -14,20 +14,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { doResolveAction, IAction } from "./people";
+import { doAuditoriumResolveAction, doInterestResolveAction, IAction } from "./people";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../../Conference";
 
-export async function runRoleCommand(action: IAction, conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
+export async function runRoleCommand(action: IAction, conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[], isInvite = true) {
     const backstageOnly = args.includes("backstage");
 
     if (args[0] && args[0] !== "backstage") {
         const aud = backstageOnly ? conference.getAuditoriumBackstage(args[0]) : conference.getAuditorium(args[0]);
-        if (!aud) return client.replyNotice(roomId, event, "Unknown auditorium");
-        await doResolveAction(action, client, aud, conference, backstageOnly);
+        if (!aud) {
+            const spiRoom = conference.getInterestRoom(args[0]);
+            if (!spiRoom) return client.replyNotice(roomId, event, "Unknown auditorium/interest room");
+            await doInterestResolveAction(action, client, spiRoom, conference, isInvite);
+        } else {
+            await doAuditoriumResolveAction(action, client, aud, conference, backstageOnly, isInvite);
+        }
     } else {
-        for (const auditorium of conference.storedAuditoriums) {
-            await doResolveAction(action, client, auditorium, conference, backstageOnly);
+        if (!args.includes("sionly")) {
+            for (const auditorium of conference.storedAuditoriums) {
+                await doAuditoriumResolveAction(action, client, auditorium, conference, backstageOnly, isInvite);
+            }
+        }
+        if (!args.includes("nosi")) {
+            for (const spiRoom of conference.storedInterestRooms) {
+                await doInterestResolveAction(action, client, spiRoom, conference, isInvite);
+            }
         }
     }
 }

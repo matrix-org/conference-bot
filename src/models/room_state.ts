@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { IConference, ITalk, IAuditorium } from "./schedule";
-import { objectFastCloneWithout } from "../utils";
+import { IConference, ITalk, IAuditorium, IInterestRoom } from "./schedule";
+import { objectFastClone, objectFastCloneWithout } from "../utils";
 import { MSC1772Space } from "matrix-bot-sdk";
 import { IDbPerson } from "../db/DbPerson";
 
@@ -141,5 +141,20 @@ export function makeStoredRole(name: string, space: MSC1772Space): IStateEvent<I
             name: name,
             spaceRoomId: space.roomId,
         },
+    };
+}
+
+export const RS_STORED_INTEREST_ROOM = "org.matrix.confbot.interest_room";
+export interface IStoredInterestRoom extends IInterestRoom {
+    conferenceId: string;
+}
+export function makeStoredInterestRoom(confId: string, interestRoom: IInterestRoom): IStateEvent<IStoredInterestRoom> {
+    return {
+        type: RS_STORED_INTEREST_ROOM,
+        state_key: interestRoom.id,
+        content: {
+            ...objectFastClone(interestRoom),
+            conferenceId: confId,
+        } as IStoredInterestRoom,
     };
 }

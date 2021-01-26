@@ -193,6 +193,10 @@ conference:
     # The prefix to apply to all generated room aliases.
     aliases: ""
 
+    # The alias suffixes to apply for certain prefixes of rooms
+    suffixes:
+      #"S.": "-stand"
+
 # Options related to the IRC bridge.
 ircBridge:
   # The nick to use when taking ownership of channels

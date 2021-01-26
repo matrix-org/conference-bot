@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import * as parser from 'fast-xml-parser';
-import { IAuditorium, IConference, IPerson, ITalk } from "../models/schedule";
+import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk } from "../models/schedule";
 import * as moment from "moment";
 import { RoomKind } from "../models/room_kinds";
 import config from "../config";
@@ -92,7 +92,7 @@ function simpleTimeParse(str: string): { hours: number, minutes: number } {
     return {hours: Number(parts[0]), minutes: Number(parts[1])};
 }
 
-function deprefix(id: string): {kind: RoomKind, name: string} {
+export function deprefix(id: string): {kind: RoomKind, name: string} {
     const override = config.conference.prefixes.nameOverrides[id];
 
     const auditoriumPrefix = config.conference.prefixes.auditoriumRooms.find(p => id.startsWith(p));
@@ -115,6 +115,7 @@ export class PentabarfParser {
     public readonly auditoriums: IAuditorium[];
     public readonly talks: ITalk[];
     public readonly speakers: IPerson[];
+    public readonly interestRooms: IInterestRoom[];
 
     constructor(rawXml: string) {
         this.parsed = parser.parse(rawXml, {
@@ -126,9 +127,11 @@ export class PentabarfParser {
         this.auditoriums = [];
         this.talks = [];
         this.speakers = [];
+        this.interestRooms = [];
         this.conference = {
             title: this.parsed.schedule?.conference?.title,
             auditoriums: this.auditoriums,
+            interestRooms: this.interestRooms,
         };
 
         for (const day of arrayLike(this.parsed.schedule?.day)) {
@@ -139,6 +142,18 @@ export class PentabarfParser {
                 if (!pRoom) continue;
 
                 const metadata = deprefix(pRoom.attr?.["@_name"] || "org.matrix.confbot.unknown");
+                if (metadata.kind === RoomKind.SpecialInterest) {
+                    let spiRoom: IInterestRoom = {
+                        id: pRoom.attr?.["@_name"],
+                        name: metadata.name,
+                        kind: metadata.kind,
+                    };
+                    const existingSpi = this.interestRooms.find(r => r.id === spiRoom.id);
+                    if (!existingSpi) {
+                        this.interestRooms.push(spiRoom);
+                    }
+                    continue;
+                }
                 if (metadata.kind !== RoomKind.Auditorium) continue;
                 let auditorium: IAuditorium = {
                     id: pRoom.attr?.["@_name"],

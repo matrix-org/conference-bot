@@ -17,30 +17,16 @@ limitations under the License.
 import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
-import { LiveWidget } from "../models/LiveWidget";
-import { invitePersonToRoom, ResolvedPersonIdentifier } from "../invites";
-import { Role } from "../db/DbPerson";
+import config from "../config";
+import { PentabarfParser } from "../parsers/PentabarfParser";
+import * as fetch from "node-fetch";
 
 export class DevCommand implements ICommand {
     public readonly prefixes = ["dev"];
 
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
-        const widget = await LiveWidget.forTalk(conference.storedTalks[0], client);
-        await client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
-
-        const person: ResolvedPersonIdentifier = {
-            person: {
-                event_role: Role.Speaker,
-                name: 'Testing',
-                person_id: 'ignore',
-                event_id: 'ignore',
-                email: 'travis+testing@example.org',
-                matrix_id: null,
-                conference_room: 'ignore',
-            },
-            mxid: null,
-            emails: ['travis+testing@example.org'],
-        };
-        await invitePersonToRoom(person, roomId);
+        const xml = await fetch(config.conference.pentabarfDefinition).then(r => r.text());
+        const parsed = new PentabarfParser(xml);
+        console.log(JSON.stringify(parsed.conference, null, 4));
     }
 }

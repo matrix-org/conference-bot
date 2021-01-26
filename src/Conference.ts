@@ -25,15 +25,15 @@ import {
     RSC_CONFERENCE_ID,
     RSC_ROOM_KIND_FLAG,
     RSC_SPECIAL_INTEREST_ID,
-    RSC_TALK_ID,
+    RSC_TALK_ID, SPECIAL_INTEREST_CREATION_TEMPLATE,
     TALK_CREATION_TEMPLATE
 } from "./models/room_kinds";
-import { IAuditorium, IConference, ITalk } from "./models/schedule";
+import { IAuditorium, IConference, IInterestRoom, ITalk } from "./models/schedule";
 import {
     IStoredPerson,
     makeParentRoom,
     makeStoredAuditorium,
-    makeStoredConference,
+    makeStoredConference, makeStoredInterestRoom,
     makeStoredPerson,
     makeStoredSpace,
     makeStoredTalk,
@@ -50,6 +50,7 @@ import { ResolvedPersonIdentifier, resolveIdentifiers } from "./invites";
 import { IDbPerson, Role } from "./db/DbPerson";
 import { PentaDb } from "./db/PentaDb";
 import { PermissionsCommand } from "./commands/PermissionsCommand";
+import { InterestRoom } from "./models/InterestRoom";
 
 export class Conference {
     private dbRoom: MatrixRoom;
@@ -64,7 +65,7 @@ export class Conference {
         [talkId: string]: Talk;
     } = {};
     private interestRooms: {
-        [interestId: string]: MatrixRoom;
+        [interestId: string]: InterestRoom;
     } = {};
     private people: {
         [personId: string]: IStoredPerson;
@@ -144,6 +145,10 @@ export class Conference {
         return Object.values(this.people);
     }
 
+    public get storedInterestRooms(): InterestRoom[] {
+        return Object.values(this.interestRooms);
+    }
+
     private reset() {
         this.dbRoom = null;
         this.auditoriums = {};
@@ -175,7 +180,7 @@ export class Conference {
                         this.talks[createEvent[RSC_TALK_ID]] = new Talk(room, this.client, this);
                         break;
                     case RoomKind.SpecialInterest:
-                        this.interestRooms[createEvent[RSC_SPECIAL_INTEREST_ID]] = new MatrixRoom(room, this.client, this);
+                        this.interestRooms[createEvent[RSC_SPECIAL_INTEREST_ID]] = new InterestRoom(room, this.client, this);
                         break;
                     default:
                         break;
@@ -227,6 +232,28 @@ export class Conference {
         return this.dbRoom.getSpace();
     }
 
+    public async createInterestRoom(interestRoom: IInterestRoom): Promise<InterestRoom> {
+        if (this.interestRooms[interestRoom.id]) {
+            return this.interestRooms[interestRoom.id];
+        }
+
+        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(SPECIAL_INTEREST_CREATION_TEMPLATE, {
+            creation_content: {
+                [RSC_CONFERENCE_ID]: this.id,
+                [RSC_SPECIAL_INTEREST_ID]: interestRoom.id,
+            },
+            initial_state: [
+                makeStoredInterestRoom(this.id, interestRoom),
+                makeParentRoom(this.dbRoom.roomId),
+            ],
+        }));
+        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + interestRoom.name, interestRoom.id);
+        await this.dbRoom.addDirectChild(roomId);
+        this.interestRooms[interestRoom.id] = new InterestRoom(roomId, this.client, this);
+
+        return this.interestRooms[interestRoom.id];
+    }
+
     public async createAuditorium(auditorium: IAuditorium): Promise<Auditorium> {
         if (this.auditoriums[auditorium.id]) {
             return this.auditoriums[auditorium.id];
@@ -250,7 +277,7 @@ export class Conference {
                 makeStoredSpace(audSpace.roomId),
             ],
         }));
-        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.name);
+        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.name, auditorium.id);
         await this.dbRoom.addDirectChild(roomId);
         this.auditoriums[auditorium.id] = new Auditorium(roomId, this.client, this);
 
@@ -282,7 +309,7 @@ export class Conference {
                 makeParentRoom(this.dbRoom.roomId),
             ],
         }));
-        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.name + "-backstage");
+        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.name + "-backstage", auditorium.id);
         await this.dbRoom.addDirectChild(roomId);
         this.auditoriumBackstages[auditorium.id] = new AuditoriumBackstage(roomId, this.client, this);
 
@@ -340,6 +367,12 @@ export class Conference {
         return await this.resolvePeople(await db.findAllPeopleForTalk(await talk.getId()));
     }
 
+    public async getPeopleForInterest(int: InterestRoom): Promise<IDbPerson[]> {
+        const db = await this.getPentaDb();
+        // Yes, an interest room is an auditorium to Penta.
+        return await this.resolvePeople(await db.findAllPeopleForAuditorium(await int.getId()));
+    }
+
     public async getInviteTargetsForAuditorium(auditorium: Auditorium, backstage = false): Promise<IDbPerson[]> {
         const people = await this.getPeopleForAuditorium(auditorium);
         const roles = [Role.Coordinator, Role.Host];
@@ -353,6 +386,12 @@ export class Conference {
         return people.filter(p => roles.includes(p.event_role));
     }
 
+    public async getInviteTargetsForInterest(int: InterestRoom): Promise<IDbPerson[]> {
+        const people = await this.getPeopleForInterest(int);
+        const roles = [Role.Speaker, Role.Host, Role.Coordinator];
+        return people.filter(p => roles.includes(p.event_role));
+    }
+
     public async getModeratorsForAuditorium(auditorium: Auditorium): Promise<IDbPerson[]> {
         const people = await this.getPeopleForAuditorium(auditorium);
         const roles = [Role.Coordinator];
@@ -362,6 +401,12 @@ export class Conference {
     public async getModeratorsForTalk(talk: Talk): Promise<IDbPerson[]> {
         const people = await this.getPeopleForTalk(talk);
         const roles = [Role.Coordinator, Role.Speaker, Role.Host];
+        return people.filter(p => roles.includes(p.event_role));
+    }
+
+    public async getModeratorsForInterest(int: InterestRoom): Promise<IDbPerson[]> {
+        const people = await this.getPeopleForInterest(int);
+        const roles = [Role.Host, Role.Coordinator];
         return people.filter(p => roles.includes(p.event_role));
     }
 
@@ -393,6 +438,10 @@ export class Conference {
 
     public getTalk(talkId: string): Talk {
         return this.talks[talkId];
+    }
+
+    public getInterestRoom(intId: string): InterestRoom {
+        return this.interestRooms[intId];
     }
 
     public async ensurePermissionsFor(people: ResolvedPersonIdentifier[], roomId: string): Promise<void> {

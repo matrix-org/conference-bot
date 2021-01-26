@@ -19,15 +19,18 @@ import { ResolvedPersonIdentifier, resolveIdentifiers } from "../../invites";
 import { Auditorium } from "../../models/Auditorium";
 import { Conference } from "../../Conference";
 import { asyncFilter } from "../../utils";
+import { InterestRoom } from "../../models/InterestRoom";
 
 export interface IAction {
     (client: MatrixClient, roomId: string, people: ResolvedPersonIdentifier[]): Promise<void>;
 }
 
-export async function doResolveAction(action: IAction, client: MatrixClient, aud: Auditorium, conference: Conference, backstageOnly = false): Promise<void> {
+export async function doAuditoriumResolveAction(action: IAction, client: MatrixClient, aud: Auditorium, conference: Conference, backstageOnly = false, isInvite = true): Promise<void> {
     // We know that everyone should be in the backstage room, so resolve that list of people
     // to make the identity server lookup efficient.
-    const backstagePeople = await conference.getInviteTargetsForAuditorium(aud, true);
+    const backstagePeople = isInvite
+        ? await conference.getInviteTargetsForAuditorium(aud, true)
+        : await conference.getModeratorsForAuditorium(aud);
     const resolvedBackstagePeople = await resolveIdentifiers(backstagePeople);
     const backstage = conference.getAuditoriumBackstage(await aud.getId());
 
@@ -36,7 +39,9 @@ export async function doResolveAction(action: IAction, client: MatrixClient, aud
     if (backstageOnly) return;
 
     const realAud = conference.getAuditorium(await aud.getId());
-    const audPeople = await conference.getInviteTargetsForAuditorium(realAud);
+    const audPeople = isInvite
+        ? await conference.getInviteTargetsForAuditorium(realAud)
+        : await conference.getModeratorsForAuditorium(realAud);
     const resolvedAudPeople = audPeople.map(p => resolvedBackstagePeople.find(b => p.person_id === b.person.person_id));
     if (resolvedAudPeople.some(p => !p)) throw new Error("Failed to resolve all targets for auditorium");
 
@@ -44,10 +49,21 @@ export async function doResolveAction(action: IAction, client: MatrixClient, aud
 
     const talks = await asyncFilter(conference.storedTalks, async t => (await t.getAuditoriumId()) === (await aud.getId()));
     for (const talk of talks) {
-        const talkPeople = await conference.getInviteTargetsForTalk(talk);
+        const talkPeople = isInvite
+            ? await conference.getInviteTargetsForTalk(talk)
+            : await conference.getModeratorsForTalk(talk);
         const resolvedTalkPeople = talkPeople.map(p => resolvedBackstagePeople.find(b => p.person_id === b.person.person_id));
         if (resolvedTalkPeople.some(p => !p)) throw new Error("Failed to resolve all targets for talk");
 
         await action(client, talk.roomId, resolvedTalkPeople);
     }
+}
+
+export async function doInterestResolveAction(action: IAction, client: MatrixClient, int: InterestRoom, conference: Conference, isInvite = true): Promise<void> {
+    // We know that everyone should be in the backstage room, so resolve that list of people
+    // to make the identity server lookup efficient.
+    const people = isInvite
+        ? await conference.getInviteTargetsForInterest(int)
+        : await conference.getModeratorsForInterest(int);
+    await action(client, int.roomId, await resolveIdentifiers(people));
 }
