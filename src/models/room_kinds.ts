@@ -57,6 +57,11 @@ export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = {
     },
 };
 
+export const PRIVATE_ROOM_POWER_LEVELS_TEMPLATE = {
+    ...PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
+    invite: 0,
+};
+
 export const RSC_ROOM_KIND_FLAG = "org.matrix.confbot.kind";
 export enum RoomKind {
     Conference = "conference",
@@ -113,7 +118,7 @@ export const AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE = {
     creation_content: {
         [RSC_ROOM_KIND_FLAG]: RoomKind.AuditoriumBackstage,
     },
-    power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
+    power_level_content_override: PRIVATE_ROOM_POWER_LEVELS_TEMPLATE,
 };
 
 export const TALK_CREATION_TEMPLATE = { // before being opened up to the public
