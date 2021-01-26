@@ -2728,10 +2728,10 @@ map-visit@^1.0.0:
   dependencies:
     object-visit "^1.0.0"
 
-matrix-bot-sdk@^0.5.12:
-  version "0.5.12"
-  resolved "https://registry.yarnpkg.com/matrix-bot-sdk/-/matrix-bot-sdk-0.5.12.tgz#e6ffe4a8a763f20ccba0fc559120b5504460236e"
-  integrity sha512-9D1ruLHLgmRmGZ34SnEHh8IcTC/mXGut86XXgDfcTQJ93DtdSOGJyp6I9GFVXddHyOa9SYbAfWwRU5ZDGpk3kQ==
+matrix-bot-sdk@^0.5.13:
+  version "0.5.13"
+  resolved "https://registry.yarnpkg.com/matrix-bot-sdk/-/matrix-bot-sdk-0.5.13.tgz#1d463dcecffd5a9d92ba30fe8790e427e5c7a959"
+  integrity sha512-tWNZbCQC+X5qgVirzEZf72UAV6UQ1UzsZboSB+ZeW1fhEIjomS0AZvon7wsiUTVtuiL2w1QOy0GZSrWiLV8zZw==
   dependencies:
     "@types/express" "^4.17.7"
     chalk "^4.1.0"

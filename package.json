@@ -26,7 +26,7 @@
     "js-yaml": "^3.14.1",
     "jsrsasign": "^10.1.4",
     "liquidjs": "^9.19.0",
-    "matrix-bot-sdk": "^0.5.12",
+    "matrix-bot-sdk": "^0.5.13",
     "matrix-widget-api": "^0.1.0-beta.11",
     "moment": "^2.29.1",
     "node-fetch": "^2.6.1",
