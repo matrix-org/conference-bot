@@ -105,7 +105,7 @@ let userId;
     } else {
         await client.sendHtmlNotice(config.managementRoom, "" +
             "<h4>Bot restarted</h4>" +
-            "<p>Your conference has been built already, but I appear to have restarted. If this is unexpected, please contact a support representative.</p>"
+            "<p>I am ready to start performing conference actions.</p>"
         );
     }
 
