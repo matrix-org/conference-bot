@@ -30,7 +30,7 @@ export class PermissionsCommand implements ICommand {
         // we think should be promoted. We don't remove people from power levels (that's left to the
         // existing room moderators/admins to deal with).
 
-        await runRoleCommand(PermissionsCommand.ensureModerator, conference, client, roomId, event, args);
+        await runRoleCommand(PermissionsCommand.ensureModerator, conference, client, roomId, event, args, false);
 
         await client.sendNotice(roomId, "Member permissions updated");
     }
