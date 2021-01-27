@@ -375,8 +375,7 @@ export class Conference {
 
     public async getInviteTargetsForAuditorium(auditorium: Auditorium, backstage = false): Promise<IDbPerson[]> {
         const people = await this.getPeopleForAuditorium(auditorium);
-        const roles = [Role.Coordinator, Role.Host];
-        if (backstage) roles.push(Role.Speaker);
+        const roles = [Role.Coordinator, Role.Host, Role.Speaker];
         return people.filter(p => roles.includes(p.event_role));
     }
 
