@@ -145,7 +145,13 @@ export const SPECIAL_INTEREST_CREATION_TEMPLATE = {
     creation_content: {
         [RSC_ROOM_KIND_FLAG]: RoomKind.SpecialInterest,
     },
-    power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
+    power_level_content_override: {
+        ...PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
+        events: {
+            ...PUBLIC_ROOM_POWER_LEVELS_TEMPLATE['events'],
+            "m.room.power_levels": 50,
+        },
+    },
     invite: [config.moderatorUserId],
 };
 
