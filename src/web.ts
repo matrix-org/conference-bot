@@ -22,6 +22,7 @@ import { LogService } from "matrix-bot-sdk";
 import { sha256 } from "./utils";
 import * as dns from "dns";
 import { Scoreboard } from "./Scoreboard";
+import { LiveWidget } from "./models/LiveWidget";
 
 export function renderAuditoriumWidget(req: Request, res: Response) {
     const audId = req.query?.['auditoriumId'] as string;
@@ -79,6 +80,40 @@ export async function renderTalkWidget(req: Request, res: Response) {
         roomName: await talk.getName(),
         conferenceDomain: config.livestream.jitsiDomain,
         conferenceId: base32.stringify(Buffer.from(talk.roomId), { pad: false }).toLowerCase(),
+    });
+}
+
+export async function renderHybridWidget(req: Request, res: Response) {
+    const roomId = req.query?.['roomId'] as string;
+    if (!roomId || Array.isArray(roomId)) {
+        return res.sendStatus(404);
+    }
+
+    const streamUrl = template(config.livestream.hybridUrl, {
+        jitsi: base32.stringify(Buffer.from(roomId), { pad: false }).toLowerCase(),
+    });
+
+    return res.render('talk.liquid', { // it's the same widget
+        videoUrl: streamUrl,
+        roomName: "Livestream / Q&A",
+        conferenceDomain: config.livestream.jitsiDomain,
+        conferenceId: base32.stringify(Buffer.from(roomId), { pad: false }).toLowerCase(),
+    });
+}
+
+export async function makeHybridWidget(req: Request, res: Response) {
+    const roomId = req.query?.['roomId'] as string;
+    if (!roomId || Array.isArray(roomId)) {
+        return res.sendStatus(404);
+    }
+
+    const widget = await LiveWidget.hybridForRoom(roomId, config.RUNTIME.client);
+    const layout = LiveWidget.layoutForHybrid(widget);
+
+    res.send({
+        widget_id: widget.state_key,
+        widget: widget.content,
+        layout: layout.content.widgets[widget.state_key],
     });
 }
 

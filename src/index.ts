@@ -29,8 +29,9 @@ import { InviteCommand } from "./commands/InviteCommand";
 import * as express from "express";
 import { Liquid } from "liquidjs";
 import {
+    makeHybridWidget,
     renderAuditoriumWidget,
-    renderHealthz,
+    renderHealthz, renderHybridWidget,
     renderScoreboard,
     renderScoreboardWidget,
     renderTalkWidget,
@@ -194,9 +195,11 @@ function setupWebserver() {
     app.get('/widgets/auditorium.html', renderAuditoriumWidget);
     app.get('/widgets/talk.html', renderTalkWidget);
     app.get('/widgets/scoreboard.html', renderScoreboardWidget);
+    app.get('/widgets/hybrid.html', renderHybridWidget);
     app.post('/onpublish', rtmpRedirect);
     app.get('/healthz', renderHealthz);
     app.get('/scoreboard/:roomId', (rq, rs) => renderScoreboard(rq, rs, scoreboard));
+    app.get('/make_hybrid', makeHybridWidget);
     app.listen(config.webserver.port, config.webserver.address, () => {
         LogService.info("web", `Webserver running at http://${config.webserver.address}:${config.webserver.port}`);
     });

@@ -31,6 +31,7 @@ interface IConfig {
     livestream: {
         auditoriumUrl: string;
         talkUrl: string;
+        hybridUrl: string;
         jitsiDomain: string;
         widgetAvatar: string;
         onpublish: {

@@ -82,6 +82,26 @@ export class LiveWidget {
         };
     }
 
+    public static async hybridForRoom(roomId: string, client: MatrixClient): Promise<IStateEvent<IWidget>> {
+        const widgetId = sha256(JSON.stringify({roomId, kind: "hybrid"}));
+        return {
+            type: "im.vector.modular.widgets",
+            state_key: widgetId,
+            content: {
+                creatorUserId: await client.getUserId(),
+                id: widgetId,
+                type: "m.custom",
+                waitForIframeLoad: true,
+                name: "Livestream / Q&A",
+                avatar_url: config.livestream.widgetAvatar,
+                url: config.webserver.publicBaseUrl + "/widgets/hybrid.html?widgetId=$matrix_widget_id&roomId=$matrix_room_id#displayName=$matrix_display_name&avatarUrl=$matrix_avatar_url&userId=$matrix_user_id&roomId=$matrix_room_id&auth=openidtoken-jwt",
+                data: {
+                    title: "Join the conference to ask questions",
+                },
+            } as IWidget,
+        };
+    }
+
     public static async scoreboardForTalk(talk: Talk, client: MatrixClient): Promise<IStateEvent<IWidget>> {
         const widgetId = sha256(JSON.stringify(await talk.getDefinition()) + "_SCOREBOARD");
         const aud = await config.RUNTIME.conference.getAuditorium(await talk.getAuditoriumId());
@@ -139,6 +159,23 @@ export class LiveWidget {
                         container: "top",
                         index: 1,
                         width: 34,
+                        height: 50,
+                    },
+                },
+            },
+        };
+    }
+
+    public static layoutForHybrid(qa: IStateEvent<IWidget>): IStateEvent<ILayout> {
+        return {
+            type: "io.element.widgets.layout",
+            state_key: "",
+            content: {
+                widgets: {
+                    [qa.state_key]: {
+                        container: "top",
+                        index: 0,
+                        width: 65,
                         height: 50,
                     },
                 },
