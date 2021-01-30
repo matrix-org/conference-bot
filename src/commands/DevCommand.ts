@@ -18,47 +18,46 @@ import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import config from "../config";
-import { PentabarfParser } from "../parsers/PentabarfParser";
-import * as fetch from "node-fetch";
-import { resolveIdentifiers } from "../invites";
+import { invitePersonToRoom, resolveIdentifiers } from "../invites";
 import { IDbPerson, Role } from "../db/DbPerson";
-import { RS_3PID_PERSON_ID } from "../models/room_state";
 
 export class DevCommand implements ICommand {
     public readonly prefixes = ["dev"];
 
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
-        const beforeTime = 1611676800000;
         const cmdRoomId = roomId;
 
+        const idClient = await client.getIdentityServerClient(config.idServerDomain);
+        idClient.brand = config.idServerBrand;
+        await idClient.acceptAllTerms();
+
         const handleLookups = async (targets: IDbPerson[], roomId: string, ref: string) => {
-            const gmailUsers = targets.filter(p => !p.matrix_id && p.email?.toLowerCase().endsWith("@gmail.com"));
+            const gmailUsers = targets.filter(p => !p.matrix_id && p.email && p.email.toLowerCase().endsWith("@gmail.com"));
             const resolved = await resolveIdentifiers(gmailUsers);
             const notAccepted = resolved.filter(r => !r.mxid);
             if (notAccepted.length <= 0) return;
 
-            const roomState = await client.getRoomState(roomId);
-            const inviteEvents = roomState.filter(e => e['type'] === 'm.room.third_party_invite' && e['origin_server_ts'] < beforeTime);
-            const personIds = notAccepted.map(p => p.person.person_id);
-            const invitesForPeople = inviteEvents.filter(e => personIds.includes(e['content']?.[RS_3PID_PERSON_ID]));
-
-            if (args[0] === "2") {
-
-            } else {
-                await client.sendNotice(cmdRoomId, `${ref}: ${invitesForPeople.length}/${inviteEvents.length} gmail invites need to be resent`);
+            // Send out the invites again
+            for (const person of notAccepted) {
+                await invitePersonToRoom(person, roomId);
             }
         };
 
+        await client.sendNotice(cmdRoomId, "Fixing invites in auditoriums...");
         for (const auditorium of conference.storedAuditoriums) {
             const toInvite = await conference.getInviteTargetsForAuditorium(auditorium);
             await handleLookups(toInvite, auditorium.roomId, await auditorium.getId());
         }
+        await client.sendNotice(cmdRoomId, "Fixing invites in auditorium backstages...");
         for (const auditorium of conference.storedAuditoriumBackstages) {
             const toInvite = await conference.getInviteTargetsForAuditorium(auditorium, true);
-            await handleLookups(toInvite, auditorium.roomId, (await auditorium.getId()) +" (backstage)");
+            await handleLookups(toInvite, auditorium.roomId, (await auditorium.getId()) + " (backstage)");
         }
+        await client.sendNotice(cmdRoomId, "Fixing invites in speakers-support...");
         const allSpeakers = await (await conference.getPentaDb()).findAllPeopleWithRole(Role.Speaker);
         const speakerRoomId = await client.resolveRoom(config.conference.supportRooms.speakers);
         await handleLookups(allSpeakers, speakerRoomId, "speakers-support");
+
+        await client.sendNotice(cmdRoomId, "Done!");
     }
 }
