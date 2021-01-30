@@ -20,13 +20,45 @@ import { Conference } from "../Conference";
 import config from "../config";
 import { PentabarfParser } from "../parsers/PentabarfParser";
 import * as fetch from "node-fetch";
+import { resolveIdentifiers } from "../invites";
+import { IDbPerson, Role } from "../db/DbPerson";
+import { RS_3PID_PERSON_ID } from "../models/room_state";
 
 export class DevCommand implements ICommand {
     public readonly prefixes = ["dev"];
 
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
-        const xml = await fetch(config.conference.pentabarfDefinition).then(r => r.text());
-        const parsed = new PentabarfParser(xml);
-        console.log(JSON.stringify(parsed.conference, null, 4));
+        const beforeTime = 1611676800000;
+        const cmdRoomId = roomId;
+
+        const handleLookups = async (targets: IDbPerson[], roomId: string, ref: string) => {
+            const gmailUsers = targets.filter(p => !p.matrix_id && p.email?.toLowerCase().endsWith("@gmail.com"));
+            const resolved = await resolveIdentifiers(gmailUsers);
+            const notAccepted = resolved.filter(r => !r.mxid);
+            if (notAccepted.length <= 0) return;
+
+            const roomState = await client.getRoomState(roomId);
+            const inviteEvents = roomState.filter(e => e['type'] === 'm.room.third_party_invite' && e['origin_server_ts'] < beforeTime);
+            const personIds = notAccepted.map(p => p.person.person_id);
+            const invitesForPeople = inviteEvents.filter(e => personIds.includes(e['content']?.[RS_3PID_PERSON_ID]));
+
+            if (args[0] === "2") {
+
+            } else {
+                await client.sendNotice(cmdRoomId, `${ref}: ${invitesForPeople.length}/${inviteEvents.length} gmail invites need to be resent`);
+            }
+        };
+
+        for (const auditorium of conference.storedAuditoriums) {
+            const toInvite = await conference.getInviteTargetsForAuditorium(auditorium);
+            await handleLookups(toInvite, auditorium.roomId, await auditorium.getId());
+        }
+        for (const auditorium of conference.storedAuditoriumBackstages) {
+            const toInvite = await conference.getInviteTargetsForAuditorium(auditorium, true);
+            await handleLookups(toInvite, auditorium.roomId, (await auditorium.getId()) +" (backstage)");
+        }
+        const allSpeakers = await (await conference.getPentaDb()).findAllPeopleWithRole(Role.Speaker);
+        const speakerRoomId = await client.resolveRoom(config.conference.supportRooms.speakers);
+        await handleLookups(allSpeakers, speakerRoomId, "speakers-support");
     }
 }
