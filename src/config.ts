@@ -18,6 +18,7 @@ import * as config from "config";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "./Conference";
 import { IRCBridgeOpts } from "./IRCBridge";
+import { Scheduler } from "./Scheduler";
 
 interface IConfig {
     homeserverUrl: string;
@@ -73,6 +74,8 @@ interface IConfig {
             database: string;
             sslmode: string;
             tblPeople: string;
+            tblSchedule: string;
+            scheduleBufferSeconds: number;
         };
     };
     ircBridge: IRCBridgeOpts;
@@ -80,6 +83,7 @@ interface IConfig {
     RUNTIME: {
         client: MatrixClient;
         conference: Conference;
+        scheduler: Scheduler;
     };
 }
 

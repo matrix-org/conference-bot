@@ -46,10 +46,12 @@ import { CustomLogger } from "./CustomLogger";
 import { InviteMeCommand } from "./commands/InviteMeCommand";
 import { WidgetsCommand } from "./commands/WidgetsCommand";
 import { Scoreboard } from "./Scoreboard";
+import { Scheduler } from "./Scheduler";
 
 config.RUNTIME = {
     client: null,
     conference: null,
+    scheduler: null,
 };
 
 process.on('SIGINT', () => {
@@ -69,6 +71,9 @@ client.impersonateUserId(config.userId);
 
 const conference = new Conference(config.conference.id, client);
 config.RUNTIME.conference = conference;
+
+const scheduler = new Scheduler(client, conference);
+config.RUNTIME.scheduler = scheduler;
 
 const scoreboard = new Scoreboard(conference, client);
 
@@ -94,6 +99,7 @@ let userId;
 
     registerCommands();
     setupWebserver();
+    await scheduler.prepare();
 
     await client.joinRoom(config.managementRoom);
 

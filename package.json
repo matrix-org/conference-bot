@@ -17,6 +17,7 @@
     "run:merge-roles": "yarn build && node lib/scripts/merge-roles.js"
   },
   "dependencies": {
+    "await-lock": "^2.1.0",
     "config": "^3.3.3",
     "escape-html": "^1.0.3",
     "express": "^4.17.1",

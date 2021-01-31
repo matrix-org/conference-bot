@@ -14,14 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Client, Pool } from "pg";
+import { Pool } from "pg";
 import config from "../config";
 import { IDbPerson, Role } from "./DbPerson";
 import { LogService, UserID } from "matrix-bot-sdk";
 import { objectFastClone } from "../utils";
+import { IDbTalk } from "./DbTalk";
 
 const PEOPLE_SELECT = "SELECT event_id::text, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM " + config.conference.database.tblPeople;
 const NONEVENT_PEOPLE_SELECT = "SELECT DISTINCT 'ignore' AS event_id, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM " + config.conference.database.tblPeople;
+
+const START_QUERY = "start_datetime AT TIME ZONE $1 AT TIME ZONE 'UTC'";
+const QA_START_QUERY = "(start_datetime + presentation_length) AT TIME ZONE $1 AT TIME ZONE 'UTC'";
+const END_QUERY = "(start_datetime + duration) AT TIME ZONE $1 AT TIME ZONE 'UTC'";
+const SCHEDULE_SELECT = `SELECT DISTINCT event_id::text, conference_room::text, EXTRACT(EPOCH FROM ${START_QUERY}) * 1000 AS start_datetime, EXTRACT(EPOCH FROM duration) AS duration_seconds, EXTRACT(EPOCH FROM presentation_length) AS presentation_length_seconds, EXTRACT(EPOCH FROM ${END_QUERY}) * 1000 AS end_datetime, EXTRACT(EPOCH FROM ${QA_START_QUERY}) * 1000 AS qa_start_datetime, prerecorded FROM ` + config.conference.database.tblSchedule;
 
 export class PentaDb {
     private client: Pool;
@@ -83,6 +89,26 @@ export class PentaDb {
     public async findAllPeopleWithRole(role: Role): Promise<IDbPerson[]> {
         const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} WHERE event_role = $1`, [role]);
         return this.sanitizeRecords(result.rows);
+    }
+
+    public async getUpcomingTalkStarts(inNextMinutes: number, minBefore: number): Promise<IDbTalk[]> {
+        return this.getTalksWithin(START_QUERY, inNextMinutes, minBefore);
+    }
+
+    public async getUpcomingQAStarts(inNextMinutes: number, minBefore: number): Promise<IDbTalk[]> {
+        return this.getTalksWithin(QA_START_QUERY, inNextMinutes, minBefore);
+    }
+
+    public async getUpcomingTalkEnds(inNextMinutes: number, minBefore: number): Promise<IDbTalk[]> {
+        return this.getTalksWithin(END_QUERY, inNextMinutes, minBefore);
+    }
+
+    private async getTalksWithin(timeQuery: string, inNextMinutes: number, minBefore: number): Promise<IDbTalk[]> {
+        const now = "NOW() AT TIME ZONE 'UTC'";
+        const result = await this.client.query(
+            `${SCHEDULE_SELECT} WHERE ${timeQuery} >= (${now} - MAKE_INTERVAL(mins => $2)) AND ${timeQuery} <= (${now} + MAKE_INTERVAL(mins => $3))`,
+            [config.conference.timezone, minBefore, inNextMinutes]);
+        return result.rows;
     }
 
     private sanitizeRecords(rows: IDbPerson[]): IDbPerson[] {
