@@ -322,6 +322,7 @@ export class Conference {
         }
 
         const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(TALK_CREATION_TEMPLATE, {
+            name: talk.title,
             creation_content: {
                 [RSC_CONFERENCE_ID]: this.id,
                 [RSC_TALK_ID]: talk.id,
