@@ -101,15 +101,19 @@ export class Scheduler {
             const upcomingQA = await pentaDb.getUpcomingQAStarts(minVar, minVar);
             const upcomingEnds = await pentaDb.getUpcomingTalkEnds(minVar, minVar);
 
-            upcomingTalks
-                .filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkStart, e)))
-                .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkStart, e));
-            upcomingQA
-                .filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkQA, e)))
-                .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkQA, e));
-            upcomingEnds
-                .filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkEnd, e)))
-                .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkEnd, e));
+            const scheduleAll = (talks: IDbTalk[], type: ScheduledTaskType) => {
+                if (type !== ScheduledTaskType.TalkStart) {
+                    talks = talks.filter(t => t.prerecorded);
+                }
+
+                talks
+                    .filter(e => !this.completedIds.includes(makeTaskId(type, e)))
+                    .forEach(e => this.tryScheduleTask(type, e));
+            };
+
+            scheduleAll(upcomingTalks, ScheduledTaskType.TalkStart);
+            scheduleAll(upcomingQA, ScheduledTaskType.TalkQA);
+            scheduleAll(upcomingEnds, ScheduledTaskType.TalkEnd);
         } catch (e) {
             LogService.error("Scheduler", e);
             await logMessage(LogLevel.ERROR, "Scheduler", `Error scheduling tasks: ${e?.message || 'unknown error'}`);
@@ -168,6 +172,13 @@ export class Scheduler {
         }
 
         if (task.type === ScheduledTaskType.TalkStart) {
+            if (!task.talk.prerecorded) {
+                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk is not pre-recorded.</h3><p>This room will now be opened up for attendees to visit. They will not be able to see history.</p>`);
+                await makeRoomPublic(confTalk.roomId, this.client);
+                const talkPill = await MentionPill.forRoom(confTalk.roomId, this.client);
+                await this.client.sendHtmlText(confAud.roomId, `<h3>${await confTalk.getName()}</h3><p><b>There is no video for this talk.</b> If the speakers are available, they'll be hanging out in ${talkPill.html}</p>`);
+                return;
+            }
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk is starting shortly.</h3>`);
             await this.client.sendHtmlText(confAud.roomId, `<h3>Up next: ${await confTalk.getName()}</h3><p>Ask your questions here for the Q&A at the end of the talk.</p>`);
         } else if (task.type === ScheduledTaskType.TalkQA) {
@@ -179,14 +190,8 @@ export class Scheduler {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk has ended - opening up this room to all attendees.</h3><p>They won't see the history in this room.</p>`);
             await makeRoomPublic(confTalk.roomId, this.client);
             const talkPill = await MentionPill.forRoom(confTalk.roomId, this.client);
-            const html = `<h3>The talk will end shortly</h3><p>If the speakers are available, they'll be hanging out in ${talkPill.html}</p>`;
-            const text = `The talk will end shortly\nIf the speakers are available, they'll be hanging out in ${talkPill.text}`;
-            await this.client.sendMessage(confAud.roomId, {
-                msgtype: "m.text",
-                format: "org.matrix.custom.html",
-                formatted_body: html,
-                body: text,
-            });
+            await this.client.sendHtmlText(confAud.roomId, `<h3>The talk will end shortly</h3><p>If the speakers are available, they'll be hanging out in ${talkPill.html}</p>`);
+
         } else {
             await logMessage(LogLevel.WARN, "Scheduler", `Unknown task type for execute(): ${task.type}`);
         }
