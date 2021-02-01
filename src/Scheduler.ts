@@ -20,6 +20,7 @@ import AwaitLock from "await-lock";
 import { logMessage } from "./LogProxy";
 import config from "./config";
 import { LogLevel, LogService, MatrixClient, MentionPill } from "matrix-bot-sdk";
+import { makeRoomPublic } from "./utils";
 
 export enum ScheduledTaskType {
     TalkStart = "talk_start",
@@ -32,7 +33,10 @@ export enum ScheduledTaskType {
 
 const KEEP_LAST_TASKS = 200;
 const ACD_SCHEDULER = "org.matrix.confbot.scheduler_info";
-const RUN_INTERVAL_MS = 15000; // run tasks somewhat often (not overlapping)
+
+// Run tasks often. Note that this also controls the lookahead timing and must be smaller than
+// the config value. Given this is hardcoded, it should be somewhat low.
+const RUN_INTERVAL_MS = 15000;
 
 interface ISchedulerAccountData {
     completed: string[];
@@ -88,12 +92,35 @@ export class Scheduler {
 
     private async runTasks() {
         const now = (new Date()).getTime();
+        const pentaDb = await this.conference.getPentaDb();
+        await this.lock.acquireAsync();
+        LogService.info("Scheduler", "Scheduling tasks");
+        try {
+            const minVar = config.conference.lookaheadMinutes;
+            const upcomingTalks = await pentaDb.getUpcomingTalkStarts(minVar, minVar);
+            const upcomingQA = await pentaDb.getUpcomingQAStarts(minVar, minVar);
+            const upcomingEnds = await pentaDb.getUpcomingTalkEnds(minVar, minVar);
+
+            upcomingTalks
+                .filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkStart, e)))
+                .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkStart, e));
+            upcomingQA
+                .filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkQA, e)))
+                .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkQA, e));
+            upcomingEnds
+                .filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkEnd, e)))
+                .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkEnd, e));
+        } catch (e) {
+            LogService.error("Scheduler", e);
+            await logMessage(LogLevel.ERROR, "Scheduler", `Error scheduling tasks: ${e?.message || 'unknown error'}`);
+        } finally {
+            this.lock.release();
+        }
         await this.lock.acquireAsync();
         LogService.info("Scheduler", "Running tasks");
         try {
-            // TODO: Order scheduled tasks to prevent "Talk Starting -> Talk Over" confusion
             const taskIds = Object.keys(this.pending);
-            let didAction = false;
+            const toExec: [number, ITask][] = [];
             for (const taskId of taskIds) {
                 if (this.completedIds.includes(taskId)) {
                     delete this.pending[taskId];
@@ -102,6 +129,11 @@ export class Scheduler {
                 const task = this.pending[taskId];
                 const startTime = getStartTime(task);
                 if (startTime > now) continue;
+                toExec.push([startTime, task]);
+            }
+            toExec.sort((a, b) => a[0] - b[0]);
+            for (const [startTime, task] of toExec) {
+                const taskId = task.id;
                 LogService.info("Scheduler", "Running task: " + taskId);
                 try {
                     await this.execute(task);
@@ -111,8 +143,8 @@ export class Scheduler {
                 }
                 delete this.pending[taskId];
                 this.completedIds.push(taskId);
-                didAction = true;
             }
+            let didAction = false;
             if (didAction) await this.persistProgress();
         } catch (e) {
             LogService.error("Scheduler", e);
@@ -129,17 +161,23 @@ export class Scheduler {
         const confAud = this.conference.getAuditorium(task.talk.conference_room);
         const confAudBackstage = this.conference.getAuditoriumBackstage(task.talk.conference_room);
 
-        console.log(task);
+        if (!confAud || !confTalk || !confAudBackstage) {
+            // probably a special interest room
+            LogService.warn("Scheduler", `Skipping task ${task.id} - Unknown auditorium or talk`);
+            return;
+        }
 
         if (task.type === ScheduledTaskType.TalkStart) {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk is starting shortly.</h3>`);
             await this.client.sendHtmlText(confAud.roomId, `<h3>Up next: ${await confTalk.getName()}</h3><p>Ask your questions here for the Q&A at the end of the talk.</p>`);
         } else if (task.type === ScheduledTaskType.TalkQA) {
+            if (!confAud || !confTalk) return; // probably a special interest room
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your Q&A is starting shortly.</h3>`);
             await this.client.sendHtmlText(confAud.roomId, `<h3>Q&A is starting shortly</h3><p>Feel free to continue asking questions for the speakers - the conversation will continue in the hallway after the Q&A.</p>`);
         } else if (task.type === ScheduledTaskType.TalkEnd) {
+            if (!confAud || !confTalk) return; // probably a special interest room
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk has ended - opening up this room to all attendees.</h3><p>They won't see the history in this room.</p>`);
-            // TODO: Make room public
+            await makeRoomPublic(confTalk.roomId, this.client);
             const talkPill = await MentionPill.forRoom(confTalk.roomId, this.client);
             const html = `<h3>The talk will end shortly</h3><p>If the speakers are available, they'll be hanging out in ${talkPill.html}</p>`;
             const text = `The talk will end shortly\nIf the speakers are available, they'll be hanging out in ${talkPill.text}`;

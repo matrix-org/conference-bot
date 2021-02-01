@@ -52,6 +52,7 @@ interface IConfig {
         name: string;
         pentabarfDefinition: string;
         timezone: string;
+        lookaheadMinutes: number;
         supportRooms: {
             speakers: string;
         };

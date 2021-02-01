@@ -129,6 +129,9 @@ conference:
   supportRooms:
     speakers: "#speakers:example.org"
 
+  # How far in the future the bot should be looking before considering something "finalized".
+  lookaheadMinutes: 5
+
   # Connection information to get data about the conference during the conference.
   # This can be readonly. Currently the bot only supports postgresql.
   database:

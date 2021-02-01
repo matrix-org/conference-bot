@@ -134,3 +134,9 @@ export async function asyncFilter<T>(a: T[], fn: (i: T) => Promise<boolean>): Pr
     }
     return r;
 }
+
+export async function makeRoomPublic(roomId: string, client: MatrixClient) {
+    await client.sendStateEvent(roomId, "m.room.guest_access", "", {guest_access: "can_join"});
+    await client.sendStateEvent(roomId, "m.room.history_visibility", "", {history_visibility: "world_readable"});
+    await client.sendStateEvent(roomId, "m.room.join_rules", "", {join_rule: "public"});
+}
