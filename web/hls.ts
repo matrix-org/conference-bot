@@ -31,7 +31,7 @@ if (isWidget) {
 let hls: Hls;
 let haveManifest = false;
 let isVideoMode = true;
-let lastReadyFn: () => void;
+let lastReadyFn: (isReady: boolean) => void;
 
 export function pause() {
     isVideoMode = false;
@@ -39,13 +39,13 @@ export function pause() {
     videoEl.pause();
 }
 
-export function play(readyFn: () => void = null) {
+export function play(readyFn: (isReady: boolean) => void = null) {
     isVideoMode = true;
     if (hls) hls.destroy();
     makeLivestream(readyFn || lastReadyFn);
 }
 
-export function makeLivestream(readyFn: () => void) {
+export function makeLivestream(readyFn: (isReady: boolean) => void) {
     lastReadyFn = readyFn;
     if (Hls.isSupported()) {
         hls = new Hls({
@@ -60,6 +60,7 @@ export function makeLivestream(readyFn: () => void) {
             console.error("HLS error: ", e, data);
             if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
                 console.log("Network error - trying again in 5s");
+                readyFn(false);
                 setTimeout(() => {
                     if (!isVideoMode) {
                         return;
@@ -70,7 +71,7 @@ export function makeLivestream(readyFn: () => void) {
         });
         hls.on(Hls.Events.MANIFEST_LOADED, (e, data) => {
             haveManifest = true;
-            readyFn();
+            readyFn(true);
         });
         hls.attachMedia(videoEl);
         hls.loadSource(videoUrl);
