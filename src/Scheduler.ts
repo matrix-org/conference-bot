@@ -80,8 +80,9 @@ export class Scheduler {
             completed: [],
             inAuditoriums: [],
         });
-        // TODO: ENABLE BEFORE RELEASE
-        //this.completedIds.push(...(schedulerData?.completed || []));
+        this.completedIds.push(...(schedulerData?.completed || []));
+
+        // TODO: Should we resume automatically?
 
         await this.runTasks();
     }
