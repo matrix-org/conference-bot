@@ -46,20 +46,26 @@ html, body {
 }
 
 #controlBar {
-  display: none; /* changed later */
+  position: absolute;
+  top: 16px;
+  right: 16px;
 }
 
-#joinButton {
+#controlBar button {
   border: none;
   color: #ffffff;
   background-color: #2a9d8f;
   border-radius: 4px;
   padding: 6px 12px;
   cursor: pointer;
+}
 
-  position: absolute;
-  top: 16px;
-  right: 16px;
+#joinButton {
+  display: none;
+}
+
+#muteButton {
+  display: none;
 }
 
 #jitsiContainer {
