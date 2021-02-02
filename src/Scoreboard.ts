@@ -16,6 +16,8 @@ limitations under the License.
 
 import { Conference } from "./Conference";
 import { LogService, MatrixClient, Permalinks, UserID } from "matrix-bot-sdk";
+import AwaitLock from "await-lock";
+import { isEmojiVariant } from "./utils";
 
 export interface RoomMessage {
     eventId: string;
@@ -24,6 +26,7 @@ export interface RoomMessage {
     senderName?: string;
     senderHttpUrl?: string;
     activeUpvoteIds: string[];
+    activeDownvoteIds: string[];
 }
 
 export interface CachedMessage {
@@ -53,13 +56,15 @@ export class Scoreboard {
     } = {};
 
     private domain: string;
+    private lock = new AwaitLock();
 
     constructor(private conference: Conference, private client: MatrixClient) {
-        this.client.on("room.event", (roomId: string, event: any) => {
+        this.client.on("room.event", async (roomId: string, event: any) => {
             if (event['type'] === 'm.reaction') {
-                return this.tryAddReaction(roomId, event);
+                await this.tryAddReaction(roomId, event);
             } else if (event['type'] === 'm.redaction') {
-                return this.tryRemoveReaction(roomId, event);
+                await this.tryRemoveReaction(roomId, event);
+                await this.tryRemoveMessage(roomId, event);
             }
         });
 
@@ -73,6 +78,18 @@ export class Scoreboard {
         return this.byRoomCached[roomId];
     }
 
+    public async resetScoreboard(roomId: string) {
+        await this.lock.acquireAsync();
+        try {
+            this.byRoom[roomId] = {
+                messages: [],
+            };
+            await this.calculateRoom(roomId);
+        } finally {
+            this.lock.release();
+        }
+    }
+
     private async calculateRoom(roomId: string) {
         LogService.info("Scoreboard", `Recalculating scoreboard for ${roomId}`);
         const scoreboard = this.byRoom[roomId];
@@ -84,7 +101,7 @@ export class Scoreboard {
                 senderName: message.senderName,
                 senderId: message.senderId,
                 text: message.text,
-                upvotes: message.activeUpvoteIds.length,
+                upvotes: message.activeUpvoteIds.length - message.activeDownvoteIds.length,
             };
             messages.push(m);
         }
@@ -102,49 +119,60 @@ export class Scoreboard {
         if (!relation) return;
 
         if (relation['rel_type'] !== 'm.annotation') return;
-        if (relation['key'] !== '👍' && relation['key'] !== '👍️') return;
+
+        const isUpvote = isEmojiVariant('👍', relation['key']);
+        const isDownvote = isEmojiVariant('👎', relation['key']);
+
+        if (!isUpvote && !isDownvote) return;
         if (typeof (relation['event_id']) !== 'string') return;
 
-        // First see if we already know about it
-        let scoreboard = this.byRoom[roomId];
-        if (!scoreboard) {
-            this.byRoom[roomId] = {
-                messages: [],
-            };
-            scoreboard = this.byRoom[roomId];
-        }
-        const message = scoreboard.messages.find(m => m.eventId === relation['event_id']);
-        if (message) {
-            message.activeUpvoteIds.push(event['event_id']);
-        } else {
-            // We don't know about it. Check the message
-            const targetEv = await this.client.getEvent(roomId, relation['event_id']);
-            if (targetEv?.['type'] !== 'm.room.message') return;
-            if (targetEv?.['content']?.['msgtype'] !== "m.text") return;
-            if (typeof (targetEv?.['content']?.['body']) !== 'string') return;
+        await this.lock.acquireAsync();
+        try {
+            // First see if we already know about it
+            let scoreboard = this.byRoom[roomId];
+            if (!scoreboard) {
+                this.byRoom[roomId] = {
+                    messages: [],
+                };
+                scoreboard = this.byRoom[roomId];
+            }
+            const message = scoreboard.messages.find(m => m.eventId === relation['event_id']);
+            if (message) {
+                (isUpvote ? message.activeUpvoteIds : message.activeDownvoteIds).push(event['event_id']);
+            } else {
+                // We don't know about it. Check the message
+                const targetEv = await this.client.getEvent(roomId, relation['event_id']);
+                if (targetEv?.['type'] !== 'm.room.message') return;
+                if (targetEv?.['content']?.['msgtype'] !== "m.text") return;
+                if (typeof (targetEv?.['content']?.['body']) !== 'string') return;
 
-            const message: RoomMessage = {
-                activeUpvoteIds: [event['event_id']],
-                eventId: relation['event_id'],
-                senderId: targetEv['sender'],
-                text: targetEv['content']['body'],
-            };
+                const message: RoomMessage = {
+                    activeUpvoteIds: [],
+                    activeDownvoteIds: [],
+                    eventId: relation['event_id'],
+                    senderId: targetEv['sender'],
+                    text: targetEv['content']['body'],
+                };
+                (isUpvote ? message.activeUpvoteIds : message.activeDownvoteIds).push(event['event_id']);
 
-            try {
-                const profile = await this.client.getUserProfile(message.senderId);
-                if (profile['displayname']) message.senderName = profile['displayname'];
-                if (profile['avatar_url'] && profile['avatar_url'].startsWith('mxc://')) {
-                    const parts = profile['avatar_url'].substring('mxc://'.length).split('/');
-                    message.senderHttpUrl = `${this.client.homeserverUrl}/_matrix/media/r0/thumbnail/${encodeURIComponent(parts[0])}/${encodeURIComponent(parts[1])}?method=crop&width=64&height=64`;
+                try {
+                    const profile = await this.client.getUserProfile(message.senderId);
+                    if (profile['displayname']) message.senderName = profile['displayname'];
+                    if (profile['avatar_url'] && profile['avatar_url'].startsWith('mxc://')) {
+                        const parts = profile['avatar_url'].substring('mxc://'.length).split('/');
+                        message.senderHttpUrl = `${this.client.homeserverUrl}/_matrix/media/r0/thumbnail/${encodeURIComponent(parts[0])}/${encodeURIComponent(parts[1])}?method=crop&width=64&height=64`;
+                    }
+                } catch (e) {
+                    // ignore
                 }
-            } catch (e) {
-                // ignore
+
+                scoreboard.messages.push(message);
             }
 
-            scoreboard.messages.push(message);
+            await this.calculateRoom(roomId);
+        } finally {
+            this.lock.release();
         }
-
-        await this.calculateRoom(roomId);
     }
 
     private async tryRemoveReaction(roomId: string, event: any) {
@@ -153,15 +181,46 @@ export class Scoreboard {
 
         if (!event['redacts']) return;
 
-        const scoreboard = this.byRoom[roomId];
-        if (!scoreboard) return;
+        await this.lock.acquireAsync();
+        try {
+            const scoreboard = this.byRoom[roomId];
+            if (!scoreboard) return;
 
-        const message = scoreboard.messages.find(m => m.activeUpvoteIds.includes(event['redacts']));
-        if (!message) return;
+            const upvoteMessage = scoreboard.messages.find(m => m.activeUpvoteIds.includes(event['redacts']));
+            const downvoteMessage = scoreboard.messages.find(m => m.activeDownvoteIds.includes(event['redacts']));
+            if (!upvoteMessage && !downvoteMessage) return;
 
-        const idx = message.activeUpvoteIds.findIndex(i => i === event['redacts']);
-        if (idx >= 0) message.activeUpvoteIds.splice(idx, 1);
+            let idx = upvoteMessage.activeUpvoteIds.findIndex(i => i === event['redacts']);
+            if (idx >= 0) upvoteMessage.activeUpvoteIds.splice(idx, 1);
+            idx = downvoteMessage.activeDownvoteIds.findIndex(i => i === event['redacts']);
+            if (idx >= 0) downvoteMessage.activeDownvoteIds.splice(idx, 1);
 
-        await this.calculateRoom(roomId);
+            await this.calculateRoom(roomId);
+        } finally {
+            this.lock.release();
+        }
+    }
+
+    private async tryRemoveMessage(roomId: string, event: any) {
+        const isAuditorium = this.conference.storedAuditoriums.some(a => a.roomId === roomId);
+        if (!isAuditorium) return; // irrelevant
+
+        if (!event['redacts']) return;
+
+        await this.lock.acquireAsync();
+        try {
+            const scoreboard = this.byRoom[roomId];
+            if (!scoreboard) return;
+
+            const toRemove = scoreboard.messages.find(m => m.eventId === event['redacts']);
+            if (!toRemove) return;
+
+            const idx = scoreboard.messages.indexOf(toRemove);
+            if (idx >= 0) scoreboard.messages.splice(idx, 1);
+
+            await this.calculateRoom(roomId);
+        } finally {
+            this.lock.release();
+        }
     }
 }

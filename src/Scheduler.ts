@@ -21,6 +21,7 @@ import { logMessage } from "./LogProxy";
 import config from "./config";
 import { LogLevel, LogService, MatrixClient, MentionPill } from "matrix-bot-sdk";
 import { makeRoomPublic } from "./utils";
+import { Scoreboard } from "./Scoreboard";
 
 export enum ScheduledTaskType {
     TalkStart = "talk_start",
@@ -72,7 +73,7 @@ export class Scheduler {
     private pending: { [taskId: string]: ITask } = {};
     private lock = new AwaitLock();
 
-    constructor(private client: MatrixClient, private conference: Conference) {
+    constructor(private client: MatrixClient, private conference: Conference, private scoreboard: Scoreboard) {
     }
 
     public async prepare() {
@@ -196,7 +197,7 @@ export class Scheduler {
             await makeRoomPublic(confTalk.roomId, this.client);
             const talkPill = await MentionPill.forRoom(confTalk.roomId, this.client);
             await this.client.sendHtmlText(confAud.roomId, `<h3>The talk will end shortly</h3><p>If the speakers are available, they'll be hanging out in ${talkPill.html}</p>`);
-
+            await this.scoreboard.resetScoreboard(confAud.roomId);
         } else {
             await logMessage(LogLevel.WARN, "Scheduler", `Unknown task type for execute(): ${task.type}`);
         }

@@ -77,10 +77,10 @@ client.impersonateUserId(config.userId);
 const conference = new Conference(config.conference.id, client);
 config.RUNTIME.conference = conference;
 
-const scheduler = new Scheduler(client, conference);
-config.RUNTIME.scheduler = scheduler;
-
 const scoreboard = new Scoreboard(conference, client);
+
+const scheduler = new Scheduler(client, conference, scoreboard);
+config.RUNTIME.scheduler = scheduler;
 
 const ircBridge = new IRCBridge(config.ircBridge, client);
 config.RUNTIME.ircBridge = ircBridge;
