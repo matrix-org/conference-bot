@@ -97,7 +97,7 @@ function render(messages: RoomMessage[]) {
 function doFetch() {
     fetch(`/scoreboard/${encodeURIComponent(forRoomId)}`).then(r => r.json()).then(r => {
         render(r['ordered']);
-        setTimeout(doFetch, 5000);
+        setTimeout(doFetch, 3000);
     }).catch(() => setTimeout(doFetch, 15000));
 }
 
