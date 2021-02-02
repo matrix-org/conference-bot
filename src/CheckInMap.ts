@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MatrixClient } from "../../matrix-js-bot-sdk";
+import { MatrixClient } from "matrix-bot-sdk";
 import AwaitLock from "await-lock";
 import { Conference } from "./Conference";
 import { isEmojiVariant } from "./utils";
