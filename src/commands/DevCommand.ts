@@ -23,14 +23,11 @@ export class DevCommand implements ICommand {
     public readonly prefixes = ["dev"];
 
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
-        const interestRoom = conference.getInterestRoom(args[0]);
-        const audRoom = conference.getAuditorium(args[0]);
-        if (interestRoom) {
-            await client.replyNotice(roomId, event, `Freenode channel: ${await config.RUNTIME.ircBridge.deriveChannelNameSI(interestRoom)}`);
-        } else if (audRoom) {
-            await client.replyNotice(roomId, event, `Freenode channel: ${await config.RUNTIME.ircBridge.deriveChannelName(audRoom)}`);
-        } else {
-            await client.replyNotice(roomId, event, "Unknown auditorium/interest room");
+        if (args[0] === 'reset') {
+            await config.RUNTIME.scheduler.devReset();
+            await client.sendNotice(roomId, "Done");
+        } else if (args[0] === 'view') {
+            await client.sendNotice(roomId, JSON.stringify(config.RUNTIME.scheduler.devInspect(), null, 4));
         }
     }
 }

@@ -20,7 +20,7 @@ import AwaitLock from "await-lock";
 import { logMessage } from "./LogProxy";
 import config from "./config";
 import { LogLevel, LogService, MatrixClient, MentionPill } from "matrix-bot-sdk";
-import { makeRoomPublic } from "./utils";
+import { makeRoomPublic, objectFastClone } from "./utils";
 import { Scoreboard } from "./Scoreboard";
 
 export enum ScheduledTaskType {
@@ -86,6 +86,19 @@ export class Scheduler {
         // TODO: Should we resume automatically?
 
         await this.runTasks();
+    }
+
+    public async devReset() {
+        await this.lock.acquireAsync();
+        try {
+            this.completedIds = [];
+        } finally {
+            this.lock.release();
+        }
+    }
+
+    public devInspect(): any {
+        return objectFastClone(this.pending);
     }
 
     private async persistProgress() {
