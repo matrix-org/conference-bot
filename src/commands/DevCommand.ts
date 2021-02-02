@@ -24,7 +24,6 @@ export class DevCommand implements ICommand {
     public readonly prefixes = ["dev"];
 
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
-        // TODO: Populate on a schedule rather than in a dev command
         const db = await conference.getPentaDb();
         const upcomingTalks = await db.getUpcomingTalkStarts(5, 5);
         const upcomingQA = await db.getUpcomingQAStarts(5, 5);
