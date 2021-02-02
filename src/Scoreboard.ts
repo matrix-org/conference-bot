@@ -62,7 +62,7 @@ export class Scoreboard {
         this.client.on("room.event", async (roomId: string, event: any) => {
             if (event['type'] === 'm.reaction') {
                 await this.tryAddReaction(roomId, event);
-            } else if (event['type'] === 'm.redaction') {
+            } else if (event['type'] === 'm.room.redaction') {
                 await this.tryRemoveReaction(roomId, event);
                 await this.tryRemoveMessage(roomId, event);
             }
@@ -190,10 +190,14 @@ export class Scoreboard {
             const downvoteMessage = scoreboard.messages.find(m => m.activeDownvoteIds.includes(event['redacts']));
             if (!upvoteMessage && !downvoteMessage) return;
 
-            let idx = upvoteMessage.activeUpvoteIds.findIndex(i => i === event['redacts']);
-            if (idx >= 0) upvoteMessage.activeUpvoteIds.splice(idx, 1);
-            idx = downvoteMessage.activeDownvoteIds.findIndex(i => i === event['redacts']);
-            if (idx >= 0) downvoteMessage.activeDownvoteIds.splice(idx, 1);
+            if (upvoteMessage) {
+                const idx = upvoteMessage.activeUpvoteIds.findIndex(i => i === event['redacts']);
+                if (idx >= 0) upvoteMessage.activeUpvoteIds.splice(idx, 1);
+            }
+            if (downvoteMessage) {
+                const idx = downvoteMessage.activeDownvoteIds.findIndex(i => i === event['redacts']);
+                if (idx >= 0) downvoteMessage.activeDownvoteIds.splice(idx, 1);
+            }
 
             await this.calculateRoom(roomId);
         } finally {
