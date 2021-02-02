@@ -54,6 +54,6 @@ export class CopyModeratorsCommand implements ICommand {
             }
         }
 
-        await client.replyNotice(roomId, event, "Invite sent");
+        await client.replyNotice(roomId, event, "Moderators copied and invited");
     }
 }
