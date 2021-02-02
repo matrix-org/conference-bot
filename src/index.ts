@@ -47,6 +47,8 @@ import { InviteMeCommand } from "./commands/InviteMeCommand";
 import { WidgetsCommand } from "./commands/WidgetsCommand";
 import { Scoreboard } from "./Scoreboard";
 import { Scheduler } from "./Scheduler";
+import { RunCommand } from "./commands/RunCommand";
+import { StopCommand } from "./commands/StopCommand";
 
 config.RUNTIME = {
     client: null,
@@ -99,7 +101,6 @@ let userId;
 
     registerCommands();
     setupWebserver();
-    await scheduler.prepare();
 
     await client.joinRoom(config.managementRoom);
 
@@ -116,6 +117,7 @@ let userId;
         );
     }
 
+    await scheduler.prepare();
     await client.start();
 
     // Needs to happen after the sync loop has started
@@ -133,6 +135,8 @@ function registerCommands() {
         new PermissionsCommand(),
         new InviteMeCommand(),
         new WidgetsCommand(),
+        new RunCommand(),
+        new StopCommand(),
     ];
 
     client.on("room.message", async (roomId: string, event: any) => {

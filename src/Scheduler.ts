@@ -40,6 +40,7 @@ const RUN_INTERVAL_MS = 15000;
 
 interface ISchedulerAccountData {
     completed: string[];
+    inAuditoriums: string[];
 }
 
 interface ITask {
@@ -67,6 +68,7 @@ function getStartTime(task: ITask): number {
 
 export class Scheduler {
     private completedIds: string[] = [];
+    private inAuditoriums: string[] = [];
     private pending: { [taskId: string]: ITask } = {};
     private lock = new AwaitLock();
 
@@ -76,6 +78,7 @@ export class Scheduler {
     public async prepare() {
         const schedulerData = await this.client.getSafeAccountData<ISchedulerAccountData>(ACD_SCHEDULER, {
             completed: [],
+            inAuditoriums: [],
         });
         // TODO: ENABLE BEFORE RELEASE
         //this.completedIds.push(...(schedulerData?.completed || []));
@@ -87,6 +90,7 @@ export class Scheduler {
         const completedIds = this.completedIds.slice().reverse().slice(0, KEEP_LAST_TASKS).reverse();
         await this.client.setAccountData(ACD_SCHEDULER, {
             completed: completedIds,
+            inAuditoriums: this.inAuditoriums,
         });
     }
 
@@ -204,10 +208,43 @@ export class Scheduler {
 
         await this.lock.acquireAsync();
         try {
-            this.pending[id] = {id, type, talk};
+            const isCompleted = this.completedIds.includes(id);
+            if (!isCompleted && this.isWatchingAuditorium(talk.conference_room)) {
+                this.pending[id] = {id, type, talk};
+                LogService.debug("Scheduler", `Task ${id} scheduled`);
+            } else {
+                if (isCompleted) LogService.debug("Scheduler", `Ignoring re-scheduled completed task: ${id}`);
+                else LogService.warn("Scheduler", `Ignoring task in unwatched auditorium: ${id}`);
+            }
         } finally {
             this.lock.release();
         }
-        LogService.debug("Scheduler", `Task ${id} scheduled`);
+    }
+
+    public async addAuditorium(audId: string) {
+        this.inAuditoriums.push(audId);
+
+        await this.lock.acquireAsync();
+        try {
+            await this.persistProgress();
+        } finally {
+            this.lock.release();
+        }
+    }
+
+    public isWatchingAuditorium(audId: string) {
+        return this.inAuditoriums.includes(audId) || this.inAuditoriums.includes("all");
+    }
+
+    public async stop() {
+        await this.lock.acquireAsync();
+        LogService.warn("Scheduler", "Stopping scheduler...");
+        try {
+            this.pending = {};
+            this.inAuditoriums = [];
+            await this.persistProgress();
+        } finally {
+            this.lock.release();
+        }
     }
 }
