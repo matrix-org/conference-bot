@@ -28,6 +28,7 @@ const jitsiContainer = document.getElementById("jitsiContainer");
 const jitsiUnderlay = document.getElementById("jitsiUnderlay");
 const liveWarning = document.getElementById("liveBanner");
 const joinButton = document.getElementById('joinButton');
+const muteButton = document.getElementById('muteButton');
 
 let widgetApi: WidgetApi = null;
 
@@ -47,7 +48,7 @@ if (widgetId) {
 
 messagesEl.style.display = 'block';
 if (isWidget) {
-    controlsEl.style.display = 'block';
+    joinButton.style.display = 'block';
 }
 
 makeLivestream(() => showVideo(true));
@@ -60,8 +61,9 @@ function showVideo(ready = true) {
     videoEl.style.display = ready ? 'block' : 'none';
     liveWarning.style.display = 'none';
     if (isWidget) {
-        controlsEl.style.display = 'block';
+        joinButton.style.display = 'inline';
     }
+    muteButton.style.display = 'inline';
 }
 
 function showJitsi() {
@@ -94,4 +96,16 @@ const jitsiOpts = {
 joinButton.addEventListener('click', () => {
     showJitsi();
     joinConference(jitsiOpts, widgetApi, () => onJitsiEnd());
+});
+
+muteButton.addEventListener('click', () => {
+    videoEl.muted = !videoEl.muted;
+});
+
+videoEl.addEventListener('volumechange', () => {
+    if (videoEl.muted) {
+        muteButton.innerHTML = "Audio Muted: Click to unmute";
+    } else {
+        muteButton.innerHTML = "Mute";
+    }
 });
