@@ -36,8 +36,8 @@ export class IrcPlumbCommand implements ICommand {
                 // Wait before plumbing the next one so as to not overwhelm the poor bridge.
                 await new Promise(r => setTimeout(r, PLUMB_WAIT_MS));
             } catch (ex) {
-                await logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel ${channelName} to ${roomId}`);
-                LogService.warn("IrcPlumbCommand", `Could not plumb channel ${channelName} to ${roomId}:`, ex);
+                await logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel ${channelName} to ${auditorium.roomId}`);
+                LogService.warn("IrcPlumbCommand", `Could not plumb channel ${channelName} to ${auditorium.roomId}:`, ex);
             }
         }
         for (const interest of conference.storedInterestRooms) {
@@ -47,8 +47,8 @@ export class IrcPlumbCommand implements ICommand {
                 // Wait before plumbing the next one so as to not overwhelm the poor bridge.
                 await new Promise(r => setTimeout(r, PLUMB_WAIT_MS));
             } catch (ex) {
-                await logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel ${channelName} to ${roomId}`);
-                LogService.warn("IrcPlumbCommand", `Could not plumb channel ${channelName} to ${roomId}:`, ex);
+                await logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel ${channelName} to ${interest.roomId}`);
+                LogService.warn("IrcPlumbCommand", `Could not plumb channel ${channelName} to ${interest.roomId}:`, ex);
             }
         }
     }
