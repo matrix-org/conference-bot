@@ -1,0 +1,105 @@
+/*
+Copyright 2021 The Matrix.org Foundation C.I.C.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+import { ICommand } from "./ICommand";
+import { MatrixClient } from "matrix-bot-sdk";
+import { Conference } from "../Conference";
+import { IDbPerson } from "../db/DbPerson";
+import { resolveIdentifiers } from "../invites";
+import { COLOR_GREEN, COLOR_RED } from "../models/colors";
+
+export class AttendanceCommand implements ICommand {
+    public readonly prefixes = ["attendance"];
+
+    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
+        let totalEmails = 0;
+        let totalJoined = 0;
+        let totalInvites = 0;
+
+        const targetAudId = args[0];
+
+        const htmlNum = (n: number, invert = false): string => {
+            if (Number.isNaN(n)) {
+                n = 0;
+            }
+            if (invert ? (n > 75) : (n < 75)) {
+                return `<b><font color='${COLOR_RED}'>${n}%</font></b>`;
+            } else {
+                return `<b><font color='${COLOR_GREEN}'>${n}%</font></b>`;
+            }
+        }
+
+        let html = "<ul>";
+        const append = async (invitePeople: IDbPerson[], bsPeople: IDbPerson[], name: string, roomId: string, bsRoomId: string, withHtml: boolean) => {
+            const inviteTargets = await resolveIdentifiers(invitePeople);
+
+            const joinedMembers = await client.getJoinedRoomMembers(roomId);
+
+            const emailInvites = inviteTargets.filter(i => !i.mxid).length;
+            const joined = inviteTargets.filter(i => i.mxid && joinedMembers.includes(i.mxid)).length;
+
+            const acceptedPct = Math.round((joined / inviteTargets.length) * 100);
+            const emailPct = Math.round((emailInvites / inviteTargets.length) * 100);
+
+            totalInvites += inviteTargets.length;
+            totalJoined += joined;
+            totalEmails += emailInvites;
+
+            if (withHtml) html += `<li><b>${name}</b> ${htmlNum(acceptedPct)} have joined, ${htmlNum(emailPct, true)} have emails waiting`;
+
+            if (bsRoomId) {
+                const bsInviteTargets = await resolveIdentifiers(bsPeople);
+                const bsJoinedMembers = await client.getJoinedRoomMembers(bsRoomId);
+                const bsEmailInvites = bsInviteTargets.filter(i => !i.mxid).length;
+                const bsJoined = bsInviteTargets.filter(i => i.mxid && bsJoinedMembers.includes(i.mxid)).length;
+                const bsAcceptedPct = Math.round((bsJoined / bsInviteTargets.length) * 100);
+                const bsEmailPct = Math.round((bsEmailInvites / bsInviteTargets.length) * 100);
+
+                if (withHtml)  html += ` (backstage: ${htmlNum(bsAcceptedPct)} joined, ${htmlNum(bsEmailPct, true)}% emails)`;
+
+                totalInvites += bsInviteTargets.length;
+                totalJoined += bsJoined;
+                totalEmails += bsEmailInvites;
+            }
+
+            if (withHtml) html += "</li>";
+        };
+        for (const auditorium of conference.storedAuditoriums) {
+            const doAppend = targetAudId && (targetAudId === "all" || targetAudId === await auditorium.getId());
+            const bs = conference.getAuditoriumBackstage(await auditorium.getId());
+            const inviteTargets = await conference.getInviteTargetsForAuditorium(auditorium);
+            const bsInviteTargets = await conference.getInviteTargetsForAuditorium(auditorium, true);
+            await append(inviteTargets, bsInviteTargets, await auditorium.getId(), auditorium.roomId, bs.roomId, doAppend);
+        }
+        for (const spiRoom of conference.storedInterestRooms) {
+            const doAppend = targetAudId && (targetAudId === "all" || targetAudId === await spiRoom.getId());
+            const inviteTargets = await conference.getInviteTargetsForInterest(spiRoom);
+            await append(inviteTargets, null, await spiRoom.getId(), spiRoom.roomId, null, doAppend);
+        }
+        html += "</ul>";
+
+        if (!targetAudId) {
+            html = "";
+        }
+
+        const acceptedPct = Math.round((totalJoined / totalInvites) * 100);
+        const emailPct = Math.round((totalEmails / totalInvites) * 100);
+
+        html = `<b>Summary:</b> ${htmlNum(acceptedPct)} have joined, ${htmlNum(emailPct, true)} have pending emails. ${targetAudId ? '<hr />' : ''}${html}`;
+
+        await client.replyHtmlNotice(roomId, event, html);
+    }
+}

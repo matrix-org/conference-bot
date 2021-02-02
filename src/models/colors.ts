@@ -15,4 +15,4 @@ limitations under the License.
 */
 
 export const COLOR_RED = "#ff0000";
-export const COLOR_GREEN = "#00cc00";
+export const COLOR_GREEN = "#00aa00";

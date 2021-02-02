@@ -50,6 +50,7 @@ import { Scheduler } from "./Scheduler";
 import { RunCommand } from "./commands/RunCommand";
 import { StopCommand } from "./commands/StopCommand";
 import { CopyModeratorsCommand } from "./commands/CopyModeratorsCommand";
+import { AttendanceCommand } from "./commands/AttendanceCommand";
 
 config.RUNTIME = {
     client: null,
@@ -141,6 +142,7 @@ function registerCommands() {
         new RunCommand(),
         new StopCommand(),
         new CopyModeratorsCommand(),
+        new AttendanceCommand(),
     ];
 
     client.on("room.message", async (roomId: string, event: any) => {
