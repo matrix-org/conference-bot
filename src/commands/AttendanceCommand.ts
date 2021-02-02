@@ -25,6 +25,8 @@ export class AttendanceCommand implements ICommand {
     public readonly prefixes = ["attendance"];
 
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
+        await client.sendNotice(roomId, "Calculating...");
+
         let totalEmails = 0;
         let totalJoined = 0;
         let totalInvites = 0;
@@ -35,7 +37,7 @@ export class AttendanceCommand implements ICommand {
             if (Number.isNaN(n)) {
                 n = 0;
             }
-            if (invert ? (n > 75) : (n < 75)) {
+            if (invert ? (n > 30) : (n < 75)) {
                 return `<b><font color='${COLOR_RED}'>${n}%</font></b>`;
             } else {
                 return `<b><font color='${COLOR_GREEN}'>${n}%</font></b>`;
