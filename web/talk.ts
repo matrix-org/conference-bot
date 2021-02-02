@@ -51,7 +51,7 @@ if (isWidget) {
     joinButton.style.display = 'block';
 }
 
-makeLivestream(() => showVideo(true));
+makeLivestream(showVideo);
 
 function showVideo(ready = true) {
     if (widgetApi) widgetApi.setAlwaysOnScreen(false);
@@ -63,7 +63,7 @@ function showVideo(ready = true) {
     if (isWidget) {
         joinButton.style.display = 'inline';
     }
-    muteButton.style.display = 'inline';
+    muteButton.style.display = ready ? 'inline' : 'none';
 }
 
 function showJitsi() {
