@@ -17,7 +17,7 @@ limitations under the License.
 import * as config from "config";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "./Conference";
-import { IRCBridgeOpts } from "./IRCBridge";
+import { IRCBridge, IRCBridgeOpts } from "./IRCBridge";
 import { Scheduler } from "./Scheduler";
 
 interface IConfig {
@@ -85,6 +85,7 @@ interface IConfig {
         client: MatrixClient;
         conference: Conference;
         scheduler: Scheduler;
+        ircBridge: IRCBridge;
     };
 }
 

@@ -55,6 +55,7 @@ config.RUNTIME = {
     client: null,
     conference: null,
     scheduler: null,
+    ircBridge: null,
 };
 
 process.on('SIGINT', () => {
@@ -81,6 +82,7 @@ config.RUNTIME.scheduler = scheduler;
 const scoreboard = new Scoreboard(conference, client);
 
 const ircBridge = new IRCBridge(config.ircBridge, client);
+config.RUNTIME.ircBridge = ircBridge;
 
 let localpart;
 let displayName;

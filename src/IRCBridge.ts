@@ -17,6 +17,9 @@ limitations under the License.
 import { MatrixClient, MatrixEvent } from "matrix-bot-sdk";
 import * as irc from "irc-upd";
 import { Auditorium } from "./models/Auditorium";
+import { InterestRoom } from "./models/InterestRoom";
+import config from "./config";
+import { makeLocalpart } from "./utils/aliases";
 
 export interface IRCBridgeOpts {
     botNick: string;
@@ -50,6 +53,14 @@ export class IRCBridge {
         const name = await auditorium.getName();
         if (!name) {
             throw Error('Auditorium name is empty');
+        }
+        return `${this.config.channelPrefix}${name}`;
+    }
+
+    public async deriveChannelNameSI(interest: InterestRoom) {
+        const name = makeLocalpart(await interest.getName(), await interest.getId());
+        if (!name) {
+            throw Error('Special interest name is empty');
         }
         return `${this.config.channelPrefix}${name}`;
     }

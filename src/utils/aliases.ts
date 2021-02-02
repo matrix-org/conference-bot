@@ -55,7 +55,7 @@ export async function safeAssignAlias(client: MatrixClient, roomId: string, loca
     }
 }
 
-export async function assignAliasVariations(client: MatrixClient, roomId: string, localpart: string, identifier?: string): Promise<void> {
+export function makeLocalpart(localpart: string, identifier: string): string {
     if (identifier && config.conference.prefixes.suffixes) {
         for (const [prefix, suffix] of Object.entries(config.conference.prefixes.suffixes)) {
             if (identifier.startsWith(prefix)) {
@@ -63,6 +63,11 @@ export async function assignAliasVariations(client: MatrixClient, roomId: string
             }
         }
     }
+    return localpart;
+}
+
+export async function assignAliasVariations(client: MatrixClient, roomId: string, localpart: string, identifier?: string): Promise<void> {
+    localpart = makeLocalpart(localpart, identifier);
     const localparts = new Set([localpart, localpart.toLowerCase(), localpart.toUpperCase()]);
     for (const lp of localparts) {
         await safeAssignAlias(client, roomId, lp);

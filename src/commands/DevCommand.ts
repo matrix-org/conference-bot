@@ -18,19 +18,19 @@ import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import config from "../config";
-import { ScheduledTaskType } from "../Scheduler";
 
 export class DevCommand implements ICommand {
     public readonly prefixes = ["dev"];
 
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
-        const db = await conference.getPentaDb();
-        const upcomingTalks = await db.getUpcomingTalkStarts(5, 5);
-        const upcomingQA = await db.getUpcomingQAStarts(5, 5);
-        const upcomingEnds = await db.getUpcomingTalkEnds(5, 5);
-
-        upcomingTalks.forEach(e => config.RUNTIME.scheduler.tryScheduleTask(ScheduledTaskType.TalkStart, e));
-        upcomingQA.forEach(e => config.RUNTIME.scheduler.tryScheduleTask(ScheduledTaskType.TalkQA, e));
-        upcomingEnds.forEach(e => config.RUNTIME.scheduler.tryScheduleTask(ScheduledTaskType.TalkEnd, e));
+        const interestRoom = conference.getInterestRoom(args[0]);
+        const audRoom = conference.getAuditorium(args[0]);
+        if (interestRoom) {
+            await client.replyNotice(roomId, event, `Freenode channel: ${await config.RUNTIME.ircBridge.deriveChannelNameSI(interestRoom)}`);
+        } else if (audRoom) {
+            await client.replyNotice(roomId, event, `Freenode channel: ${await config.RUNTIME.ircBridge.deriveChannelName(audRoom)}`);
+        } else {
+            await client.replyNotice(roomId, event, "Unknown auditorium/interest room");
+        }
     }
 }
