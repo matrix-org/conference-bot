@@ -97,10 +97,6 @@ export function makeLivestream(readyFn: (isReady: boolean) => void) {
         videoEl.addEventListener('error', (e) => {
             onNetworkError();
         });
-
-        videoEl.addEventListener('ended', () => {
-            onNetworkError();
-        });
     }
     loadHlsMedia(videoUrl);
 }
