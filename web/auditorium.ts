@@ -23,9 +23,10 @@ const messagesEl = document.getElementById("messages");
 messagesEl.style.display = 'block';
 muteButton.style.display = 'block';
 controlsEl.style.display = 'block';
-makeLivestream(() => showVideo());
+makeLivestream(showVideo);
 
-function showVideo() {
-    messagesEl.style.display = 'none';
-    videoEl.style.display = 'block';
+function showVideo(ready = true) {
+    messagesEl.style.display = ready ? 'none' : 'block';
+    videoEl.style.display = ready ? 'block' : 'none';
+    muteButton.style.display = ready ? 'inline' : 'none';
 }
