@@ -20,13 +20,12 @@ import { sha256 } from "../utils";
 import { Auditorium } from "./Auditorium";
 import config from "../config";
 import { MatrixClient } from "matrix-bot-sdk";
-import { base32 } from "rfc4648";
 import { Talk } from "./Talk";
 
 export interface ILayout {
     widgets: {
         [widgetId: string]: {
-            container: "top"|"right";
+            container: "top" | "right";
             index?: number;
             width?: number;
             height?: number;
@@ -144,7 +143,7 @@ export class LiveWidget {
     }
 
     public static layoutForTalk(qa: IStateEvent<IWidget>, scoreboard: IStateEvent<IWidget>): IStateEvent<ILayout> {
-        return {
+        const val: IStateEvent<ILayout> = {
             type: "io.element.widgets.layout",
             state_key: "",
             content: {
@@ -152,18 +151,21 @@ export class LiveWidget {
                     [qa.state_key]: {
                         container: "top",
                         index: 0,
-                        width: 65,
-                        height: 50,
-                    },
-                    [scoreboard.state_key]: {
-                        container: "top",
-                        index: 1,
-                        width: 34,
-                        height: 50,
+                        width: scoreboard ? 65 : 100,
+                        height: 60,
                     },
                 },
             },
         };
+        if (scoreboard) {
+            val.content.widgets[scoreboard.state_key] = {
+                container: "top",
+                index: 1,
+                width: 34,
+                height: 60,
+            };
+        }
+        return val;
     }
 
     public static layoutForHybrid(qa: IStateEvent<IWidget>): IStateEvent<ILayout> {

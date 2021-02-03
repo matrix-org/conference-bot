@@ -22,6 +22,8 @@ import config from "./config";
 import { LogLevel, LogService, MatrixClient, MentionPill } from "matrix-bot-sdk";
 import { makeRoomPublic } from "./utils";
 import { Scoreboard } from "./Scoreboard";
+import { IStateEvent } from "./models/room_state";
+import { LiveWidget } from "./models/LiveWidget";
 
 export enum ScheduledTaskType {
     TalkStart = "talk_start",
@@ -230,6 +232,12 @@ export class Scheduler {
         } else if (task.type === ScheduledTaskType.TalkEnd) {
             if (!confAud || !confTalk) return; // probably a special interest room
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk has ended - opening up this room to all attendees.</h3><p>@room - They won't see the history in this room.</p>`);
+            const widget = await LiveWidget.forTalk(confTalk, this.client);
+            const layout = await LiveWidget.layoutForTalk(widget, null);
+            const scoreboard = await LiveWidget.scoreboardForTalk(confTalk, this.client);
+            await this.client.sendStateEvent(confTalk.roomId, widget.type, widget.state_key, widget.content);
+            await this.client.sendStateEvent(confTalk.roomId, scoreboard.type, scoreboard.state_key, {});
+            await this.client.sendStateEvent(confTalk.roomId, layout.type, layout.state_key, layout.content);
             await makeRoomPublic(confTalk.roomId, this.client);
             const talkPill = await MentionPill.forRoom(confTalk.roomId, this.client);
             await this.client.sendHtmlText(confAud.roomId, `<h3>The talk will end shortly</h3><p>If the speakers are available, they'll be hanging out in ${talkPill.html}</p>`);
