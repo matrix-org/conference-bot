@@ -69,9 +69,11 @@ export function getStartTime(task: ITask): number {
 
 export function sortTasks(tasks: ITask[]): ITask[] {
     const implicitTaskOrder = [
-        ScheduledTaskType.TalkStart,
-        ScheduledTaskType.TalkQA,
+        // Unconventionally, we order this backwards so the messages show up as
+        // concluding a talk before starting a new one.
         ScheduledTaskType.TalkEnd,
+        ScheduledTaskType.TalkQA,
+        ScheduledTaskType.TalkStart,
     ];
     tasks.sort((a, b) => {
         const diff = getStartTime(a) - getStartTime(b);
