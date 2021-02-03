@@ -213,7 +213,7 @@ export class Scheduler {
 
         if (task.type === ScheduledTaskType.TalkStart) {
             if (!task.talk.prerecorded) {
-                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk is not pre-recorded.</h3><p>This room will now be opened up for attendees to visit. They will not be able to see history.</p>`);
+                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk is not pre-recorded.</h3><p>@room - This room will now be opened up for attendees to visit. They will not be able to see history.</p>`);
                 await makeRoomPublic(confTalk.roomId, this.client);
                 const talkPill = await MentionPill.forRoom(confTalk.roomId, this.client);
                 await this.client.sendHtmlText(confAud.roomId, `<h3>${await confTalk.getName()}</h3><p><b>There is no video for this talk.</b> If the speakers are available, they'll be hanging out in ${talkPill.html}</p>`);
@@ -227,7 +227,7 @@ export class Scheduler {
             await this.client.sendHtmlText(confAud.roomId, `<h3>Q&A is starting shortly</h3><p>Feel free to continue asking questions for the speakers - the conversation will continue in the hallway after the Q&A.</p>`);
         } else if (task.type === ScheduledTaskType.TalkEnd) {
             if (!confAud || !confTalk) return; // probably a special interest room
-            await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk has ended - opening up this room to all attendees.</h3><p>They won't see the history in this room.</p>`);
+            await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk has ended - opening up this room to all attendees.</h3><p>@room - They won't see the history in this room.</p>`);
             await makeRoomPublic(confTalk.roomId, this.client);
             const talkPill = await MentionPill.forRoom(confTalk.roomId, this.client);
             await this.client.sendHtmlText(confAud.roomId, `<h3>The talk will end shortly</h3><p>If the speakers are available, they'll be hanging out in ${talkPill.html}</p>`);
