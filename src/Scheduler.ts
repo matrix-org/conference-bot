@@ -20,7 +20,7 @@ import AwaitLock from "await-lock";
 import { logMessage } from "./LogProxy";
 import config from "./config";
 import { LogLevel, LogService, MatrixClient, MentionPill } from "matrix-bot-sdk";
-import { makeRoomPublic, objectFastClone } from "./utils";
+import { makeRoomPublic } from "./utils";
 import { Scoreboard } from "./Scoreboard";
 
 export enum ScheduledTaskType {
@@ -54,7 +54,7 @@ function makeTaskId(type: ScheduledTaskType, talk: IDbTalk): string {
     return `${type}::${talk.event_id}::${talk.conference_room}`;
 }
 
-function getStartTime(task: ITask): number {
+export function getStartTime(task: ITask): number {
     switch (task.type) {
         case ScheduledTaskType.TalkStart:
             return task.talk.start_datetime;
@@ -65,6 +65,24 @@ function getStartTime(task: ITask): number {
         default:
             throw new Error("Unknown task type for getStartTime(): " + task.type);
     }
+}
+
+export function sortTasks(tasks: ITask[]): ITask[] {
+    const implicitTaskOrder = [
+        ScheduledTaskType.TalkStart,
+        ScheduledTaskType.TalkQA,
+        ScheduledTaskType.TalkEnd,
+    ];
+    tasks.sort((a, b) => {
+        const diff = getStartTime(a) - getStartTime(b);
+        if (diff === 0) {
+            const ai = implicitTaskOrder.indexOf(a.type);
+            const bi = implicitTaskOrder.indexOf(b.type);
+            return ai - bi;
+        }
+        return diff;
+    });
+    return tasks;
 }
 
 export class Scheduler {
@@ -81,14 +99,17 @@ export class Scheduler {
             completed: [],
             inAuditoriums: [],
         });
-        //this.completedIds.push(...(schedulerData?.completed || []));
+        this.completedIds.push(...(schedulerData?.completed || []));
+        this.inAuditoriums.push(...(schedulerData?.inAuditoriums || []));
 
-        // TODO: Should we resume automatically?
+        if (this.inAuditoriums.length) {
+            await this.client.sendNotice(config.managementRoom, `Running schedule in auditoriums: ${this.inAuditoriums.join(', ')}`);
+        }
 
         await this.runTasks();
     }
 
-    public async devReset() {
+    public async reset() {
         await this.lock.acquireAsync();
         try {
             this.completedIds = [];
@@ -97,8 +118,8 @@ export class Scheduler {
         }
     }
 
-    public devInspect(): any {
-        return objectFastClone(this.pending);
+    public inspect(): ITask[] {
+        return Object.values(this.pending);
     }
 
     private async persistProgress() {
@@ -143,7 +164,7 @@ export class Scheduler {
         LogService.info("Scheduler", "Running tasks");
         try {
             const taskIds = Object.keys(this.pending);
-            const toExec: [number, ITask][] = [];
+            const toExec: ITask[] = [];
             for (const taskId of taskIds) {
                 if (this.completedIds.includes(taskId)) {
                     delete this.pending[taskId];
@@ -152,10 +173,10 @@ export class Scheduler {
                 const task = this.pending[taskId];
                 const startTime = getStartTime(task);
                 if (startTime > now) continue;
-                toExec.push([startTime, task]);
+                toExec.push(task);
             }
-            toExec.sort((a, b) => a[0] - b[0]);
-            for (const [startTime, task] of toExec) {
+            sortTasks(toExec);
+            for (const task of toExec) {
                 const taskId = task.id;
                 LogService.info("Scheduler", "Running task: " + taskId);
                 try {

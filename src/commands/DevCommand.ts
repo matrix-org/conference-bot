@@ -17,17 +17,11 @@ limitations under the License.
 import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
-import config from "../config";
 
 export class DevCommand implements ICommand {
     public readonly prefixes = ["dev"];
 
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
-        if (args[0] === 'reset') {
-            await config.RUNTIME.scheduler.devReset();
-            await client.sendNotice(roomId, "Done");
-        } else if (args[0] === 'view') {
-            await client.sendNotice(roomId, JSON.stringify(config.RUNTIME.scheduler.devInspect(), null, 4));
-        }
+
     }
 }

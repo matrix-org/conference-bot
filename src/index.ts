@@ -31,7 +31,8 @@ import { Liquid } from "liquidjs";
 import {
     makeHybridWidget,
     renderAuditoriumWidget,
-    renderHealthz, renderHybridWidget,
+    renderHealthz,
+    renderHybridWidget,
     renderScoreboard,
     renderScoreboardWidget,
     renderTalkWidget,
@@ -51,6 +52,7 @@ import { RunCommand } from "./commands/RunCommand";
 import { StopCommand } from "./commands/StopCommand";
 import { CopyModeratorsCommand } from "./commands/CopyModeratorsCommand";
 import { AttendanceCommand } from "./commands/AttendanceCommand";
+import { ScheduleCommand } from "./commands/ScheduleCommand";
 
 config.RUNTIME = {
     client: null,
@@ -143,6 +145,7 @@ function registerCommands() {
         new StopCommand(),
         new CopyModeratorsCommand(),
         new AttendanceCommand(),
+        new ScheduleCommand(),
     ];
 
     client.on("room.message", async (roomId: string, event: any) => {
