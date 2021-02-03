@@ -34,6 +34,10 @@ export async function doAuditoriumResolveAction(action: IAction, client: MatrixC
     const resolvedBackstagePeople = await resolveIdentifiers(backstagePeople);
     const backstage = conference.getAuditoriumBackstage(await aud.getId());
 
+    const allPossiblePeople = isInvite
+        ? resolvedBackstagePeople
+        : await resolveIdentifiers(await conference.getInviteTargetsForAuditorium(aud, true));
+
     await action(client, backstage.roomId, resolvedBackstagePeople);
 
     if (backstageOnly) return;
@@ -42,7 +46,7 @@ export async function doAuditoriumResolveAction(action: IAction, client: MatrixC
     const audPeople = isInvite
         ? await conference.getInviteTargetsForAuditorium(realAud)
         : await conference.getModeratorsForAuditorium(realAud);
-    const resolvedAudPeople = audPeople.map(p => resolvedBackstagePeople.find(b => p.person_id === b.person.person_id));
+    const resolvedAudPeople = audPeople.map(p => allPossiblePeople.find(b => p.person_id === b.person.person_id));
     if (resolvedAudPeople.some(p => !p)) throw new Error("Failed to resolve all targets for auditorium");
 
     await action(client, realAud.roomId, resolvedAudPeople);
@@ -52,7 +56,7 @@ export async function doAuditoriumResolveAction(action: IAction, client: MatrixC
         const talkPeople = isInvite
             ? await conference.getInviteTargetsForTalk(talk)
             : await conference.getModeratorsForTalk(talk);
-        const resolvedTalkPeople = talkPeople.map(p => resolvedBackstagePeople.find(b => p.person_id === b.person.person_id));
+        const resolvedTalkPeople = talkPeople.map(p => allPossiblePeople.find(b => p.person_id === b.person.person_id));
         if (resolvedTalkPeople.some(p => !p)) throw new Error("Failed to resolve all targets for talk");
 
         await action(client, talk.roomId, resolvedTalkPeople);
