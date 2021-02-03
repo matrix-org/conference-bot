@@ -22,17 +22,24 @@ import config from "./config";
 import { LogLevel, LogService, MatrixClient, MentionPill } from "matrix-bot-sdk";
 import { makeRoomPublic } from "./utils";
 import { Scoreboard } from "./Scoreboard";
-import { IStateEvent } from "./models/room_state";
 import { LiveWidget } from "./models/LiveWidget";
 
 export enum ScheduledTaskType {
     TalkStart = "talk_start",
     TalkEnd = "talk_end",
     TalkQA = "talk_q&a",
+    TalkStart5M = "talk_start_5m",
+    TalkStart1H = "talk_start_1h",
+    TalkQA5M = "talk_q&a_5m",
+    TalkEnd5M = "talk_end_5m",
 
     // TODO: tasks for "talks starts in 1 hr" and other timing points (tie into scoreboard)
     // TODO: tasks for "please check in" and "$person hasn't checked in"
 }
+
+const SKIPPABLE_TASKS = [
+    ScheduledTaskType.TalkStart1H,
+];
 
 const KEEP_LAST_TASKS = 200;
 const ACD_SCHEDULER = "org.matrix.confbot.scheduler_info";
@@ -58,10 +65,18 @@ function makeTaskId(type: ScheduledTaskType, talk: IDbTalk): string {
 
 export function getStartTime(task: ITask): number {
     switch (task.type) {
+        case ScheduledTaskType.TalkStart1H:
+            return task.talk.start_datetime - (60 * 60 * 1000);
+        case ScheduledTaskType.TalkStart5M:
+            return task.talk.start_datetime - (5 * 60 * 1000);
         case ScheduledTaskType.TalkStart:
             return task.talk.start_datetime;
+        case ScheduledTaskType.TalkEnd5M:
+            return task.talk.end_datetime - (5 * 60 * 1000);
         case ScheduledTaskType.TalkEnd:
             return task.talk.end_datetime;
+        case ScheduledTaskType.TalkQA5M:
+            return (task.talk.qa_start_datetime + (config.conference.database.scheduleBufferSeconds * 1000)) - (5 * 60 * 1000);
         case ScheduledTaskType.TalkQA:
             return task.talk.qa_start_datetime + (config.conference.database.scheduleBufferSeconds * 1000);
         default:
@@ -73,8 +88,12 @@ export function sortTasks(tasks: ITask[]): ITask[] {
     const implicitTaskOrder = [
         // Unconventionally, we order this backwards so the messages show up as
         // concluding a talk before starting a new one.
+        ScheduledTaskType.TalkEnd5M,
         ScheduledTaskType.TalkEnd,
+        ScheduledTaskType.TalkQA5M,
         ScheduledTaskType.TalkQA,
+        ScheduledTaskType.TalkStart1H,
+        ScheduledTaskType.TalkStart5M,
         ScheduledTaskType.TalkStart,
     ];
     tasks.sort((a, b) => {
@@ -146,18 +165,36 @@ export class Scheduler {
             const upcomingEnds = await pentaDb.getUpcomingTalkEnds(minVar, minVar);
 
             const scheduleAll = (talks: IDbTalk[], type: ScheduledTaskType) => {
-                if (type !== ScheduledTaskType.TalkStart) {
+                const startTasks = [
+                    ScheduledTaskType.TalkStart,
+                    ScheduledTaskType.TalkStart5M,
+                    ScheduledTaskType.TalkStart1H,
+                ]
+                if (!startTasks.includes(type)) {
                     talks = talks.filter(t => t.prerecorded);
                 }
 
-                talks
-                    .filter(e => !this.completedIds.includes(makeTaskId(type, e)))
+                talks.filter(e => !this.completedIds.includes(makeTaskId(type, e)))
                     .forEach(e => this.tryScheduleTask(type, e));
+
+                if (type === ScheduledTaskType.TalkStart) {
+                    talks.filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkStart5M, e)))
+                        .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkStart5M, e));
+                } else if (type === ScheduledTaskType.TalkQA) {
+                    talks.filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkQA5M, e)))
+                        .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkQA5M, e));
+                } else if (type === ScheduledTaskType.TalkEnd) {
+                    talks.filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkEnd5M, e)))
+                        .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkEnd5M, e));
+                }
             };
 
             scheduleAll(upcomingTalks, ScheduledTaskType.TalkStart);
             scheduleAll(upcomingQA, ScheduledTaskType.TalkQA);
             scheduleAll(upcomingEnds, ScheduledTaskType.TalkEnd);
+
+            const earlyWarnings = await pentaDb.getUpcomingTalkStarts(75, 15);
+            scheduleAll(earlyWarnings, ScheduledTaskType.TalkStart1H);
         } catch (e) {
             LogService.error("Scheduler", e);
             await logMessage(LogLevel.ERROR, "Scheduler", `Error scheduling tasks: ${e?.message || 'unknown error'}`);
@@ -177,6 +214,7 @@ export class Scheduler {
                 const task = this.pending[taskId];
                 const startTime = getStartTime(task);
                 if (startTime > now) continue;
+                if (SKIPPABLE_TASKS.includes(task.type) && (now - startTime) > 10 * 60 * 1000) continue;
                 toExec.push(task);
             }
             sortTasks(toExec);
@@ -226,11 +264,9 @@ export class Scheduler {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk is starting shortly.</h3>`);
             await this.client.sendHtmlText(confAud.roomId, `<h3>Up next: ${await confTalk.getName()}</h3><p>Ask your questions here for the Q&A at the end of the talk.</p>`);
         } else if (task.type === ScheduledTaskType.TalkQA) {
-            if (!confAud || !confTalk) return; // probably a special interest room
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your Q&A is starting shortly.</h3>`);
             await this.client.sendHtmlText(confAud.roomId, `<h3>Q&A is starting shortly</h3><p>Feel free to continue asking questions for the speakers - the conversation will continue in the hallway after the Q&A.</p>`);
         } else if (task.type === ScheduledTaskType.TalkEnd) {
-            if (!confAud || !confTalk) return; // probably a special interest room
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk has ended - opening up this room to all attendees.</h3><p>@room - They won't see the history in this room.</p>`);
             const widget = await LiveWidget.forTalk(confTalk, this.client);
             const layout = await LiveWidget.layoutForTalk(widget, null);
@@ -242,6 +278,22 @@ export class Scheduler {
             const talkPill = await MentionPill.forRoom(confTalk.roomId, this.client);
             await this.client.sendHtmlText(confAud.roomId, `<h3>The talk will end shortly</h3><p>If the speakers are available, they'll be hanging out in ${talkPill.html}</p>`);
             await this.scoreboard.resetScoreboard(confAud.roomId);
+        } else if (task.type === ScheduledTaskType.TalkStart1H) {
+            if (!task.talk.prerecorded) {
+                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 1 hour</h3><p><b>Your talk is not pre-recorded.</b> When your talk is set to begin, this room will be opened up for anyone to join. They will not be able to see history.</p>`);
+            } else {
+                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 1 hour</h3><p>If you haven't already checked in, please do so by sending 👋 in this room.</p>`);
+            }
+        } else if (task.type === ScheduledTaskType.TalkStart5M) {
+            if (!task.talk.prerecorded) {
+                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 5 minutes</h3><p><b>Your talk is not pre-recorded.</b> When your talk is set to begin, this room will be opened up for anyone to join. They will not be able to see history.</p>`);
+            } else {
+                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 5 minutes</h3><p>Please join the Jitsi conference at the top of this room to prepare for your Q&A.</p>`);
+            }
+        } else if (task.type === ScheduledTaskType.TalkQA5M) {
+            await this.client.sendHtmlText(confTalk.roomId, `<h3>Your Q&A starts in about 5 minutes</h3><p>The upvoted questions appear in the "Upvoted messages" widget next to the Jitsi conference. Prepare your answers!</p>`);
+        } else if (task.type === ScheduledTaskType.TalkEnd5M) {
+            await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 5 minutes</h3><p>The next talk will start automatically after yours. In 5 minutes, this room will be opened up for anyone to join. They will not be able to see history.</p>`);
         } else {
             await logMessage(LogLevel.WARN, "Scheduler", `Unknown task type for execute(): ${task.type}`);
         }

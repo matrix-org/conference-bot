@@ -130,6 +130,7 @@ conference:
     speakers: "#speakers:example.org"
 
   # How far in the future the bot should be looking before considering something "finalized".
+  # Should never be less than 5 minutes.
   lookaheadMinutes: 5
 
   # Connection information to get data about the conference during the conference.
