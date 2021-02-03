@@ -78,7 +78,7 @@ function showJitsi() {
 
 function onJitsiEnd() {
     showVideo(false);
-    play(() => showVideo(true));
+    play(showVideo);
 }
 
 const jitsiOpts = {
