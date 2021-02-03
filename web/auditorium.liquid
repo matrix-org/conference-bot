@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8" />
     <title>{{roomName}}</title>
-    <meta name="org.matrix.confbot.video_url" content="{{videoUrl}}" />
+    <meta name="org.matrix.confbot.video_url" content="https://livestream-fosdem.ems.host/hls/efxwmzdgojrfiqknn5mvotdyifvvo4b2mzxxgzdfnuxg64th/index.m3u8" />
 </head>
 <body>
     <noscript>Sorry, you'll need JavaScript to use this widget.</noscript>
     <div id="messages">
         <h3>Waiting for stream</h3>
     </div>
-    <video id="livestream" controls autoplay muted></video>
+    <video id="livestream" controls autoplay muted playsinline></video>
     <div id="controlBar">
         <button id="muteButton">Muted: Click to unmute</button>
     </div>
