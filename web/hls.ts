@@ -47,8 +47,28 @@ export function play(readyFn: (isReady: boolean) => void = null) {
     makeLivestream(readyFn || lastReadyFn);
 }
 
+function loadHlsMedia(url) {
+    if (Hls.isSupported()) {
+        hls.loadSource(url);
+    } else {
+        videoEl.src = url;
+    }
+}
+
 export function makeLivestream(readyFn: (isReady: boolean) => void) {
     lastReadyFn = readyFn;
+
+    const onNetworkError = () => {
+        console.log("Network error - trying again in 5s");
+        readyFn(false);
+        setTimeout(() => {
+            if (!isVideoMode) {
+                return;
+            }
+            loadHlsMedia(videoUrl);
+        }, 5000);
+    };
+
     if (Hls.isSupported()) {
         hls = new Hls({
             liveSyncDurationCount: 2,
@@ -61,14 +81,7 @@ export function makeLivestream(readyFn: (isReady: boolean) => void) {
         hls.on(Hls.Events.ERROR, (e, data) => {
             console.error("HLS error: ", e, data);
             if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-                console.log("Network error - trying again in 5s");
-                readyFn(false);
-                setTimeout(() => {
-                    if (!isVideoMode) {
-                        return;
-                    }
-                    hls.loadSource(videoUrl);
-                }, 5000);
+                onNetworkError();
             }
         });
         hls.on(Hls.Events.MANIFEST_LOADED, (e, data) => {
@@ -76,10 +89,20 @@ export function makeLivestream(readyFn: (isReady: boolean) => void) {
             readyFn(true);
         });
         hls.attachMedia(videoEl);
-        hls.loadSource(videoUrl);
     } else {
-        videoEl.src = videoUrl;
+        videoEl.addEventListener('canplay', () => {
+            readyFn(true);
+        });
+
+        videoEl.addEventListener('error', (e) => {
+            onNetworkError();
+        });
+
+        videoEl.addEventListener('ended', () => {
+            onNetworkError();
+        });
     }
+    loadHlsMedia(videoUrl);
 }
 
 muteButton.addEventListener('click', () => {
