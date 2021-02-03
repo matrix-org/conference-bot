@@ -16,11 +16,13 @@ limitations under the License.
 
 import "./common.scss";
 
-import { makeLivestream, videoEl } from "./hls";
+import { controlsEl, makeLivestream, muteButton, videoEl } from "./hls";
 
 const messagesEl = document.getElementById("messages");
 
 messagesEl.style.display = 'block';
+muteButton.style.display = 'block';
+controlsEl.style.display = 'block';
 makeLivestream(() => showVideo());
 
 function showVideo() {

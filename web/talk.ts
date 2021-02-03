@@ -18,17 +18,15 @@ import "./common.scss";
 
 import { joinConference } from "./jitsi";
 import { VideoConferenceCapabilities, WidgetApi } from "matrix-widget-api";
-import { makeLivestream, pause, play, videoEl } from "./hls";
+import { controlsEl, makeLivestream, muteButton, pause, play, videoEl } from "./hls";
 import { addlQuery, isWidget, widgetId } from "./widgets";
 import { getAttr } from "./common";
 
 const messagesEl = document.getElementById("messages");
-const controlsEl = document.getElementById("controlBar");
 const jitsiContainer = document.getElementById("jitsiContainer");
 const jitsiUnderlay = document.getElementById("jitsiUnderlay");
 const liveWarning = document.getElementById("liveBanner");
 const joinButton = document.getElementById('joinButton');
-const muteButton = document.getElementById('muteButton');
 
 let widgetApi: WidgetApi = null;
 
@@ -60,6 +58,7 @@ function showVideo(ready = true) {
     messagesEl.style.display = ready ? 'none' : 'block';
     videoEl.style.display = ready ? 'block' : 'none';
     liveWarning.style.display = 'none';
+    controlsEl.style.display = 'block';
     if (isWidget) {
         joinButton.style.display = 'inline';
     }
@@ -98,14 +97,3 @@ joinButton.addEventListener('click', () => {
     joinConference(jitsiOpts, widgetApi, () => onJitsiEnd());
 });
 
-muteButton.addEventListener('click', () => {
-    videoEl.muted = !videoEl.muted;
-});
-
-videoEl.addEventListener('volumechange', () => {
-    if (videoEl.muted) {
-        muteButton.innerHTML = "Audio Muted: Click to unmute";
-    } else {
-        muteButton.innerHTML = "Mute";
-    }
-});

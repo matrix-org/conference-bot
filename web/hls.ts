@@ -21,6 +21,8 @@ import { getAttr } from "./common";
 const videoUrl = getAttr('org.matrix.confbot.video_url');
 
 export const videoEl = document.getElementById("livestream") as HTMLVideoElement;
+export const muteButton = document.getElementById('muteButton');
+export const controlsEl = document.getElementById("controlBar");
 
 if (isWidget) {
     videoEl.classList.add('widget');
@@ -79,3 +81,15 @@ export function makeLivestream(readyFn: (isReady: boolean) => void) {
         videoEl.src = videoUrl;
     }
 }
+
+muteButton.addEventListener('click', () => {
+    videoEl.muted = !videoEl.muted;
+});
+
+videoEl.addEventListener('volumechange', () => {
+    if (videoEl.muted) {
+        muteButton.innerHTML = "Audio Muted: Click to unmute";
+    } else {
+        muteButton.innerHTML = "Mute";
+    }
+});
