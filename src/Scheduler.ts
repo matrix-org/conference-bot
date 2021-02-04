@@ -236,6 +236,7 @@ export class Scheduler {
                 toExec.push(task);
             }
             sortTasks(toExec);
+            let didAction = false;
             for (const task of toExec) {
                 const taskId = task.id;
                 LogService.info("Scheduler", "Running task: " + taskId);
@@ -247,8 +248,8 @@ export class Scheduler {
                 }
                 delete this.pending[taskId];
                 this.completedIds.push(taskId);
+                didAction = true;
             }
-            let didAction = false;
             if (didAction) await this.persistProgress();
         } catch (e) {
             LogService.error("Scheduler", e);
