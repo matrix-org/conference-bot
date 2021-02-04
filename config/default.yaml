@@ -128,6 +128,8 @@ conference:
   # haven't already.
   supportRooms:
     speakers: "#speakers:example.org"
+    specialInterest: "#stands:example.org"
+    coordinators: "#coordinators:example.org"
 
   # How far in the future the bot should be looking before considering something "finalized".
   # Should never be less than 5 minutes.

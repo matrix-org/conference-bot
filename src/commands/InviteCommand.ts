@@ -20,7 +20,7 @@ import { Conference } from "../Conference";
 import { invitePersonToRoom, ResolvedPersonIdentifier, resolveIdentifiers } from "../invites";
 import { RS_3PID_PERSON_ID } from "../models/room_state";
 import { runRoleCommand } from "./actions/roles";
-import { Role } from "../db/DbPerson";
+import { IDbPerson, Role } from "../db/DbPerson";
 import config from "../config";
 import { safeCreateRoom } from "../utils";
 import { AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, mergeWithCreationTemplate } from "../models/room_kinds";
@@ -28,6 +28,23 @@ import { logMessage } from "../LogProxy";
 
 export class InviteCommand implements ICommand {
     public readonly prefixes = ["invite", "inv"];
+
+    private async createInvites(client: MatrixClient, people: IDbPerson[], alias: string) {
+        const resolved = await resolveIdentifiers(people);
+
+        let targetRoomId: string;
+        try {
+            targetRoomId = await client.resolveRoom(alias);
+        } catch (e) {
+            // probably doesn't exist
+            targetRoomId = await safeCreateRoom(client, mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
+                room_alias_name: (new RoomAlias(alias)).localpart,
+                invite: [config.moderatorUserId],
+            }));
+        }
+
+        await InviteCommand.ensureInvited(client, targetRoomId, resolved);
+    }
 
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
         await client.replyNotice(roomId, event, "Sending invites to participants. This might take a while.");
@@ -39,20 +56,16 @@ export class InviteCommand implements ICommand {
 
         if (args[0] && args[0] === "speakers-support") {
             const people = await (await conference.getPentaDb()).findAllPeopleWithRole(Role.Speaker);
-            const resolved = await resolveIdentifiers(people);
-
-            let speakersRoomId: string;
-            try {
-                speakersRoomId = await client.resolveRoom(config.conference.supportRooms.speakers);
-            } catch (e) {
-                // probably doesn't exist
-                speakersRoomId = await safeCreateRoom(client, mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
-                    room_alias_name: (new RoomAlias(config.conference.supportRooms.speakers)).localpart,
-                    invite: [config.moderatorUserId],
-                }));
+            await this.createInvites(client, people, config.conference.supportRooms.speakers);
+        }else if (args[0] && args[0] === "coordinators-support") {
+            const people = await (await conference.getPentaDb()).findAllPeopleWithRole(Role.Coordinator);
+            await this.createInvites(client, people, config.conference.supportRooms.coordinators);
+        } else if (args[0] && args[0] === "si-support") {
+            const people: IDbPerson[] = [];
+            for (const sir of conference.storedInterestRooms) {
+                people.push(...await conference.getInviteTargetsForInterest(sir));
             }
-
-            await InviteCommand.ensureInvited(client, speakersRoomId, resolved);
+            await this.createInvites(client, people, config.conference.supportRooms.specialInterest);
         } else {
             await runRoleCommand(InviteCommand.ensureInvited, conference, client, roomId, event, args);
         }

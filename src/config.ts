@@ -55,6 +55,8 @@ interface IConfig {
         lookaheadMinutes: number;
         supportRooms: {
             speakers: string;
+            coordinators: string;
+            specialInterest: string;
         };
         prefixes: {
             auditoriumRooms: string[];
