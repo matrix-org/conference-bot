@@ -55,11 +55,31 @@ export class InviteCommand implements ICommand {
         // that a subset of people are joined.
 
         if (args[0] && args[0] === "speakers-support") {
-            const people = await (await conference.getPentaDb()).findAllPeopleWithRole(Role.Speaker);
-            await this.createInvites(client, people, config.conference.supportRooms.speakers);
+            let people: IDbPerson[] = [];
+            for (const aud of conference.storedAuditoriumBackstages) {
+                people.push(...await conference.getInviteTargetsForAuditorium(aud, true));
+            }
+            people = people.filter(p => p.event_role === Role.Speaker);
+            const newPeople: IDbPerson[] = [];
+            people.forEach(p => {
+                if (!newPeople.some(n => n.person_id === p.person_id)) {
+                    newPeople.push(p);
+                }
+            });
+            await this.createInvites(client, newPeople, config.conference.supportRooms.speakers);
         }else if (args[0] && args[0] === "coordinators-support") {
-            const people = await (await conference.getPentaDb()).findAllPeopleWithRole(Role.Coordinator);
-            await this.createInvites(client, people, config.conference.supportRooms.coordinators);
+            let people: IDbPerson[] = [];
+            for (const aud of conference.storedAuditoriumBackstages) {
+                people.push(...await conference.getInviteTargetsForAuditorium(aud, true));
+            }
+            people = people.filter(p => p.event_role === Role.Coordinator);
+            const newPeople: IDbPerson[] = [];
+            people.forEach(p => {
+                if (!newPeople.some(n => n.person_id === p.person_id)) {
+                    newPeople.push(p);
+                }
+            });
+            await this.createInvites(client, newPeople, config.conference.supportRooms.coordinators);
         } else if (args[0] && args[0] === "si-support") {
             const people: IDbPerson[] = [];
             for (const sir of conference.storedInterestRooms) {
