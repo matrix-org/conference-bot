@@ -17,7 +17,6 @@ limitations under the License.
 import { MatrixClient } from "matrix-bot-sdk";
 import AwaitLock from "await-lock";
 import { Conference } from "./Conference";
-import { isEmojiVariant } from "./utils";
 
 interface ICheckin {
     expires: number;
@@ -26,33 +25,20 @@ interface ICheckin {
 const CHECKIN_TIME = 4 * 60 * 60 * 1000; // 4 hours
 
 export class CheckInMap {
-    private checkedIn: {[userId: string]: ICheckin} = {};
+    private checkedIn: { [userId: string]: ICheckin } = {};
     private lock = new AwaitLock();
 
     constructor(private client: MatrixClient, private conference: Conference) {
         client.on('room.event', async (roomId: string, event: any) => {
-            const confTalk = conference.storedTalks.find(t => t.roomId === roomId);
-            if (!confTalk) return;
             if (!this.checkedIn[event['sender']]) return;
 
-            if (event['type'] === 'm.room.message') {
-                if (!isEmojiVariant('👋', event['content']?.['body'] || '')) {
-                    return;
+            if (event['type'] === 'm.room.message' || event['type'] === 'm.reaction') {
+                await this.lock.acquireAsync();
+                try {
+                    this.checkedIn[event['sender']] = {expires: (new Date()).getTime() + CHECKIN_TIME};
+                } finally {
+                    this.lock.release();
                 }
-            } else if (event['type'] === 'm.reaction') {
-                const emoji = event['content']?.['m.relates_to']?.['key'] || '';
-                if (!isEmojiVariant('👋', emoji)) {
-                    return;
-                }
-            } else {
-                return;
-            }
-
-            await this.lock.acquireAsync();
-            try {
-                this.checkedIn[event['sender']] = {expires: (new Date()).getTime() + CHECKIN_TIME};
-            } finally {
-                this.lock.release();
             }
         });
     }
@@ -64,6 +50,16 @@ export class CheckInMap {
                 if (this.checkedIn[userId]) continue;
                 this.checkedIn[userId] = {expires: 0};
             }
+        } finally {
+            this.lock.release();
+        }
+    }
+
+    public async extendCheckin(userId: string) {
+        await this.lock.acquireAsync();
+        try {
+            if (!this.checkedIn[userId]) return;
+            this.checkedIn[userId] = {expires: (new Date()).getTime() + CHECKIN_TIME};
         } finally {
             this.lock.release();
         }

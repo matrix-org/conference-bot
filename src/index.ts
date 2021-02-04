@@ -53,12 +53,14 @@ import { StopCommand } from "./commands/StopCommand";
 import { CopyModeratorsCommand } from "./commands/CopyModeratorsCommand";
 import { AttendanceCommand } from "./commands/AttendanceCommand";
 import { ScheduleCommand } from "./commands/ScheduleCommand";
+import { CheckInMap } from "./CheckInMap";
 
 config.RUNTIME = {
     client: null,
     conference: null,
     scheduler: null,
     ircBridge: null,
+    checkins: null,
 };
 
 process.on('SIGINT', () => {
@@ -86,6 +88,9 @@ config.RUNTIME.scheduler = scheduler;
 
 const ircBridge = new IRCBridge(config.ircBridge, client);
 config.RUNTIME.ircBridge = ircBridge;
+
+const checkins = new CheckInMap(client, conference);
+config.RUNTIME.checkins = checkins;
 
 let localpart;
 let displayName;

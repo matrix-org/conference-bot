@@ -19,6 +19,7 @@ import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "./Conference";
 import { IRCBridge, IRCBridgeOpts } from "./IRCBridge";
 import { Scheduler } from "./Scheduler";
+import { CheckInMap } from "./CheckInMap";
 
 interface IConfig {
     homeserverUrl: string;
@@ -88,6 +89,7 @@ interface IConfig {
         conference: Conference;
         scheduler: Scheduler;
         ircBridge: IRCBridge;
+        checkins: CheckInMap;
     };
 }
 
