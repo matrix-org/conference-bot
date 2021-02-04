@@ -67,7 +67,7 @@ export class InviteCommand implements ICommand {
                 }
             });
             await this.createInvites(client, newPeople, config.conference.supportRooms.speakers);
-        }else if (args[0] && args[0] === "coordinators-support") {
+        } else if (args[0] && args[0] === "coordinators-support") {
             let people: IDbPerson[] = [];
             for (const aud of conference.storedAuditoriums) {
                 const inviteTargets = await conference.getInviteTargetsForAuditorium(aud, true);
