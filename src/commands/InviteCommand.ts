@@ -69,13 +69,13 @@ export class InviteCommand implements ICommand {
             await this.createInvites(client, newPeople, config.conference.supportRooms.speakers);
         }else if (args[0] && args[0] === "coordinators-support") {
             let people: IDbPerson[] = [];
-            for (const aud of conference.storedAuditoriumBackstages) {
-                people.push(...await conference.getInviteTargetsForAuditorium(aud, true));
+            for (const aud of conference.storedAuditoriums) {
+                const inviteTargets = await conference.getInviteTargetsForAuditorium(aud, true);
+                people.push(...inviteTargets.filter(i => i.event_role === Role.Coordinator));
             }
-            people = people.filter(p => p.event_role === Role.Coordinator);
             const newPeople: IDbPerson[] = [];
             people.forEach(p => {
-                if (!newPeople.some(n => n.person_id === p.person_id)) {
+                if (!newPeople.some(n => n.person_id == p.person_id)) {
                     newPeople.push(p);
                 }
             });
