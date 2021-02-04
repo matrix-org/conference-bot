@@ -19,16 +19,12 @@ import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { LiveWidget } from "../models/LiveWidget";
 import { asyncFilter } from "../utils";
+import { Auditorium } from "../models/Auditorium";
 
 export class WidgetsCommand implements ICommand {
     public readonly prefixes = ["widgets"];
 
-    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
-        const aud = await conference.getAuditorium(args[0]);
-        if (!aud) {
-            return client.replyNotice(roomId, event, "Auditorium not found");
-        }
-
+    private async addToRoom(aud: Auditorium, client: MatrixClient, conference: Conference) {
         const audWidget = await LiveWidget.forAuditorium(aud, client);
         const audLayout = LiveWidget.layoutForAuditorium(audWidget);
         await client.sendStateEvent(aud.roomId, audWidget.type, audWidget.state_key, audWidget.content);
@@ -42,6 +38,20 @@ export class WidgetsCommand implements ICommand {
             await client.sendStateEvent(talk.roomId, talkWidget.type, talkWidget.state_key, talkWidget.content);
             await client.sendStateEvent(talk.roomId, scoreboardWidget.type, scoreboardWidget.state_key, scoreboardWidget.content);
             await client.sendStateEvent(talk.roomId, talkLayout.type, talkLayout.state_key, talkLayout.content);
+        }
+    }
+
+    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
+        if (args[0] === 'all') {
+            for (const aud of conference.storedAuditoriums) {
+                await this.addToRoom(aud, client, conference);
+            }
+        } else {
+            const aud = await conference.getAuditorium(args[0]);
+            if (!aud) {
+                return client.replyNotice(roomId, event, "Auditorium not found");
+            }
+            await this.addToRoom(aud, client, conference);
         }
 
         await client.replyNotice(roomId, event, "Widgets created");
