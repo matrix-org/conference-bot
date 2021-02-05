@@ -21,7 +21,7 @@ import { LogService, UserID } from "matrix-bot-sdk";
 import { objectFastClone } from "../utils";
 import { IDbTalk } from "./DbTalk";
 
-const PEOPLE_SELECT = "SELECT event_id::text, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM " + config.conference.database.tblPeople;
+const PEOPLE_SELECT = "SELECT event_id::text, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text, remark::text FROM " + config.conference.database.tblPeople;
 const NONEVENT_PEOPLE_SELECT = "SELECT DISTINCT 'ignore' AS event_id, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM " + config.conference.database.tblPeople;
 
 const START_QUERY = "start_datetime AT TIME ZONE $1 AT TIME ZONE 'UTC'";
@@ -88,6 +88,11 @@ export class PentaDb {
 
     public async findAllPeopleWithRole(role: Role): Promise<IDbPerson[]> {
         const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} WHERE event_role = $1`, [role]);
+        return this.sanitizeRecords(result.rows);
+    }
+
+    public async findAllPeopleWithRemark(remark: string): Promise<IDbPerson[]> {
+        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} WHERE remark = $1`, [remark]);
         return this.sanitizeRecords(result.rows);
     }
 

@@ -54,6 +54,7 @@ import { CopyModeratorsCommand } from "./commands/CopyModeratorsCommand";
 import { AttendanceCommand } from "./commands/AttendanceCommand";
 import { ScheduleCommand } from "./commands/ScheduleCommand";
 import { CheckInMap } from "./CheckInMap";
+import { FDMCommand } from "./commands/FDMCommand";
 
 config.RUNTIME = {
     client: null,
@@ -151,6 +152,7 @@ function registerCommands() {
         new CopyModeratorsCommand(),
         new AttendanceCommand(),
         new ScheduleCommand(),
+        new FDMCommand(),
     ];
 
     client.on("room.message", async (roomId: string, event: any) => {

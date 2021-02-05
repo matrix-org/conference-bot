@@ -28,4 +28,5 @@ export interface IDbPerson {
     email: string;
     matrix_id: string;
     conference_room: string;
+    remark: string;
 }
