@@ -140,7 +140,7 @@ export class LiveWidget {
                 id: widgetId,
                 type: "m.custom",
                 waitForIframeLoad: true,
-                name: "Upvoted messages",
+                name: "Schedule",
                 avatar_url: config.livestream.widgetAvatar,
                 url: widgetUrl,
                 data: {
