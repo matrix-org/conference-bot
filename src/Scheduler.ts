@@ -180,15 +180,6 @@ export class Scheduler {
             const upcomingEnds = await pentaDb.getUpcomingTalkEnds(minVar, minVar);
 
             const scheduleAll = (talks: IDbTalk[], type: ScheduledTaskType) => {
-                const startTasks = [
-                    ScheduledTaskType.TalkStart,
-                    ScheduledTaskType.TalkStart5M,
-                    ScheduledTaskType.TalkStart1H,
-                ]
-                if (!startTasks.includes(type)) {
-                    talks = talks.filter(t => t.prerecorded);
-                }
-
                 talks.filter(e => !this.completedIds.includes(makeTaskId(type, e)))
                     .forEach(e => this.tryScheduleTask(type, e));
 
@@ -274,7 +265,7 @@ export class Scheduler {
 
         if (task.type === ScheduledTaskType.TalkStart) {
             if (!task.talk.prerecorded) {
-                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk is not pre-recorded.</h3><p>@room - This room will now be opened up for attendees to visit. They will not be able to see history.</p>`);
+                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk is not pre-recorded.</h3><p>You are entering the Q&A for your talk's duration now.</p>`);
                 await makeRoomPublic(confTalk.roomId, this.client);
                 const talkPill = await MentionPill.forRoom(confTalk.roomId, this.client);
                 await this.client.sendHtmlText(confAud.roomId, `<h3>${await confTalk.getName()}</h3><p><b>There is no video for this talk.</b> If the speakers are available, they'll be hanging out in ${talkPill.html}</p>`);
@@ -283,6 +274,7 @@ export class Scheduler {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk is starting shortly.</h3>`);
             await this.client.sendHtmlText(confAud.roomId, `<h3>Up next: ${await confTalk.getName()}</h3><p>Ask your questions here for the Q&A at the end of the talk.</p>`);
         } else if (task.type === ScheduledTaskType.TalkQA) {
+            if (!task.talk.prerecorded)return;
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your Q&A is starting shortly.</h3>`);
             await this.client.sendHtmlText(confAud.roomId, `<h3>Q&A is starting shortly</h3><p>Feel free to continue asking questions in this room for the speakers - the conversation will continue in the hallway after the Q&A.</p>`);
         } else if (task.type === ScheduledTaskType.TalkEnd) {
@@ -299,7 +291,7 @@ export class Scheduler {
             await this.scoreboard.resetScoreboard(confAud.roomId);
         } else if (task.type === ScheduledTaskType.TalkStart1H) {
             if (!task.talk.prerecorded) {
-                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 1 hour</h3><p><b>Your talk is not pre-recorded.</b> When your talk is set to begin, this room will be opened up for anyone to join. They will not be able to see history.</p>`);
+                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 1 hour</h3><p><b>Your talk is not pre-recorded.</b> You will have your talk's full duration be Q&A.</p>`);
             } else {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 1 hour</h3><p>Please say something (anything) in this room to check in.</p>`);
 
@@ -309,7 +301,7 @@ export class Scheduler {
             }
         } else if (task.type === ScheduledTaskType.TalkStart5M) {
             if (!task.talk.prerecorded) {
-                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 5 minutes</h3><p><b>Your talk is not pre-recorded.</b> When your talk is set to begin, this room will be opened up for anyone to join. They will not be able to see history.</p>`);
+                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 5 minutes</h3><p><b>Your talk is not pre-recorded.</b> Your talk's full duration will be Q&A.</p>`);
             } else {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 5 minutes</h3><p>Please join the Jitsi conference at the top of this room to prepare for your Q&A.</p>`);
             }
@@ -372,9 +364,6 @@ export class Scheduler {
                 }
             }
             if (missing.length > 0) {
-                for (const person of coordinators) {
-                    await invitePersonToRoom(person, confTalk.roomId);
-                }
                 const pills: string[] = [];
                 for (const person of missing) {
                     if (person.mxid) {
@@ -383,8 +372,8 @@ export class Scheduler {
                         pills.push(`<b>${person.person.name}</b>`);
                     }
                 }
-                await this.client.sendHtmlText(confTalk.roomId, `<h3>Please check in.</h3><p>${pills.join(', ')} - please check in by saying something in here. I've invited the room coordinators for their visibility.</p>`);
-                await this.client.sendHtmlText(confAudBackstage.roomId, `<h3>Required persons not checked in for upcoming talk</h3><p>Coordinators: you have been invited to the talk room in question. One or more speakers have not checked in.</p>`);
+                await this.client.sendHtmlText(confTalk.roomId, `<h3>Please check in.</h3><p>${pills.join(', ')} - It does not appear as though you are present for your talk. Please say something in this room.</p>`);
+                await this.client.sendHtmlText(confAudBackstage.roomId, `<h3>Required persons not checked in for upcoming talk</h3><p>Please track down the speakers for <b>${await confTalk.getName()}</b>.</p><p>Missing: ${pills.join(', ')}</p>`);
             } // else no complaints
         } else if (task.type === ScheduledTaskType.TalkCheckin15M) {
             if (!task.talk.prerecorded) return;
@@ -406,9 +395,6 @@ export class Scheduler {
                 }
             }
             if (missing.length > 0) {
-                for (const person of coordinators) {
-                    await invitePersonToRoom(person, confTalk.roomId);
-                }
                 const pills: string[] = [];
                 for (const person of missing) {
                     if (person.mxid) {
@@ -420,7 +406,7 @@ export class Scheduler {
                 const roomPill = await MentionPill.forRoom(confTalk.roomId, this.client);
                 await this.client.sendHtmlText(config.managementRoom, `<h3>Talk is missing speakers</h3><p>${roomPill.html} is missing one or more speakers: ${pills.join(', ')}</p><p>The talk starts in about 15 minutes.</p>`);
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>@room - please check in.</h3><p>${pills.join(', ')} - It does not appear as though you are present for your talk. Please say something in this room. The conference staff have been notified.</p>`);
-                await this.client.sendHtmlText(confAudBackstage.roomId, `<h3>Required persons not checked in for upcoming talk</h3><p>Please track down the speakers for <b>${await confTalk.getName()}</b>. The conference staff have been notified.</p>`);
+                await this.client.sendHtmlText(confAudBackstage.roomId, `<h3>Required persons not checked in for upcoming talk</h3><p>Please track down the speakers for <b>${await confTalk.getName()}</b>. The conference staff have been notified.</p><p>Missing: ${pills.join(', ')}</p>`);
             } // else no complaints
         } else {
             await logMessage(LogLevel.WARN, "Scheduler", `Unknown task type for execute(): ${task.type}`);
