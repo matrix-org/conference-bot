@@ -14,10 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { IdentityClient } from "matrix-bot-sdk";
+import { IdentityClient, LogLevel } from "matrix-bot-sdk";
 import config from "./config";
 import { RS_3PID_PERSON_ID } from "./models/room_state";
 import { IDbPerson } from "./db/DbPerson";
+import { logMessage } from "./LogProxy";
 
 let idClient: IdentityClient;
 
@@ -70,6 +71,10 @@ export async function resolveIdentifiers(people: IDbPerson[]): Promise<ResolvedP
             resolved.push({mxid: person.matrix_id, person});
             continue;
         }
+        if (!person.email) {
+            await logMessage(LogLevel.WARN, "invites", `No email or Matrix ID for person ${person.person_id} (${person.event_role} at ${person.event_id}) in ${person.conference_room} - ${person.name}`);
+            continue;
+        }
 
         pendingLookups.push(person);
         if (pendingLookups.length >= MAX_EMAILS_PER_BATCH) {
@@ -83,7 +88,7 @@ export async function resolveIdentifiers(people: IDbPerson[]): Promise<ResolvedP
 
 export async function invitePersonToRoom(resolvedPerson: ResolvedPersonIdentifier, roomId: string): Promise<void> {
     if (resolvedPerson.mxid) {
-        return await config.RUNTIME.client.inviteUser(resolvedPerson.mxid, roomId);
+        return await config.RUNTIME.client.inviteUser(resolvedPerson.mxid.trim(), roomId);
     }
 
     await ensureIdentityClient();
