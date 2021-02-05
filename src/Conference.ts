@@ -382,7 +382,7 @@ export class Conference {
 
     public async getInviteTargetsForTalk(talk: Talk): Promise<IDbPerson[]> {
         const people = await this.getPeopleForTalk(talk);
-        const roles = [Role.Speaker, Role.Host];
+        const roles = [Role.Speaker, Role.Host, Role.Coordinator];
         return people.filter(p => roles.includes(p.event_role));
     }
 
