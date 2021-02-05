@@ -279,6 +279,7 @@ export class Scheduler {
         }
 
         if (task.type === ScheduledTaskType.TalkStart) {
+            await this.scoreboard.resetScoreboard(confAud.roomId);
             if (!task.talk.prerecorded) {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk is not pre-recorded.</h3><p>You are entering the Q&A for your talk's duration now.</p>`);
                 await this.client.sendHtmlText(confAud.roomId, `<h3>${await confTalk.getName()}</h3><p><b>There is no video for this talk.</b> Ask your questions here and they'll try to answer them!</p>`);
@@ -301,7 +302,6 @@ export class Scheduler {
             await makeRoomPublic(confTalk.roomId, this.client);
             const talkPill = await MentionPill.forRoom(confTalk.roomId, this.client);
             await this.client.sendHtmlText(confAud.roomId, `<h3>The talk will end shortly</h3><p>If the speakers are available, they'll be hanging out in ${talkPill.html}</p>`);
-            await this.scoreboard.resetScoreboard(confAud.roomId);
         } else if (task.type === ScheduledTaskType.TalkStart1H) {
             if (!task.talk.prerecorded) {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 1 hour</h3><p><b>Your talk is not pre-recorded.</b> You will have your talk's full duration be Q&A.</p>`);
