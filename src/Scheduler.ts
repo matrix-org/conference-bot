@@ -52,7 +52,7 @@ const ACD_SCHEDULER = "org.matrix.confbot.scheduler_info";
 
 // Run tasks often. Note that this also controls the lookahead timing and must be smaller than
 // the config value. Given this is hardcoded, it should be somewhat low.
-const RUN_INTERVAL_MS = 15000;
+const RUN_INTERVAL_MS = 8000;
 
 interface ISchedulerAccountData {
     completed: string[];
