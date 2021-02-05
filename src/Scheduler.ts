@@ -23,7 +23,7 @@ import { LogLevel, LogService, MatrixClient, MentionPill } from "matrix-bot-sdk"
 import { makeRoomPublic } from "./utils";
 import { Scoreboard } from "./Scoreboard";
 import { LiveWidget } from "./models/LiveWidget";
-import { invitePersonToRoom, ResolvedPersonIdentifier, resolveIdentifiers } from "./invites";
+import { ResolvedPersonIdentifier, resolveIdentifiers } from "./invites";
 import { Role } from "./db/DbPerson";
 
 export enum ScheduledTaskType {
@@ -266,15 +266,13 @@ export class Scheduler {
         if (task.type === ScheduledTaskType.TalkStart) {
             if (!task.talk.prerecorded) {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk is not pre-recorded.</h3><p>You are entering the Q&A for your talk's duration now.</p>`);
-                await makeRoomPublic(confTalk.roomId, this.client);
-                const talkPill = await MentionPill.forRoom(confTalk.roomId, this.client);
-                await this.client.sendHtmlText(confAud.roomId, `<h3>${await confTalk.getName()}</h3><p><b>There is no video for this talk.</b> If the speakers are available, they'll be hanging out in ${talkPill.html}</p>`);
+                await this.client.sendHtmlText(confAud.roomId, `<h3>${await confTalk.getName()}</h3><p><b>There is no video for this talk.</b> Ask your questions here and they'll try to answer them!</p>`);
                 return;
             }
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk is starting shortly.</h3>`);
             await this.client.sendHtmlText(confAud.roomId, `<h3>Up next: ${await confTalk.getName()}</h3><p>Ask your questions here for the Q&A at the end of the talk.</p>`);
         } else if (task.type === ScheduledTaskType.TalkQA) {
-            if (!task.talk.prerecorded)return;
+            if (!task.talk.prerecorded) return;
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your Q&A is starting shortly.</h3>`);
             await this.client.sendHtmlText(confAud.roomId, `<h3>Q&A is starting shortly</h3><p>Feel free to continue asking questions in this room for the speakers - the conversation will continue in the hallway after the Q&A.</p>`);
         } else if (task.type === ScheduledTaskType.TalkEnd) {
@@ -306,6 +304,7 @@ export class Scheduler {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 5 minutes</h3><p>Please join the Jitsi conference at the top of this room to prepare for your Q&A.</p>`);
             }
         } else if (task.type === ScheduledTaskType.TalkQA5M) {
+            if (!task.talk.prerecorded) return;
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your Q&A starts in about 5 minutes</h3><p>The upvoted questions appear in the "Upvoted messages" widget next to the Jitsi conference. Prepare your answers!</p>`);
         } else if (task.type === ScheduledTaskType.TalkEnd5M) {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 5 minutes</h3><p>The next talk will start automatically after yours. In 5 minutes, this room will be opened up for anyone to join. They will not be able to see history.</p>`);
