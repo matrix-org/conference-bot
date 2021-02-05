@@ -34,6 +34,7 @@ interface IConfig {
         auditoriumUrl: string;
         talkUrl: string;
         hybridUrl: string;
+        scheduleUrl: string;
         jitsiDomain: string;
         widgetAvatar: string;
         onpublish: {

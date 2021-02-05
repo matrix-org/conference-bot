@@ -21,6 +21,8 @@ import { Auditorium } from "./Auditorium";
 import config from "../config";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Talk } from "./Talk";
+import * as template from "string-template";
+import { base32 } from "rfc4648";
 
 export interface ILayout {
     widgets: {
@@ -120,6 +122,30 @@ export class LiveWidget {
                     title: title,
                     auditoriumId: await talk.getAuditoriumId(),
                     talkId: await talk.getId(),
+                },
+            } as IWidget,
+        };
+    }
+
+    public static async scheduleForAuditorium(aud: Auditorium, client: MatrixClient): Promise<IStateEvent<IWidget>> {
+        const widgetId = sha256(JSON.stringify(await aud.getDefinition()) + "_AUDSCHED");
+        const widgetUrl = template(config.livestream.scheduleUrl, {
+            audId: await aud.getId(),
+        });
+        return {
+            type: "im.vector.modular.widgets",
+            state_key: widgetId,
+            content: {
+                creatorUserId: await client.getUserId(),
+                id: widgetId,
+                type: "m.custom",
+                waitForIframeLoad: true,
+                name: "Upvoted messages",
+                avatar_url: config.livestream.widgetAvatar,
+                url: widgetUrl,
+                data: {
+                    title: "Conference Schedule",
+                    auditoriumId: await aud.getId(),
                 },
             } as IWidget,
         };

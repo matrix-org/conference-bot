@@ -27,7 +27,9 @@ export class WidgetsCommand implements ICommand {
     private async addToRoom(aud: Auditorium, client: MatrixClient, conference: Conference) {
         const audWidget = await LiveWidget.forAuditorium(aud, client);
         const audLayout = LiveWidget.layoutForAuditorium(audWidget);
+        const audSchedule = await LiveWidget.scheduleForAuditorium(aud, client);
         await client.sendStateEvent(aud.roomId, audWidget.type, audWidget.state_key, audWidget.content);
+        await client.sendStateEvent(aud.roomId, audSchedule.type, audSchedule.state_key, audSchedule.content);
         await client.sendStateEvent(aud.roomId, audLayout.type, audLayout.state_key, audLayout.content);
 
         const talks = await asyncFilter(conference.storedTalks, async t => (await t.getAuditoriumId()) === (await aud.getId()));

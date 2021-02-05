@@ -52,6 +52,11 @@ livestream:
   #  jitsi - The Jitsi conference name in lowercase.
   hybridUrl: "https://stream.example.org/conference-hybrids/hls/{jitsi}.m3u8"
 
+  # The URL template for the schedule widget.
+  # Available variables:
+  #  audId - The auditorium ID the talk is held in (eg: "D.collab")
+  scheduleUrl: "https://example.org/?theme=$theme&room={audId}"
+
   # The domain of the Jitsi server to use. It will be assumed to be using
   # https://github.com/matrix-org/prosody-mod-auth-matrix-user-verification
   jitsiDomain: "jitsi.riot.im"
