@@ -34,13 +34,11 @@ export enum ScheduledTaskType {
     TalkStart1H = "talk_start_1h",
     TalkQA5M = "talk_q&a_5m",
     TalkEnd5M = "talk_end_5m",
+    TalkEnd1M = "talk_end_1m",
 
     TalkCheckin45M = "talk_checkin_45m",
     TalkCheckin30M = "talk_checkin_30m",
     TalkCheckin15M = "talk_checkin_15m",
-
-    // TODO: tasks for "talks starts in 1 hr" and other timing points (tie into scoreboard)
-    // TODO: tasks for "please check in" and "$person hasn't checked in"
 }
 
 const SKIPPABLE_TASKS = [
@@ -85,6 +83,8 @@ export function getStartTime(task: ITask): number {
             return task.talk.start_datetime;
         case ScheduledTaskType.TalkEnd5M:
             return task.talk.end_datetime - (5 * 60 * 1000);
+        case ScheduledTaskType.TalkEnd1M:
+            return task.talk.end_datetime - (1 * 60 * 1000);
         case ScheduledTaskType.TalkEnd:
             return task.talk.end_datetime;
         case ScheduledTaskType.TalkQA5M:
@@ -101,6 +101,7 @@ export function sortTasks(tasks: ITask[]): ITask[] {
         // Unconventionally, we order this backwards so the messages show up as
         // concluding a talk before starting a new one.
         ScheduledTaskType.TalkEnd5M,
+        ScheduledTaskType.TalkEnd1M,
         ScheduledTaskType.TalkEnd,
         ScheduledTaskType.TalkQA5M,
         ScheduledTaskType.TalkQA,
@@ -192,6 +193,8 @@ export class Scheduler {
                 } else if (type === ScheduledTaskType.TalkEnd) {
                     talks.filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkEnd5M, e)))
                         .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkEnd5M, e));
+                    talks.filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkEnd1M, e)))
+                        .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkEnd1M, e));
                 }
             };
 
@@ -308,6 +311,8 @@ export class Scheduler {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your Q&A starts in about 5 minutes</h3><p>The upvoted questions appear in the "Upvoted messages" widget next to the Jitsi conference. Prepare your answers!</p>`);
         } else if (task.type === ScheduledTaskType.TalkEnd5M) {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 5 minutes</h3><p>The next talk will start automatically after yours. In 5 minutes, this room will be opened up for anyone to join. They will not be able to see history.</p>`);
+        } else if (task.type === ScheduledTaskType.TalkEnd1M) {
+            await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 1 minute!</h3><p>The next talk will start automatically after yours. Wrap it up!</p>`);
         } else if (task.type === ScheduledTaskType.TalkCheckin45M) {
             if (!task.talk.prerecorded) return;
             const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
