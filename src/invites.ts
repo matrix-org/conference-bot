@@ -72,7 +72,7 @@ export async function resolveIdentifiers(people: IDbPerson[]): Promise<ResolvedP
             continue;
         }
         if (!person.email) {
-            await logMessage(LogLevel.WARN, "invites", `No email or Matrix ID for person ${person.person_id} (${person.event_role} at ${person.event_id}) in ${person.conference_room} - ${person.name}`);
+            await logMessage(LogLevel.WARN, "invites", `No email or Matrix ID for person ${person.person_id} (${person.event_role}) in ${person.conference_room} - ${person.name}`);
             continue;
         }
 
