@@ -170,88 +170,100 @@ export class Scheduler {
     }
 
     private async runTasks() {
-        const now = (new Date()).getTime();
-        const pentaDb = await this.conference.getPentaDb();
-        await this.lock.acquireAsync();
-        LogService.info("Scheduler", "Scheduling tasks");
         try {
-            const minVar = config.conference.lookaheadMinutes;
-            const upcomingTalks = await pentaDb.getUpcomingTalkStarts(minVar, minVar);
-            const upcomingQA = await pentaDb.getUpcomingQAStarts(minVar, minVar);
-            const upcomingEnds = await pentaDb.getUpcomingTalkEnds(minVar, minVar);
+            const now = (new Date()).getTime();
+            const pentaDb = await this.conference.getPentaDb();
+            await this.lock.acquireAsync();
+            LogService.info("Scheduler", "Scheduling tasks");
+            try {
+                const minVar = config.conference.lookaheadMinutes;
+                const upcomingTalks = await pentaDb.getUpcomingTalkStarts(minVar, minVar);
+                const upcomingQA = await pentaDb.getUpcomingQAStarts(minVar, minVar);
+                const upcomingEnds = await pentaDb.getUpcomingTalkEnds(minVar, minVar);
 
-            const scheduleAll = (talks: IDbTalk[], type: ScheduledTaskType) => {
-                talks.filter(e => !this.completedIds.includes(makeTaskId(type, e)))
-                    .forEach(e => this.tryScheduleTask(type, e));
+                const scheduleAll = (talks: IDbTalk[], type: ScheduledTaskType) => {
+                    talks.filter(e => !this.completedIds.includes(makeTaskId(type, e)))
+                        .forEach(e => this.tryScheduleTask(type, e));
 
-                if (type === ScheduledTaskType.TalkStart) {
-                    talks.filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkStart5M, e)))
-                        .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkStart5M, e));
-                } else if (type === ScheduledTaskType.TalkQA) {
-                    talks.filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkQA5M, e)))
-                        .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkQA5M, e));
-                } else if (type === ScheduledTaskType.TalkEnd) {
-                    talks.filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkEnd5M, e)))
-                        .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkEnd5M, e));
-                    talks.filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkEnd1M, e)))
-                        .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkEnd1M, e));
-                }
-            };
+                    if (type === ScheduledTaskType.TalkStart) {
+                        talks.filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkStart5M, e)))
+                            .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkStart5M, e));
+                    } else if (type === ScheduledTaskType.TalkQA) {
+                        talks.filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkQA5M, e)))
+                            .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkQA5M, e));
+                    } else if (type === ScheduledTaskType.TalkEnd) {
+                        talks.filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkEnd5M, e)))
+                            .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkEnd5M, e));
+                        talks.filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkEnd1M, e)))
+                            .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkEnd1M, e));
+                    }
+                };
 
-            scheduleAll(upcomingTalks, ScheduledTaskType.TalkStart);
-            scheduleAll(upcomingQA, ScheduledTaskType.TalkQA);
-            scheduleAll(upcomingEnds, ScheduledTaskType.TalkEnd);
+                scheduleAll(upcomingTalks, ScheduledTaskType.TalkStart);
+                scheduleAll(upcomingQA, ScheduledTaskType.TalkQA);
+                scheduleAll(upcomingEnds, ScheduledTaskType.TalkEnd);
 
-            const earlyWarnings = await pentaDb.getUpcomingTalkStarts(75, 15);
-            scheduleAll(earlyWarnings, ScheduledTaskType.TalkStart1H);
-            scheduleAll(earlyWarnings, ScheduledTaskType.TalkCheckin15M);
-            scheduleAll(earlyWarnings, ScheduledTaskType.TalkCheckin30M);
-            scheduleAll(earlyWarnings, ScheduledTaskType.TalkCheckin45M);
-        } catch (e) {
-            LogService.error("Scheduler", e);
-            await logMessage(LogLevel.ERROR, "Scheduler", `Error scheduling tasks: ${e?.message || 'unknown error'}`);
-        } finally {
-            this.lock.release();
-        }
-        await this.lock.acquireAsync();
-        LogService.info("Scheduler", "Running tasks");
-        try {
-            const taskIds = Object.keys(this.pending);
-            const toExec: ITask[] = [];
-            for (const taskId of taskIds) {
-                if (this.completedIds.includes(taskId)) {
-                    delete this.pending[taskId];
-                    continue;
-                }
-                const task = this.pending[taskId];
-                const startTime = getStartTime(task);
-                if (startTime > now) continue;
-                if (SKIPPABLE_TASKS.includes(task.type) && (now - startTime) > 10 * 60 * 1000) continue;
-                toExec.push(task);
-            }
-            sortTasks(toExec);
-            let didAction = false;
-            for (const task of toExec) {
-                const taskId = task.id;
-                LogService.info("Scheduler", "Running task: " + taskId);
+                const earlyWarnings = await pentaDb.getUpcomingTalkStarts(75, 15);
+                scheduleAll(earlyWarnings, ScheduledTaskType.TalkStart1H);
+                scheduleAll(earlyWarnings, ScheduledTaskType.TalkCheckin15M);
+                scheduleAll(earlyWarnings, ScheduledTaskType.TalkCheckin30M);
+                scheduleAll(earlyWarnings, ScheduledTaskType.TalkCheckin45M);
+            } catch (e) {
+                LogService.error("Scheduler", e);
                 try {
-                    await this.execute(task);
+                    await logMessage(LogLevel.ERROR, "Scheduler", `Error scheduling tasks: ${e?.message || 'unknown error'}`);
                 } catch (e) {
                     LogService.error("Scheduler", e);
-                    await logMessage(LogLevel.ERROR, "Scheduler", `Error running task ${taskId}: ${e?.message || 'unknown error'}`);
                 }
-                delete this.pending[taskId];
-                this.completedIds.push(taskId);
-                didAction = true;
+            } finally {
+                this.lock.release();
             }
-            if (didAction) await this.persistProgress();
+            await this.lock.acquireAsync();
+            LogService.info("Scheduler", "Running tasks");
+            try {
+                const taskIds = Object.keys(this.pending);
+                const toExec: ITask[] = [];
+                for (const taskId of taskIds) {
+                    if (this.completedIds.includes(taskId)) {
+                        delete this.pending[taskId];
+                        continue;
+                    }
+                    const task = this.pending[taskId];
+                    const startTime = getStartTime(task);
+                    if (startTime > now) continue;
+                    if (SKIPPABLE_TASKS.includes(task.type) && (now - startTime) > 10 * 60 * 1000) continue;
+                    toExec.push(task);
+                }
+                sortTasks(toExec);
+                let didAction = false;
+                for (const task of toExec) {
+                    const taskId = task.id;
+                    LogService.info("Scheduler", "Running task: " + taskId);
+                    try {
+                        await this.execute(task);
+                    } catch (e) {
+                        LogService.error("Scheduler", e);
+                        await logMessage(LogLevel.ERROR, "Scheduler", `Error running task ${taskId}: ${e?.message || 'unknown error'}`);
+                    }
+                    delete this.pending[taskId];
+                    this.completedIds.push(taskId);
+                    didAction = true;
+                }
+                if (didAction) await this.persistProgress();
+            } catch (e) {
+                LogService.error("Scheduler", e);
+                try {
+                    await logMessage(LogLevel.ERROR, "Scheduler", `Error running tasks: ${e?.message || 'unknown error'}`);
+                } catch (e) {
+                    LogService.error("Scheduler", e);
+                }
+            } finally {
+                this.lock.release();
+            }
+            LogService.info("Scheduler", "Done running tasks");
         } catch (e) {
             LogService.error("Scheduler", e);
-            await logMessage(LogLevel.ERROR, "Scheduler", `Error running tasks: ${e?.message || 'unknown error'}`);
-        } finally {
-            this.lock.release();
         }
-        LogService.info("Scheduler", "Done running tasks");
         setTimeout(() => this.runTasks(), RUN_INTERVAL_MS);
     }
 
