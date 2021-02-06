@@ -18,6 +18,7 @@ import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { invitePersonToRoom, resolveIdentifiers } from "../invites";
+import { IDbPerson } from "../db/DbPerson";
 
 export class FDMCommand implements ICommand {
     public readonly prefixes = ["fdm"];
@@ -30,7 +31,14 @@ export class FDMCommand implements ICommand {
 
         const db = await conference.getPentaDb();
 
-        const volunteers = await db.findAllPeopleWithRemark("volunteer");
+        let volunteers = await db.findAllPeopleWithRemark("volunteer");
+        const dedupe: IDbPerson[] = [];
+        for (const volunteer of volunteers) {
+            if (!dedupe.some(p => p.person_id === volunteer.person_id)) {
+                dedupe.push(volunteer);
+            }
+        }
+        volunteers = dedupe;
 
         if (args[0] === 'verify') {
             let html = "<h3>Volunteers</h3><ul>";
