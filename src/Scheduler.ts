@@ -43,6 +43,8 @@ export enum ScheduledTaskType {
 
 const SKIPPABLE_TASKS = [
     ScheduledTaskType.TalkStart1H,
+    ScheduledTaskType.TalkCheckin45M,
+    ScheduledTaskType.TalkCheckin30M,
 ];
 
 const KEEP_LAST_TASKS = 200;
