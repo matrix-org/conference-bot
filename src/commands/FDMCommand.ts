@@ -15,10 +15,11 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { MatrixClient } from "matrix-bot-sdk";
+import { LogLevel, MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { invitePersonToRoom, resolveIdentifiers } from "../invites";
 import { IDbPerson } from "../db/DbPerson";
+import { logMessage } from "../LogProxy";
 
 export class FDMCommand implements ICommand {
     public readonly prefixes = ["fdm"];
@@ -50,13 +51,31 @@ export class FDMCommand implements ICommand {
         } else if (args[0] === 'invite') {
             const infodesk = await conference.getInviteTargetsForInterest(spi);
             const infodeskResolved = await resolveIdentifiers(infodesk);
+            const inBsJoined = await client.getJoinedRoomMembers(infBackstage);
+            const volJoined = await client.getJoinedRoomMembers(vol);
+            const volBsJoined = await client.getJoinedRoomMembers(volBackstage);
             for (const person of infodeskResolved) {
-                await invitePersonToRoom(person, infBackstage);
+                try {
+                    if (person.mxid && inBsJoined.includes(person.mxid)) continue;
+                    await invitePersonToRoom(person, infBackstage);
+                } catch (e) {
+                    await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.person_id} to ${infBackstage} - ignoring`);
+                }
             }
             const volResolved = await resolveIdentifiers(volunteers);
             for (const person of volResolved) {
-                await invitePersonToRoom(person, vol);
-                await invitePersonToRoom(person, volBackstage);
+                try {
+                    if (person.mxid && volJoined.includes(person.mxid)) continue;
+                    await invitePersonToRoom(person, vol);
+                } catch (e) {
+                    await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.person_id} to ${vol} - ignoring`);
+                }
+                try {
+                    if (person.mxid && volBsJoined.includes(person.mxid)) continue;
+                    await invitePersonToRoom(person, volBackstage);
+                } catch (e) {
+                    await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.person_id} to ${volBackstage} - ignoring`);
+                }
             }
         } else {
             await client.replyNotice(roomId, event, "Unknown command");
