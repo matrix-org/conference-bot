@@ -77,6 +77,7 @@ export class FDMCommand implements ICommand {
                     await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.person_id} to ${volBackstage} - ignoring`);
                 }
             }
+            await client.sendNotice(roomId, "Invites sent");
         } else {
             await client.replyNotice(roomId, event, "Unknown command");
         }
