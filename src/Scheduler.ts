@@ -392,6 +392,10 @@ export class Scheduler {
                 }
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Please check in.</h3><p>${pills.join(', ')} - It does not appear as though you are present for your talk. Please say something in this room.</p>`);
                 await this.client.sendHtmlText(confAudBackstage.roomId, `<h3>Required persons not checked in for upcoming talk</h3><p>Please track down the speakers for <b>${await confTalk.getName()}</b>.</p><p>Missing: ${pills.join(', ')}</p>`);
+
+                const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
+                const resolved = (await resolveIdentifiers(userIds)).filter(p => p.mxid).map(p => p.mxid);
+                await config.RUNTIME.checkins.expectCheckinFrom(resolved);
             } // else no complaints
         } else if (task.type === ScheduledTaskType.TalkCheckin15M) {
             if (!task.talk.prerecorded) return;
@@ -425,6 +429,10 @@ export class Scheduler {
                 await this.client.sendHtmlText(config.managementRoom, `<h3>Talk is missing speakers</h3><p>${roomPill.html} is missing one or more speakers: ${pills.join(', ')}</p><p>The talk starts in about 15 minutes.</p>`);
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>@room - please check in.</h3><p>${pills.join(', ')} - It does not appear as though you are present for your talk. Please say something in this room. The conference staff have been notified.</p>`);
                 await this.client.sendHtmlText(confAudBackstage.roomId, `<h3>Required persons not checked in for upcoming talk</h3><p>Please track down the speakers for <b>${await confTalk.getName()}</b>. The conference staff have been notified.</p><p>Missing: ${pills.join(', ')}</p>`);
+
+                const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
+                const resolved = (await resolveIdentifiers(userIds)).filter(p => p.mxid).map(p => p.mxid);
+                await config.RUNTIME.checkins.expectCheckinFrom(resolved);
             } // else no complaints
         } else {
             await logMessage(LogLevel.WARN, "Scheduler", `Unknown task type for execute(): ${task.type}`);

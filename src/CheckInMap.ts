@@ -14,9 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MatrixClient } from "matrix-bot-sdk";
+import { LogService, MatrixClient } from "matrix-bot-sdk";
 import AwaitLock from "await-lock";
 import { Conference } from "./Conference";
+import {promises as fs} from "fs";
+import * as path from "path";
+import config from "./config";
 
 interface ICheckin {
     expires: number;
@@ -36,11 +39,29 @@ export class CheckInMap {
                 await this.lock.acquireAsync();
                 try {
                     this.checkedIn[event['sender']] = {expires: (new Date()).getTime() + CHECKIN_TIME};
+                    await this.persist();
                 } finally {
                     this.lock.release();
                 }
             }
         });
+        this.load();
+    }
+
+    private async persist() {
+        await fs.writeFile(path.join(config.dataPath, "checkins.json"), JSON.stringify(this.checkedIn), "utf-8");
+    }
+
+    private async load() {
+        try {
+            await this.lock.acquireAsync();
+            const str = await fs.readFile(path.join(config.dataPath, "checkins.json"), "utf-8");
+            this.checkedIn = JSON.parse(str || "{}");
+        } catch (e) {
+            LogService.error("CheckInMap", e);
+        } finally {
+            this.lock.release();
+        }
     }
 
     public async expectCheckinFrom(userIds: string[]) {
@@ -50,6 +71,7 @@ export class CheckInMap {
                 if (this.checkedIn[userId]) continue;
                 this.checkedIn[userId] = {expires: 0};
             }
+            await this.persist();
         } finally {
             this.lock.release();
         }
@@ -60,6 +82,7 @@ export class CheckInMap {
         try {
             if (!this.checkedIn[userId]) return;
             this.checkedIn[userId] = {expires: (new Date()).getTime() + CHECKIN_TIME};
+            await this.persist();
         } finally {
             this.lock.release();
         }
