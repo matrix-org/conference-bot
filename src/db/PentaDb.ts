@@ -125,7 +125,7 @@ export class PentaDb {
                     // we use the variable even though it's a no-op just to avoid
                     // the compiler optimizing us out.
                     const parsed = new UserID(userId);
-                    r.matrix_id = parsed.toString();
+                    r.matrix_id = parsed.toString().trim();
                 }
             } catch (e) {
                 LogService.warn("PentaDb", "Invalid user ID: " + userId, e);
