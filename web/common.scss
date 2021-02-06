@@ -101,7 +101,7 @@ html, body {
 }
 
 #liveBanner > span::after {
-  content: 'This conference is livestreamed/recorded.';
+  content: 'You are being live broadcasted';
 }
 
 @media only screen and (max-width: 600px) {
