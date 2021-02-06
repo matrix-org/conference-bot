@@ -112,11 +112,13 @@ let userId;
     }
 
     registerCommands();
-    setupWebserver();
 
     await client.joinRoom(config.managementRoom);
 
     await conference.construct();
+
+    setupWebserver();
+
     if (!conference.isCreated) {
         await client.sendHtmlNotice(config.managementRoom, "" +
             "<h4>Welcome!</h4>" +
