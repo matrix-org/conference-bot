@@ -323,8 +323,10 @@ export class Scheduler {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your Q&A starts in about 5 minutes</h3><p>The upvoted questions appear in the "Upvoted messages" widget next to the Jitsi conference. Prepare your answers!</p>`);
         } else if (task.type === ScheduledTaskType.TalkEnd5M) {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 5 minutes</h3><p>The next talk will start automatically after yours. In 5 minutes, this room will be opened up for anyone to join. They will not be able to see history.</p>`);
+            await this.client.sendHtmlText(confAud.roomId, `<h3>This talk ends in about 5 minutes</h3><p>Ask questions here for the speakers!</p>`);
         } else if (task.type === ScheduledTaskType.TalkEnd1M) {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 1 minute!</h3><p>The next talk will start automatically after yours. Wrap it up!</p>`);
+            await this.client.sendHtmlText(confAud.roomId, `<h3>This talk ends in about 1 minute!</h3><p>Last question!</p>`);
         } else if (task.type === ScheduledTaskType.TalkCheckin45M) {
             if (!task.talk.prerecorded) return;
             const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
