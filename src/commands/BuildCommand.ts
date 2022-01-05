@@ -18,10 +18,12 @@ import { ICommand } from "./ICommand";
 import { LogLevel, MatrixClient, MentionPill, RichReply } from "matrix-bot-sdk";
 import * as fetch from "node-fetch";
 import { PentabarfParser } from "../parsers/PentabarfParser";
+import { Auditorium } from "../models/Auditorium";
 import { ITalk } from "../models/schedule";
 import config from "../config";
 import { Conference } from "../Conference";
 import { logMessage } from "../LogProxy";
+import { editNotice } from "../utils";
 
 export class BuildCommand implements ICommand {
     public readonly prefixes = ["build", "b"];
@@ -66,40 +68,81 @@ export class BuildCommand implements ICommand {
             return;
         }
 
-        let auditoriumsCreated = 0;
-        let talksCreated = 0;
-        let specialInterestRoomsCreated = 0;
         if (!args.includes("sionly")) {
-            for (const auditorium of parsed.auditoriums) {
-                if (args.includes("backstages")) {
+            let auditoriumsCreated = 0;
+            const statusEventId = await client.sendNotice(
+                roomId,
+                `0/${parsed.auditoriums.length} auditoriums have been created`,
+            );
+            if (args.includes("backstages")) {
+                // Create auditorium backstages
+                for (const auditorium of parsed.auditoriums) {
                     await conference.createAuditoriumBackstage(auditorium);
                     auditoriumsCreated++;
-                    continue;
+                    editNotice(
+                        client,
+                        roomId,
+                        statusEventId,
+                        `${auditoriumsCreated}/${parsed.auditoriums.length} auditoriums have been created`,
+                    );
+                }
+            } else {
+                // Create auditoriums
+                const talks: [ITalk, Auditorium][] = [];
+                for (const auditorium of parsed.auditoriums) {
+                    const confAud = await conference.createAuditorium(auditorium);
+                    auditoriumsCreated++;
+                    editNotice(
+                        client,
+                        roomId,
+                        statusEventId,
+                        `${auditoriumsCreated}/${parsed.auditoriums.length} auditoriums have been created`,
+                    );
+
+                    Object.values(auditorium.talksByDate)
+                        .map(dayTalks => dayTalks.map(talk => [talk, confAud] as [ITalk, Auditorium]))
+                        .forEach(dayTalks => talks.push(...dayTalks));
                 }
 
-                const confAud = await conference.createAuditorium(auditorium);
-                auditoriumsCreated++;
-
                 if (!args.includes("notalks")) {
-                    const allTalks: ITalk[] = [];
-                    Object.values(auditorium.talksByDate).forEach(ea => allTalks.push(...ea));
-                    for (const talk of allTalks) {
-                        await conference.createTalk(talk, confAud);
+                    // Create talk rooms
+                    let talksCreated = 0;
+                    const statusEventId = await client.sendNotice(
+                        roomId,
+                        `0/${talks.length} talks have been created`,
+                    );
+                    for (const [talk, auditorium] of talks) {
+                        await conference.createTalk(talk, auditorium);
                         talksCreated++;
+                        editNotice(
+                            client,
+                            roomId,
+                            statusEventId,
+                            `${talksCreated}/${talks.length} talks have been created`,
+                        );
                     }
                 }
             }
         }
+
         if (!args.includes("nosi")) {
+            // Create special interest rooms
+            let specialInterestRoomsCreated = 0;
+            const statusEventId = await client.sendNotice(roomId, `0/${parsed.interestRooms.length} interest rooms have been created`);
             for (const siRoom of parsed.interestRooms) {
                 await conference.createInterestRoom(siRoom);
                 specialInterestRoomsCreated++;
+                await editNotice(
+                    client,
+                    roomId,
+                    statusEventId,
+                    `${specialInterestRoomsCreated}/${parsed.interestRooms.length} interest rooms have been created`,
+                );
             }
+        } else {
+            await client.sendNotice(roomId, "Skipped special interest rooms");
         }
 
-        await client.sendNotice(roomId, `${auditoriumsCreated} auditoriums have been created`);
-        await client.sendNotice(roomId, `${talksCreated} talks have been created`);
-        await client.sendNotice(roomId, `${specialInterestRoomsCreated} interest rooms have been created`);
         await client.sendHtmlNotice(roomId, "" +
             "<h4>Conference built</h4>" +
             "<p>Now it's time to <a href='https://github.com/matrix-org/conference-bot/blob/main/docs/importing-people.md'>import your participants &amp; team</a>.</p>"
