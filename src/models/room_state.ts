@@ -16,7 +16,7 @@ limitations under the License.
 
 import { IConference, ITalk, IAuditorium, IInterestRoom } from "./schedule";
 import { objectFastClone, objectFastCloneWithout } from "../utils";
-import { MSC1772Space } from "matrix-bot-sdk";
+import { Space } from "matrix-bot-sdk";
 import { IDbPerson } from "../db/DbPerson";
 
 export interface IStateEvent<T> {
@@ -133,7 +133,7 @@ export interface IStoredRole {
     name: string;
     spaceRoomId: string;
 }
-export function makeStoredRole(name: string, space: MSC1772Space): IStateEvent<IStoredRole> {
+export function makeStoredRole(name: string, space: Space): IStateEvent<IStoredRole> {
     return {
         type: RS_STORED_ROLE,
         state_key: name,
