@@ -14,12 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { LogService, MatrixClient, MSC1772Space } from "matrix-bot-sdk";
+import { LogService, MatrixClient, Space } from "matrix-bot-sdk";
 import { makeChildRoom, RS_STORED_SPACE } from "./room_state";
 import { Conference } from "../Conference";
 
 export class MatrixRoom {
-    protected space: MSC1772Space;
+    protected space: Space;
     protected canonicalAlias: string;
 
     constructor(public readonly roomId: string, protected client: MatrixClient, protected conference: Conference) {
@@ -30,12 +30,12 @@ export class MatrixRoom {
         await this.client.sendStateEvent(this.roomId, state.type, state.state_key, state.content);
     }
 
-    public async getSpace(): Promise<MSC1772Space> {
+    public async getSpace(): Promise<Space> {
         if (this.space) {
             return this.space;
         }
         const spaceState = await this.client.getRoomStateEvent(this.roomId, RS_STORED_SPACE, "");
-        this.space = await this.client.unstableApis.getSpace(spaceState.roomId);
+        this.space = await this.client.getSpace(spaceState.roomId);
         return this.space;
     }
 
