@@ -141,6 +141,21 @@ export async function makeRoomPublic(roomId: string, client: MatrixClient) {
     await client.sendStateEvent(roomId, "m.room.join_rules", "", {join_rule: "public"});
 }
 
+export async function editNotice(client: MatrixClient, roomId: string, eventId: string, text: string) {
+    await client.sendEvent(roomId, "m.room.message", {
+        body: text,
+        msgtype: "m.notice",
+        "m.new_content": {
+            "body": text,
+            "msgtype": "m.notice"
+        },
+        "m.relates_to": {
+            "rel_type": "m.replace",
+            "event_id": eventId,
+        }
+    });
+}
+
 export function isEmojiVariant(expected: string, value: string): boolean {
     return expected.codePointAt(0) === value.codePointAt(0);
 }
