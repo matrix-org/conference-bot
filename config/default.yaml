@@ -241,6 +241,10 @@ conference:
     suffixes:
       #"S.": "-stand"
 
+    # The display name suffixes to apply for certain prefixes of rooms
+    displayNameSuffixes:
+      #"S.": " stand"
+
 # Options related to the IRC bridge.
 ircBridge:
   # The nick to use when taking ownership of channels
