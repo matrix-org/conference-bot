@@ -41,7 +41,7 @@ import {
     RS_STORED_PERSON,
 } from "./models/room_state";
 import { makeDisplayName, objectFastClone, safeCreateRoom } from "./utils";
-import { assignAliasVariations } from "./utils/aliases";
+import { assignAliasVariations, makeLocalpart } from "./utils/aliases";
 import config from "./config";
 import { MatrixRoom } from "./models/MatrixRoom";
 import { Auditorium, AuditoriumBackstage } from "./models/Auditorium";
@@ -260,7 +260,9 @@ export class Conference {
         }
 
         const audSpace = await this.client.createSpace({
-            localpart: "space-" + config.conference.prefixes.aliases + auditorium.name,
+            localpart: makeLocalpart(
+                "space-" + config.conference.prefixes.aliases + auditorium.name, auditorium.id
+            ),
             isPublic: true,
             name: makeDisplayName(auditorium.name, auditorium.id),
         });
