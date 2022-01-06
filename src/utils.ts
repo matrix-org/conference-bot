@@ -159,3 +159,33 @@ export async function editNotice(client: MatrixClient, roomId: string, eventId: 
 export function isEmojiVariant(expected: string, value: string): boolean {
     return expected.codePointAt(0) === value.codePointAt(0);
 }
+
+/**
+ * Suffixes the given string according to the provided rules.
+ * @param str The string to be suffixed.
+ * @param identifier The identifier against which to evaluate the suffix rules.
+ * @param suffixRules A mapping from identifier prefixes to string suffixes.
+ * @returns The string, with any applicable suffixes applied.
+ */
+export function applySuffixRules(
+    str: string, identifier: string, suffixRules: {[prefix: string]: string}
+): string {
+    for (const [prefix, suffix] of Object.entries(suffixRules)) {
+        if (identifier.startsWith(prefix)) {
+            str += suffix;
+        }
+    }
+    return str;
+}
+
+/**
+ * Formats the display name for a room according to the config.
+ * @param name The base name of the room.
+ * @param identifier The identifier of the room.
+ * @returns The formatted display name for the room.
+ */
+export function makeDisplayName(name: string, identifier: string): string {
+    return applySuffixRules(
+        name, identifier, config.conference.prefixes.displayNameSuffixes
+    );
+}

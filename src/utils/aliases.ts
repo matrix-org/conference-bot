@@ -17,6 +17,7 @@ limitations under the License.
 import { LogLevel, LogService, MatrixClient, UserID } from "matrix-bot-sdk";
 import { logMessage } from "../LogProxy";
 import config from "../config";
+import { applySuffixRules } from "../utils";
 
 export interface ICanonicalAliasContent {
     alias: string;
@@ -55,15 +56,12 @@ export async function safeAssignAlias(client: MatrixClient, roomId: string, loca
     }
 }
 
-export function makeLocalpart(localpart: string, identifier: string): string {
-    if (identifier && config.conference.prefixes.suffixes) {
-        for (const [prefix, suffix] of Object.entries(config.conference.prefixes.suffixes)) {
-            if (identifier.startsWith(prefix)) {
-                localpart += suffix;
-            }
-        }
+export function makeLocalpart(localpart: string, identifier?: string): string {
+    if (!identifier) {
+        return localpart;
     }
-    return localpart;
+
+    return applySuffixRules(localpart, identifier, config.conference.prefixes.suffixes);
 }
 
 export async function assignAliasVariations(client: MatrixClient, roomId: string, localpart: string, identifier?: string): Promise<void> {
