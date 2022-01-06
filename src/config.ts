@@ -64,7 +64,10 @@ interface IConfig {
             auditoriumRooms: string[];
             interestRooms: string[];
             aliases: string;
-            suffixes:{
+            suffixes: {
+                [prefix: string]: string;
+            };
+            displayNameSuffixes: {
                 [prefix: string]: string;
             };
             nameOverrides: {
