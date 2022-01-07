@@ -68,6 +68,26 @@ export class BuildCommand implements ICommand {
             return;
         }
 
+        // Create subspaces
+        let subspacesCreated = 0;
+        const subspacesConfig = Object.entries(config.conference.subspaces);
+        const statusEventId = await client.sendNotice(
+            roomId,
+            `0/${subspacesConfig.length} subspaces have been created`,
+        );
+        for (const [subspaceId, subspaceConfig] of subspacesConfig) {
+            await conference.createSubspace(
+                subspaceId, subspaceConfig.displayName, subspaceConfig.alias
+            );
+            subspacesCreated++;
+            await editNotice(
+                client,
+                roomId,
+                statusEventId,
+                `${subspacesCreated}/${subspacesConfig.length} subspaces have been created`,
+            );
+        }
+
         if (!args.includes("sionly")) {
             let auditoriumsCreated = 0;
             const statusEventId = await client.sendNotice(

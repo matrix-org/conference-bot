@@ -31,6 +31,7 @@ import {
 import { IAuditorium, IConference, IInterestRoom, ITalk } from "./models/schedule";
 import {
     IStoredPerson,
+    IStoredSubspace,
     makeParentRoom,
     makeStoredAuditorium,
     makeStoredConference, makeStoredInterestRoom,
@@ -39,6 +40,7 @@ import {
     makeStoredTalk,
     RS_3PID_PERSON_ID,
     RS_STORED_PERSON,
+    RS_STORED_SUBSPACE,
 } from "./models/room_state";
 import { makeDisplayName, objectFastClone, safeCreateRoom } from "./utils";
 import { assignAliasVariations, makeLocalpart } from "./utils/aliases";
@@ -51,10 +53,14 @@ import { IDbPerson, Role } from "./db/DbPerson";
 import { PentaDb } from "./db/PentaDb";
 import { PermissionsCommand } from "./commands/PermissionsCommand";
 import { InterestRoom } from "./models/InterestRoom";
+import { IStateEvent } from "./models/room_state";
 
 export class Conference {
     private dbRoom: MatrixRoom;
     private pentaDb = new PentaDb();
+    private subspaces: {
+        [subspaceId: string]: Space
+    } = {};
     private auditoriums: {
         [auditoriumId: string]: Auditorium;
     } = {};
@@ -151,6 +157,7 @@ export class Conference {
 
     private reset() {
         this.dbRoom = null;
+        this.subspaces = {};
         this.auditoriums = {};
         this.auditoriumBackstages = {};
         this.talks = {};
@@ -205,6 +212,15 @@ export class Conference {
         for (const person of people) {
             this.people[person.pentaId] = person;
         }
+
+        // Locate created subspaces
+        const subspaceEvents = dbState.filter(
+            event => event.type === RS_STORED_SUBSPACE
+        ) as IStateEvent<IStoredSubspace>[];
+        for (const subspaceEvent of subspaceEvents) {
+            const roomId = subspaceEvent.content.roomId;
+            this.subspaces[subspaceEvent.state_key] = await this.client.getSpace(roomId);
+        }
     }
 
     public async createDb(conference: IConference) {
@@ -241,11 +257,42 @@ export class Conference {
         return this.dbRoom.getSpace();
     }
 
+    /**
+     * Creates a subspace defined in the bot config.
+     * @param subspaceId The id of the subspace.
+     * @param name The display name of the subspace.
+     * @param aliasLocalpart The localpart of the subspace's alias.
+     * @returns The newly created subspace.
+     */
+    public async createSubspace(
+        subspaceId: string, name: string, aliasLocalpart: string
+    ): Promise<Space> {
+        if (this.subspaces[subspaceId]) {
+            return this.subspaces[subspaceId];
+        }
+
+        const subspace = await this.client.createSpace({
+            isPublic: true,
+            localpart: "space-" + config.conference.prefixes.aliases + aliasLocalpart,
+            name: name,
+        });
+        await (await this.getSpace()).addChildSpace(subspace);
+
+        await this.client.sendStateEvent(this.dbRoom.roomId, RS_STORED_SUBSPACE, subspaceId, {
+            roomId: subspace.roomId,
+        } as IStoredSubspace);
+
+        this.subspaces[subspaceId] = subspace;
+
+        return subspace;
+    }
+
     public async createInterestRoom(interestRoom: IInterestRoom): Promise<InterestRoom> {
         if (this.interestRooms[interestRoom.id]) {
             return this.interestRooms[interestRoom.id];
         }
 
+        const parentSpace = await this.getDesiredParentSpace(interestRoom);
         const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(SPECIAL_INTEREST_CREATION_TEMPLATE, {
             creation_content: {
                 [RSC_CONFERENCE_ID]: this.id,
@@ -259,7 +306,7 @@ export class Conference {
         await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + interestRoom.name, interestRoom.id);
         await this.dbRoom.addDirectChild(roomId);
         this.interestRooms[interestRoom.id] = new InterestRoom(roomId, this.client, this);
-        await (await this.getSpace()).addChildRoom(roomId);
+        await parentSpace.addChildRoom(roomId);
 
         return this.interestRooms[interestRoom.id];
     }
@@ -269,6 +316,7 @@ export class Conference {
             return this.auditoriums[auditorium.id];
         }
 
+        const parentSpace = await this.getDesiredParentSpace(auditorium);
         const audSpace = await this.client.createSpace({
             localpart: makeLocalpart(
                 "space-" + config.conference.prefixes.aliases + auditorium.name, auditorium.id
@@ -276,7 +324,7 @@ export class Conference {
             isPublic: true,
             name: makeDisplayName(auditorium.name, auditorium.id),
         });
-        await (await this.getSpace()).addChildSpace(audSpace);
+        await parentSpace.addChildSpace(audSpace);
 
         const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_CREATION_TEMPLATE, {
             creation_content: {
@@ -364,6 +412,32 @@ export class Conference {
         await this.client.sendStateEvent(this.dbRoom.roomId, storedPerson.type, storedPerson.state_key, storedPerson.content);
         this.people[storedPerson.content.pentaId] = storedPerson.content;
         return this.people[storedPerson.content.pentaId];
+    }
+
+    /**
+     * Determines the space in which an auditorium space or interest room should reside.
+     * @param auditoriumOrInterestRoom The description of the auditorium or interest room.
+     * @returns The space in which the auditorium or interest room should reside.
+     */
+    public async getDesiredParentSpace(
+        auditoriumOrInterestRoom: IAuditorium | IInterestRoom
+    ): Promise<Space> {
+        const id = auditoriumOrInterestRoom.id;
+
+        for (const [subspaceId, subspaceConfig] of Object.entries(config.conference.subspaces)) {
+            for (const prefix of subspaceConfig.prefixes) {
+                if (id.startsWith(prefix)) {
+                    if (!(subspaceId in this.subspaces)) {
+                        throw new Error(`The ${subspaceId} subspace has not been created yet!`);
+                    }
+
+                    return this.subspaces[subspaceId];
+                }
+            }
+        }
+
+        // Default to the top-level conference space.
+        return await this.getSpace();
     }
 
     public getPerson(personId: string): IStoredPerson {
