@@ -40,7 +40,7 @@ import {
     RS_3PID_PERSON_ID,
     RS_STORED_PERSON,
 } from "./models/room_state";
-import { objectFastClone, safeCreateRoom } from "./utils";
+import { makeDisplayName, objectFastClone, safeCreateRoom } from "./utils";
 import { assignAliasVariations } from "./utils/aliases";
 import config from "./config";
 import { MatrixRoom } from "./models/MatrixRoom";
@@ -270,7 +270,7 @@ export class Conference {
         const audSpace = await this.client.createSpace({
             localpart: "space-" + config.conference.prefixes.aliases + auditorium.name,
             isPublic: true,
-            name: auditorium.name,
+            name: makeDisplayName(auditorium.name, auditorium.id),
         });
         await (await this.getSpace()).addChildSpace(audSpace);
 
