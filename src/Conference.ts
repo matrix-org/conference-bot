@@ -322,7 +322,7 @@ export class Conference {
             isPublic: true,
             name: makeDisplayName(auditorium.name, auditorium.id),
         });
-        await parentSpace.addChildSpace(audSpace);
+        await parentSpace.addChildSpace(audSpace, { order: `auditorium-${auditorium.id}` });
 
         const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_CREATION_TEMPLATE, {
             creation_content: {
