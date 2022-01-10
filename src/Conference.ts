@@ -257,6 +257,7 @@ export class Conference {
         await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + interestRoom.name, interestRoom.id);
         await this.dbRoom.addDirectChild(roomId);
         this.interestRooms[interestRoom.id] = new InterestRoom(roomId, this.client, this);
+        await (await this.getSpace()).addChildRoom(roomId);
 
         return this.interestRooms[interestRoom.id];
     }
