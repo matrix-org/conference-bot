@@ -141,7 +141,16 @@ export async function makeRoomPublic(roomId: string, client: MatrixClient) {
     await client.sendStateEvent(roomId, "m.room.join_rules", "", {join_rule: "public"});
 }
 
-export async function editNotice(client: MatrixClient, roomId: string, eventId: string, text: string) {
+/**
+ * Edits a previously sent notice.
+ * @param client The matrix-bot-sdk client.
+ * @param roomId The room containing the notice.
+ * @param eventId The event ID of the notice to edit.
+ * @param text The updated text of the notice.
+ */
+export async function editNotice(
+    client: MatrixClient, roomId: string, eventId: string, text: string
+) {
     await client.sendEvent(roomId, "m.room.message", {
         body: text,
         msgtype: "m.notice",
