@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { LogService, MatrixClient, MSC1772Space } from "matrix-bot-sdk";
+import { LogService, MatrixClient, Space } from "matrix-bot-sdk";
 import {
     AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE,
     AUDITORIUM_CREATION_TEMPLATE,
@@ -210,7 +210,7 @@ export class Conference {
             throw new Error("Conference has already been created");
         }
 
-        const space = await this.client.unstableApis.createSpace({
+        const space = await this.client.createSpace({
             isPublic: true,
             localpart: config.conference.id,
             name: config.conference.name,
@@ -235,7 +235,7 @@ export class Conference {
         return this.pentaDb;
     }
 
-    public async getSpace(): Promise<MSC1772Space> {
+    public async getSpace(): Promise<Space> {
         return this.dbRoom.getSpace();
     }
 
@@ -266,7 +266,7 @@ export class Conference {
             return this.auditoriums[auditorium.id];
         }
 
-        const audSpace = await this.client.unstableApis.createSpace({
+        const audSpace = await this.client.createSpace({
             localpart: "space-" + config.conference.prefixes.aliases + auditorium.name,
             isPublic: true,
             name: auditorium.name,
