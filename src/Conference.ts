@@ -309,6 +309,17 @@ export class Conference {
         return this.interestRooms[interestRoom.id];
     }
 
+    /**
+     * Creates an auditorium space, room and backstage room.
+     *
+     * The auditorium space's children are ordered as follows:
+     *  1. auditorium room
+     *  2. backstage room
+     *  3. talk rooms, ordered by timestamp, ascending
+     *
+     * @param auditorium The description of the auditorium.
+     * @returns The newly created `Auditorium`.
+     */
     public async createAuditorium(auditorium: IAuditorium): Promise<Auditorium> {
         if (this.auditoriums[auditorium.id]) {
             return this.auditoriums[auditorium.id];
@@ -343,11 +354,11 @@ export class Conference {
         // const widget = await LiveWidget.forAuditorium(this.auditoriums[auditorium.id], this.client);
         // await this.client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
 
-        await audSpace.addChildRoom(roomId);
+        await audSpace.addChildRoom(roomId, { order: "1-auditorium" });
 
         // Now create the backstage
         const backstage = await this.createAuditoriumBackstage(auditorium);
-        await audSpace.addChildRoom(backstage.roomId);
+        await audSpace.addChildRoom(backstage.roomId, { order: "2-backstage" });
 
         return this.auditoriums[auditorium.id];
     }
@@ -400,7 +411,8 @@ export class Conference {
         // const widget = await LiveWidget.forTalk(this.talks[talk.id], this.client);
         // await this.client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
 
-        await (await auditorium.getSpace()).addChildRoom(roomId);
+        const startTime = new Date(talk.startTime).toISOString();
+        await (await auditorium.getSpace()).addChildRoom(roomId, { order: `3-talk-${startTime}` });
 
         return this.talks[talk.id];
     }
