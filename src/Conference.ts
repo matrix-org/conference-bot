@@ -162,30 +162,37 @@ export class Conference {
         this.reset();
 
         // Locate all the rooms for the conference
-        const rooms = await this.client.getJoinedRooms();
-        for (const room of rooms) {
-            const createEvent = await this.client.getRoomStateEvent(room, "m.room.create", "");
-            if (createEvent[RSC_CONFERENCE_ID] === this.id) {
-                switch (createEvent[RSC_ROOM_KIND_FLAG]) {
-                    case RoomKind.Conference:
-                        this.dbRoom = new MatrixRoom(room, this.client, this);
-                        break;
-                    case RoomKind.Auditorium:
-                        this.auditoriums[createEvent[RSC_AUDITORIUM_ID]] = new Auditorium(room, this.client, this);
-                        break;
-                    case RoomKind.AuditoriumBackstage:
-                        this.auditoriumBackstages[createEvent[RSC_AUDITORIUM_ID]] = new AuditoriumBackstage(room, this.client, this);
-                        break;
-                    case RoomKind.Talk:
-                        this.talks[createEvent[RSC_TALK_ID]] = new Talk(room, this.client, this);
-                        break;
-                    case RoomKind.SpecialInterest:
-                        this.interestRooms[createEvent[RSC_SPECIAL_INTEREST_ID]] = new InterestRoom(room, this.client, this);
-                        break;
-                    default:
-                        break;
+        const roomIds = await this.client.getJoinedRooms();
+        const batchSize = 20;
+        for (let i = 0; i < roomIds.length; i += batchSize) {
+            // Process batches of rooms in parallel, since there may be a few hundred
+            const tasks = roomIds.slice(i, i + batchSize).map(
+                async roomId => {
+                    const createEvent = await this.client.getRoomStateEvent(roomId, "m.room.create", "");
+                    if (createEvent[RSC_CONFERENCE_ID] === this.id) {
+                        switch (createEvent[RSC_ROOM_KIND_FLAG]) {
+                            case RoomKind.Conference:
+                                this.dbRoom = new MatrixRoom(roomId, this.client, this);
+                                break;
+                            case RoomKind.Auditorium:
+                                this.auditoriums[createEvent[RSC_AUDITORIUM_ID]] = new Auditorium(roomId, this.client, this);
+                                break;
+                            case RoomKind.AuditoriumBackstage:
+                                this.auditoriumBackstages[createEvent[RSC_AUDITORIUM_ID]] = new AuditoriumBackstage(roomId, this.client, this);
+                                break;
+                            case RoomKind.Talk:
+                                this.talks[createEvent[RSC_TALK_ID]] = new Talk(roomId, this.client, this);
+                                break;
+                            case RoomKind.SpecialInterest:
+                                this.interestRooms[createEvent[RSC_SPECIAL_INTEREST_ID]] = new InterestRoom(roomId, this.client, this);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
                 }
-            }
+            );
+            await Promise.all(tasks);
         }
 
         // Locate other metadata in the room
