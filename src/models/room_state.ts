@@ -25,6 +25,23 @@ export interface IStateEvent<T> {
     content: T;
 }
 
+/**
+ * The event type for a subspace state event.
+ */
+export const RS_STORED_SUBSPACE = "org.matrix.confbot.subspace";
+/**
+ * The content of a subspace state event.
+ *
+ * Subspace state events are stored in the root conference room and link a subspace defined in the
+ * bot config to a created space.
+ */
+export interface IStoredSubspace {
+    /**
+     * The room id of the subspace.
+     */
+    roomId: string;
+}
+
 export const RS_3PID_PERSON_ID = "org.matrix.confbot.person.v2";
 
 export const RS_STORED_TALK = "org.matrix.confbot.talk";

@@ -245,6 +245,14 @@ conference:
     displayNameSuffixes:
       #"S.": " stand"
 
+  # The subspaces to create under the main conference space
+  subspaces:
+    #stands:
+    #  displayName: Stands
+    #  alias: stands
+    #  # The prefixes of rooms which belong in the subspace
+    #  prefixes: ["S."]
+
 # Options related to the IRC bridge.
 ircBridge:
   # The nick to use when taking ownership of channels

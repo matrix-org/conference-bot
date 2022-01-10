@@ -74,6 +74,13 @@ interface IConfig {
                 [auditoriumId: string]: string;
             };
         };
+        subspaces: {
+            [name: string]: {
+                displayName: string;
+                alias: string;
+                prefixes: string[];
+            };
+        };
         database: {
             host: string;
             port: number;
