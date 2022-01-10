@@ -167,33 +167,31 @@ export class Conference {
         for (let i = 0; i < roomIds.length; i += batchSize) {
             // Process batches of rooms in parallel, since there may be a few hundred
             const tasks = roomIds.slice(i, i + batchSize).map(
-                roomId => (
-                    async function(client: MatrixClient, conference: Conference, roomId: string) {
-                        const createEvent = await client.getRoomStateEvent(roomId, "m.room.create", "");
-                        if (createEvent[RSC_CONFERENCE_ID] === conference.id) {
-                            switch (createEvent[RSC_ROOM_KIND_FLAG]) {
-                                case RoomKind.Conference:
-                                    conference.dbRoom = new MatrixRoom(roomId, client, conference);
-                                    break;
-                                case RoomKind.Auditorium:
-                                    conference.auditoriums[createEvent[RSC_AUDITORIUM_ID]] = new Auditorium(roomId, client, conference);
-                                    break;
-                                case RoomKind.AuditoriumBackstage:
-                                    conference.auditoriumBackstages[createEvent[RSC_AUDITORIUM_ID]] = new AuditoriumBackstage(roomId, client, conference);
-                                    break;
-                                case RoomKind.Talk:
-                                    conference.talks[createEvent[RSC_TALK_ID]] = new Talk(roomId, client, conference);
-                                    break;
-                                case RoomKind.SpecialInterest:
-                                    conference.interestRooms[createEvent[RSC_SPECIAL_INTEREST_ID]] = new InterestRoom(roomId, client, conference);
-                                    break;
-                                default:
-                                    break;
-                            }
+                async roomId => {
+                    const createEvent = await this.client.getRoomStateEvent(roomId, "m.room.create", "");
+                    if (createEvent[RSC_CONFERENCE_ID] === this.id) {
+                        switch (createEvent[RSC_ROOM_KIND_FLAG]) {
+                            case RoomKind.Conference:
+                                this.dbRoom = new MatrixRoom(roomId, this.client, this);
+                                break;
+                            case RoomKind.Auditorium:
+                                this.auditoriums[createEvent[RSC_AUDITORIUM_ID]] = new Auditorium(roomId, this.client, this);
+                                break;
+                            case RoomKind.AuditoriumBackstage:
+                                this.auditoriumBackstages[createEvent[RSC_AUDITORIUM_ID]] = new AuditoriumBackstage(roomId, this.client, this);
+                                break;
+                            case RoomKind.Talk:
+                                this.talks[createEvent[RSC_TALK_ID]] = new Talk(roomId, this.client, this);
+                                break;
+                            case RoomKind.SpecialInterest:
+                                this.interestRooms[createEvent[RSC_SPECIAL_INTEREST_ID]] = new InterestRoom(roomId, this.client, this);
+                                break;
+                            default:
+                                break;
                         }
                     }
-                )(this.client, this, roomId)
-            )
+                }
+            );
             await Promise.all(tasks);
         }
 
