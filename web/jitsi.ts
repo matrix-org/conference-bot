@@ -102,6 +102,7 @@ export async function joinConference(opts, widgetApi, onCallback) {
             roomName: conferenceId,
             configOverwrite: {
                 startWithAudioMuted: true,
+                startWithVideoMuted: true,
             },
             interfaceConfigOverwrite: {
                 SHOW_JITSI_WATERMARK: false,
