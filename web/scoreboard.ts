@@ -64,7 +64,8 @@ let bannerUpdateTimer: number | null = null;
 
 function render(scoreboard: Scoreboard) {
     // Update countdown banner
-    if (scoreboard.qaStartTime != null) {
+    if (scoreboard.qaStartTime !== null) {
+        // Show the countdown banner
         function renderBannerText(qaStartTime: number) {
             const timeUntilStart = qaStartTime - Date.now();
             const banner = document.getElementById('scoreboardQABanner');
@@ -83,6 +84,7 @@ function render(scoreboard: Scoreboard) {
         renderBannerText(scoreboard.qaStartTime);
         document.getElementById('scoreboardQABanner').style.display = 'block';
     } else {
+        // Hide the countdown banner
         clearInterval(bannerUpdateTimer);
         bannerUpdateTimer = null;
         document.getElementById('scoreboardQABanner').style.display = 'none';
