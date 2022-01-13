@@ -190,6 +190,7 @@ export function renderScoreboard(req: Request, res: Response, scoreboard: Scoreb
     const auditorium = config.RUNTIME.conference.storedAuditoriums.find(a => a.roomId === roomId);
     if (!auditorium) return res.sendStatus(404);
 
-    const sb = scoreboard.getScoreboard(auditorium.roomId);
-    res.send(sb || {ordered: []});
+    let sb = scoreboard.getScoreboard(auditorium.roomId);
+    sb = sb || {qaStartTime: null, ordered: []};
+    res.send(sb);
 }

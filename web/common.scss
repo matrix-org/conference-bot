@@ -88,15 +88,20 @@ html, body {
   right: 0;
 }
 
-#liveBanner {
+.banner {
   display: none; /* changed later */
   text-align: center;
   position: absolute;
   top: 0;
   left: 0;
-  width: 375px;
+  width: 100%;
   background-color: tomato;
   padding: 2px;
+  box-sizing: border-box; /* the padding must go inside the 100% width, not outside */
+}
+
+#liveBanner {
+  width: 375px;
   border-bottom-right-radius: 8px;
 }
 

@@ -323,6 +323,8 @@ export class Scheduler {
         } else if (task.type === ScheduledTaskType.TalkQA5M) {
             if (!task.talk.prerecorded) return;
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your Q&A starts in about 5 minutes</h3><p>The upvoted questions appear in the "Upvoted messages" widget next to the Jitsi conference. Prepare your answers!</p>`);
+            const qaStartTime = task.talk.qa_start_datetime + (config.conference.database.scheduleBufferSeconds * 1000);
+            await this.scoreboard.showQACountdown(confAud.roomId, qaStartTime);
         } else if (task.type === ScheduledTaskType.TalkEnd5M) {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 5 minutes</h3><p>The next talk will start automatically after yours. In 5 minutes, this room will be opened up for anyone to join. They will not be able to see history.</p>`);
             await this.client.sendHtmlText(confAud.roomId, `<h3>This talk ends in about 5 minutes</h3><p>Ask questions here for the speakers!</p>`);

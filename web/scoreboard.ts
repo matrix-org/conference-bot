@@ -21,6 +21,11 @@ import { getAttr } from "./common";
 
 const upvoteEl = document.getElementById("upvoted");
 
+interface Scoreboard {
+    qaStartTime: number | null;
+    ordered: RoomMessage[];
+}
+
 interface RoomMessage {
     permalink: string;
     text: string;
@@ -55,10 +60,37 @@ function innerText(tag: string, clazz: string, text: string): [string, string[]]
     ];
 }
 
-function render(messages: RoomMessage[]) {
+let bannerUpdateTimer: number | null = null;
+
+function render(scoreboard: Scoreboard) {
+    // Update countdown banner
+    if (scoreboard.qaStartTime != null) {
+        function renderBannerText(qaStartTime: number) {
+            const timeUntilStart = qaStartTime - Date.now();
+            const banner = document.getElementById('scoreboardQABanner');
+            if (timeUntilStart < 0) {
+                banner.innerText = "Q&A has started";
+            } else {
+                const minutes = Math.floor(timeUntilStart / 60 / 1000).toString().padStart(2, "0");
+                const seconds = (Math.floor(timeUntilStart / 1000) % 60).toString().padStart(2, "0");
+                const text = `Q&A starts in ${minutes}:${seconds}`;
+                if (banner.innerText !== text) {
+                    banner.innerText = text;
+                }
+            }
+        }
+        bannerUpdateTimer = window.setInterval(renderBannerText, 100, scoreboard.qaStartTime);
+        renderBannerText(scoreboard.qaStartTime);
+        document.getElementById('scoreboardQABanner').style.display = 'block';
+    } else {
+        clearInterval(bannerUpdateTimer);
+        bannerUpdateTimer = null;
+        document.getElementById('scoreboardQABanner').style.display = 'none';
+    }
+
     let html = "";
     const innerTexts: string[][] = [];
-    for (const message of messages) {
+    for (const message of scoreboard.ordered) {
         html += "<div class='message'>";
 
         /** SENDER **/
@@ -96,7 +128,7 @@ function render(messages: RoomMessage[]) {
 
 function doFetch() {
     fetch(`/scoreboard/${encodeURIComponent(forRoomId)}`).then(r => r.json()).then(r => {
-        render(r['ordered']);
+        render(r);
         setTimeout(doFetch, 3000);
     }).catch(() => setTimeout(doFetch, 15000));
 }
