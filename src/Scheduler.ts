@@ -291,7 +291,12 @@ export class Scheduler {
             await this.client.sendHtmlText(confAud.roomId, `<h3>Up next: ${await confTalk.getName()}</h3><p>Ask your questions here for the Q&A at the end of the talk.</p>`);
         } else if (task.type === ScheduledTaskType.TalkQA) {
             if (!task.talk.prerecorded) return;
-            await this.client.sendHtmlText(confTalk.roomId, `<h3>Your Q&A is starting shortly.</h3>`);
+            await this.client.sendHtmlText(
+                confTalk.roomId,
+                `<h3>Your Q&A is starting NOW</h3>` +
+                `<p>Remember that the broadcast feed is buffered and lags many seconds behind. ` +
+                `Do not wait for it to finish, otherwise you will create a long pause!</p>`,
+            );
             await this.client.sendHtmlText(confAud.roomId, `<h3>Q&A is starting shortly</h3><p>Feel free to continue asking questions in this room for the speakers - the conversation will continue in the hallway after the Q&A.</p>`);
         } else if (task.type === ScheduledTaskType.TalkEnd) {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk has ended - opening up this room to all attendees.</h3><p>@room - They won't see the history in this room.</p>`);
@@ -322,7 +327,13 @@ export class Scheduler {
             }
         } else if (task.type === ScheduledTaskType.TalkQA5M) {
             if (!task.talk.prerecorded) return;
-            await this.client.sendHtmlText(confTalk.roomId, `<h3>Your Q&A starts in about 5 minutes</h3><p>The upvoted questions appear in the "Upvoted messages" widget next to the Jitsi conference. Prepare your answers!</p>`);
+            await this.client.sendHtmlText(
+                confTalk.roomId,
+                `<h3>Your Q&A starts in 5 minutes</h3>` +
+                `<p>The upvoted questions appear in the "Upvoted messages" widget next to the Jitsi conference. Prepare your answers!</p>` +
+                `<p>Remember that the broadcast feed is buffered and lags many seconds behind. ` +
+                `Do not wait for it to finish, otherwise you will create a long pause!</p>`,
+            );
         } else if (task.type === ScheduledTaskType.TalkEnd5M) {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 5 minutes</h3><p>The next talk will start automatically after yours. In 5 minutes, this room will be opened up for anyone to join. They will not be able to see history.</p>`);
             await this.client.sendHtmlText(confAud.roomId, `<h3>This talk ends in about 5 minutes</h3><p>Ask questions here for the speakers!</p>`);
