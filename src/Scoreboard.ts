@@ -39,10 +39,22 @@ export interface CachedMessage {
 }
 
 export interface RoomScoreboard {
+    /**
+     * The start time of the current talk's Q&A session, as a Unix timestamp in milliseconds.
+     *
+     * When provided, a countdown or in-progress indicator is shown on the scoreboard.
+     */
+    qaStartTime: number | null;
     messages: RoomMessage[];
 }
 
 export interface CachedScoreboard {
+    /**
+     * The start time of the current talk's Q&A session, as a Unix timestamp in milliseconds.
+     *
+     * When provided, a countdown or in-progress indicator is shown on the scoreboard.
+     */
+    qaStartTime: number | null;
     ordered: CachedMessage[];
 }
 
@@ -82,8 +94,32 @@ export class Scoreboard {
         await this.lock.acquireAsync();
         try {
             this.byRoom[roomId] = {
+                qaStartTime: null,
                 messages: [],
             };
+            await this.calculateRoom(roomId);
+        } finally {
+            this.lock.release();
+        }
+    }
+
+    /**
+     * Shows the countdown or in-progress indicator for a Q&A session.
+     * @param roomId The auditorium's room ID.
+     * @param qaStartTime The start time of the Q&A session, as a Unix timestamp in milliseconds.
+     */
+    public async showQACountdown(roomId: string, qaStartTime: number) {
+        await this.lock.acquireAsync();
+        try {
+            if (!(roomId in this.byRoom)) {
+                this.byRoom[roomId] = {
+                    qaStartTime: null,
+                    messages: [],
+                }
+            }
+
+            this.byRoom[roomId].qaStartTime = qaStartTime;
+
             await this.calculateRoom(roomId);
         } finally {
             this.lock.release();
@@ -108,7 +144,10 @@ export class Scoreboard {
         messages.sort((a, b) => {
             return b.upvotes - a.upvotes;
         });
-        this.byRoomCached[roomId] = {ordered: messages};
+        this.byRoomCached[roomId] = {
+            qaStartTime: scoreboard.qaStartTime,
+            ordered: messages,
+        };
     }
 
     private async tryAddReaction(roomId: string, event: any) {
@@ -132,6 +171,7 @@ export class Scoreboard {
             let scoreboard = this.byRoom[roomId];
             if (!scoreboard) {
                 this.byRoom[roomId] = {
+                    qaStartTime: null,
                     messages: [],
                 };
                 scoreboard = this.byRoom[roomId];
