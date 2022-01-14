@@ -105,8 +105,12 @@ html, body {
   border-bottom-right-radius: 8px;
 }
 
-#liveBanner > span::after {
-  content: 'You are being live broadcasted';
+#liveBanner #liveBannerShortText {
+  display: none;
+}
+
+#liveBanner #liveBannerLongText {
+  display: inline;
 }
 
 @media only screen and (max-width: 600px) {
@@ -114,8 +118,12 @@ html, body {
     width: 75px;
   }
 
-  #liveBanner > span::after {
-    content: 'LIVE';
+  #liveBanner #liveBannerShortText {
+    display: inline;
+  }
+
+  #liveBanner #liveBannerLongText {
+    display: none;
   }
 }
 
