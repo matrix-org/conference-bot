@@ -35,7 +35,8 @@ export class ScheduleCommand implements ICommand {
                 const talkRoom = conference.getTalk(task.talk.event_id);
                 if (!talkRoom) continue;
                 const taskStart = moment(getStartTime(task));
-                html += `<li><b>${task.type} on ${await talkRoom.getName()}</b> (<code>${task.id}</code>) ${taskStart.fromNow()}</li>`;
+                const formattedTimestamp = taskStart.format("YYYY-MM-DD HH:mm:ss [UTC]ZZ");
+                html += `<li>${formattedTimestamp}: <b>${task.type} on ${await talkRoom.getName()}</b> (<code>${task.id}</code>) ${taskStart.fromNow()}</li>`;
             }
             html += "</ul>";
             await client.sendHtmlNotice(roomId, html);
