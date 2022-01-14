@@ -14,6 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+/**
+ * Converts a duration to a string.
+ * @param duration The duration, in milliseconds.
+ * @returns The duration, in mm:ss format.
+ */
+export function formatDuration(duration: number): string {
+    const minutes = Math.floor(duration / 60 / 1000).toString().padStart(2, "0");
+    const seconds = (Math.floor(duration / 1000) % 60).toString().padStart(2, "0");
+    return `${minutes}:${seconds}`;
+}
+
 export function getAttr(name: string): string {
     return Array.from(document.getElementsByTagName('meta'))
         .find(t => t.name === name)

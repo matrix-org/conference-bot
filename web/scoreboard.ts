@@ -17,7 +17,7 @@ limitations under the License.
 import "./common.scss";
 import { MatrixCapabilities, WidgetApi } from "matrix-widget-api";
 import { widgetId } from "./widgets";
-import { getAttr } from "./common";
+import { formatDuration, getAttr } from "./common";
 
 const upvoteEl = document.getElementById("upvoted");
 
@@ -72,9 +72,7 @@ function render(scoreboard: Scoreboard) {
             if (timeUntilStart < 0) {
                 banner.innerText = "Q&A has started";
             } else {
-                const minutes = Math.floor(timeUntilStart / 60 / 1000).toString().padStart(2, "0");
-                const seconds = (Math.floor(timeUntilStart / 1000) % 60).toString().padStart(2, "0");
-                const text = `Q&A starts in ${minutes}:${seconds}`;
+                const text = `Q&A starts in ${formatDuration(timeUntilStart)}`;
                 if (banner.innerText !== text) {
                     banner.innerText = text;
                 }
