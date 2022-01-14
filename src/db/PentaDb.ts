@@ -19,7 +19,7 @@ import config from "../config";
 import { IDbPerson, Role } from "./DbPerson";
 import { LogService, UserID } from "matrix-bot-sdk";
 import { objectFastClone } from "../utils";
-import { IDbTalk } from "./DbTalk";
+import { IDbTalk, IRawDbTalk } from "./DbTalk";
 
 const PEOPLE_SELECT = "SELECT event_id::text, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text, remark::text FROM " + config.conference.database.tblPeople;
 const NONEVENT_PEOPLE_SELECT = "SELECT DISTINCT 'ignore' AS event_id, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM " + config.conference.database.tblPeople;
@@ -116,12 +116,18 @@ export class PentaDb {
         return this.postprocessDbTalks(result.rows);
     }
 
-    private postprocessDbTalk(talk: IDbTalk): IDbTalk {
-        talk.qa_start_datetime += config.conference.database.scheduleBufferSeconds * 1000;
-        return talk;
+    private postprocessDbTalk(talk: IRawDbTalk): IDbTalk {
+        const qaStartDatetime = talk.qa_start_datetime + config.conference.database.scheduleBufferSeconds * 1000;
+        const livestreamStartDatetime = talk.prerecorded ? qaStartDatetime : talk.start_datetime;
+        return {
+            ...talk,
+
+            qa_start_datetime: qaStartDatetime,
+            livestream_start_datetime: livestreamStartDatetime,
+        };
     }
 
-    private postprocessDbTalks(rows: IDbTalk[]): IDbTalk[] {
+    private postprocessDbTalks(rows: IRawDbTalk[]): IDbTalk[] {
         return rows.map(this.postprocessDbTalk);
     }
 
