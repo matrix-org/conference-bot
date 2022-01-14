@@ -108,6 +108,18 @@ export class PentaDb {
         return this.getTalksWithin(END_QUERY, inNextMinutes, minBefore);
     }
 
+    /**
+     * Gets the record for a talk.
+     * @param talkId The talk ID.
+     * @returns The record for the talk, if it exists; `null` otherwise.
+     */
+    public async getTalk(talkId: string): Promise<IDbTalk | null> {
+        const result = await this.client.query(
+            `${SCHEDULE_SELECT} WHERE event_id::text = $2`,
+            [config.conference.timezone, talkId]);
+        return result.rowCount > 0 ? this.postprocessDbTalk(result.rows[0]) : null;
+    }
+
     private async getTalksWithin(timeQuery: string, inNextMinutes: number, minBefore: number): Promise<IDbTalk[]> {
         const now = "NOW() AT TIME ZONE 'UTC'";
         const result = await this.client.query(

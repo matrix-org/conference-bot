@@ -54,6 +54,7 @@ import { PentaDb } from "./db/PentaDb";
 import { PermissionsCommand } from "./commands/PermissionsCommand";
 import { InterestRoom } from "./models/InterestRoom";
 import { IStateEvent } from "./models/room_state";
+import { IDbTalk } from "./db/DbTalk";
 
 export class Conference {
     private dbRoom: MatrixRoom;
@@ -534,6 +535,15 @@ export class Conference {
 
     public getTalk(talkId: string): Talk {
         return this.talks[talkId];
+    }
+
+    /**
+     * Gets the Pentabarf database record for a talk.
+     * @param talkId The talk ID.
+     * @returns The database record for the talk, if it exists; `null` otherwise.
+     */
+    public async getDbTalk(talkId: string): Promise<IDbTalk | null> {
+        return this.pentaDb.getTalk(talkId);
     }
 
     public getInterestRoom(intId: string): InterestRoom {
