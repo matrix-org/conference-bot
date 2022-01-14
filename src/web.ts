@@ -69,6 +69,11 @@ export async function renderTalkWidget(req: Request, res: Response) {
         return res.sendStatus(404);
     }
 
+    // TODO: Cache dbTalk so that the Pentabarf database isn't hit every time.
+    //       This endpoint is only used by speakers/hosts/coordinators,
+    //       so we don't expect too much load.
+    const dbTalk = await config.RUNTIME.conference.getDbTalk(talkId);
+
     const streamUrl = template(config.livestream.talkUrl, {
         audId: audId.toLowerCase(),
         slug: (await talk.getDefinition()).slug.toLowerCase(),
@@ -80,6 +85,8 @@ export async function renderTalkWidget(req: Request, res: Response) {
         roomName: await talk.getName(),
         conferenceDomain: config.livestream.jitsiDomain,
         conferenceId: base32.stringify(Buffer.from(talk.roomId), { pad: false }).toLowerCase(),
+        livestreamStartTime: dbTalk?.livestream_start_datetime ?? "",
+        livestreamEndTime: dbTalk?.end_datetime ?? "",
     });
 }
 
