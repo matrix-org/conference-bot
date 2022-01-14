@@ -242,7 +242,7 @@ export class Scheduler {
                     const taskId = task.id;
                     LogService.info("Scheduler", "Running task: " + taskId);
                     try {
-                        await this.execute(task);
+                        await this._execute(task);
                     } catch (e) {
                         LogService.error("Scheduler", e);
                         await logMessage(LogLevel.ERROR, "Scheduler", `Error running task ${taskId}: ${e?.message || 'unknown error'}`);
@@ -269,7 +269,27 @@ export class Scheduler {
         setTimeout(() => this.runTasks(), RUN_INTERVAL_MS);
     }
 
-    private async execute(task: ITask) {
+    /**
+     * Executes the specified task for debugging.
+     *
+     * Does not mark the task as completed, so that it can be executed more than once.
+     * @param taskId The ID of the task to be executed.
+     * @throws {Error} The specified task does not exist or is no longer pending.
+     */
+    public async execute(taskId: string) {
+        await this.lock.acquireAsync();
+        try {
+            const task = this.pending[taskId];
+            if (!task) {
+                throw Error(`Task does not exist or is no longer pending: ${taskId}`);
+            }
+            await this._execute(task);
+        } finally {
+            this.lock.release();
+        }
+    }
+
+    private async _execute(task: ITask) {
         const confTalk = this.conference.getTalk(task.talk.event_id);
         const confAud = this.conference.getAuditorium(task.talk.conference_room);
         const confAudBackstage = this.conference.getAuditoriumBackstage(task.talk.conference_room);

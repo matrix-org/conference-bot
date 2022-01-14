@@ -39,6 +39,9 @@ export class ScheduleCommand implements ICommand {
             }
             html += "</ul>";
             await client.sendHtmlNotice(roomId, html);
+        } else if (args[0] === 'execute') {
+            await config.RUNTIME.scheduler.execute(args[1]);
+            await client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
         } else {
             await client.sendNotice(roomId, "Unknown schedule command.");
         }
