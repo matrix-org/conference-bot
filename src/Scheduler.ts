@@ -90,9 +90,9 @@ export function getStartTime(task: ITask): number {
         case ScheduledTaskType.TalkEnd:
             return task.talk.end_datetime;
         case ScheduledTaskType.TalkQA5M:
-            return (task.talk.qa_start_datetime + (config.conference.database.scheduleBufferSeconds * 1000)) - (5 * 60 * 1000);
+            return task.talk.qa_start_datetime - (5 * 60 * 1000);
         case ScheduledTaskType.TalkQA:
-            return task.talk.qa_start_datetime + (config.conference.database.scheduleBufferSeconds * 1000);
+            return task.talk.qa_start_datetime;
         default:
             throw new Error("Unknown task type for getStartTime(): " + task.type);
     }
@@ -354,8 +354,7 @@ export class Scheduler {
                 `<p>Remember that the broadcast feed is buffered and lags many seconds behind. ` +
                 `Do not wait for it to finish, otherwise you will create a long pause!</p>`,
             );
-            const qaStartTime = task.talk.qa_start_datetime + (config.conference.database.scheduleBufferSeconds * 1000);
-            await this.scoreboard.showQACountdown(confAud.roomId, qaStartTime);
+            await this.scoreboard.showQACountdown(confAud.roomId, task.talk.qa_start_datetime);
         } else if (task.type === ScheduledTaskType.TalkEnd5M) {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 5 minutes</h3><p>The next talk will start automatically after yours. In 5 minutes, this room will be opened up for anyone to join. They will not be able to see history.</p>`);
             await this.client.sendHtmlText(confAud.roomId, `<h3>This talk ends in about 5 minutes</h3><p>Ask questions here for the speakers!</p>`);
