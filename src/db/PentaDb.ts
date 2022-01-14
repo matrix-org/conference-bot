@@ -113,7 +113,16 @@ export class PentaDb {
         const result = await this.client.query(
             `${SCHEDULE_SELECT} WHERE ${timeQuery} >= (${now} - MAKE_INTERVAL(mins => $2)) AND ${timeQuery} <= (${now} + MAKE_INTERVAL(mins => $3))`,
             [config.conference.timezone, minBefore, inNextMinutes]);
-        return result.rows;
+        return this.postprocessDbTalks(result.rows);
+    }
+
+    private postprocessDbTalk(talk: IDbTalk): IDbTalk {
+        talk.qa_start_datetime += config.conference.database.scheduleBufferSeconds * 1000;
+        return talk;
+    }
+
+    private postprocessDbTalks(rows: IDbTalk[]): IDbTalk[] {
+        return rows.map(this.postprocessDbTalk);
     }
 
     private sanitizeRecords(rows: IDbPerson[]): IDbPerson[] {
