@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-export interface IDbTalk {
+export interface IRawDbTalk {
     event_id: string; // penta ID
     conference_room: string;
     start_datetime: number; // ms timestamp, utc
@@ -23,4 +23,14 @@ export interface IDbTalk {
     end_datetime: number; // ms timestamp, utc
     qa_start_datetime: number; // ms timestamp, utc
     prerecorded: boolean;
+}
+
+export interface IDbTalk extends IRawDbTalk {
+    /**
+     * The start time of the talk's livestream, as a Unix timestamp in milliseconds.
+     *
+     * This is the start of the Q&A session for prerecorded talks, and the start of the talk for
+     * non-prerecorded talks.
+     */
+    livestream_start_datetime: number; // ms timestamp, utc
 }
