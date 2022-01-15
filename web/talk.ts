@@ -20,13 +20,22 @@ import { joinConference } from "./jitsi";
 import { VideoConferenceCapabilities, WidgetApi } from "matrix-widget-api";
 import { controlsEl, makeLivestream, muteButton, pause, play, videoEl } from "./hls";
 import { addlQuery, isWidget, widgetId } from "./widgets";
-import { getAttr } from "./common";
+import { formatDuration, getAttr } from "./common";
 
 const messagesEl = document.getElementById("messages");
 const jitsiContainer = document.getElementById("jitsiContainer");
 const jitsiUnderlay = document.getElementById("jitsiUnderlay");
-const liveWarning = document.getElementById("liveBanner");
+const liveBanner = document.getElementById("liveBanner");
+const liveBannerShortText = document.getElementById("liveBannerShortText");
+const liveBannerLongText = document.getElementById("liveBannerLongText");
 const joinButton = document.getElementById('joinButton');
+
+const livestreamStartTime = getAttr('org.matrix.confbot.livestream_start_time') ?
+    parseInt(getAttr('org.matrix.confbot.livestream_start_time')) :
+    null;
+const livestreamEndTime = getAttr('org.matrix.confbot.livestream_end_time') ?
+    parseInt(getAttr('org.matrix.confbot.livestream_end_time')) :
+    null;
 
 let widgetApi: WidgetApi = null;
 
@@ -51,18 +60,22 @@ if (isWidget) {
 
 makeLivestream(showVideo);
 
+let widgetMode: "video" | "jitsi" = "video";
+
 function showVideo(ready = true) {
     if (widgetApi) widgetApi.setAlwaysOnScreen(false);
     jitsiContainer.style.display = 'none';
     jitsiUnderlay.style.display = 'none';
     messagesEl.style.display = ready ? 'none' : 'block';
     videoEl.style.display = ready ? 'block' : 'none';
-    liveWarning.style.display = 'none';
     controlsEl.style.display = 'block';
     if (isWidget) {
         joinButton.style.display = 'inline';
     }
     muteButton.style.display = ready ? 'inline' : 'none';
+
+    widgetMode = "video";
+    updateLivestreamBanner();
 }
 
 function showJitsi() {
@@ -73,7 +86,9 @@ function showJitsi() {
     messagesEl.style.display = 'none';
     videoEl.style.display = 'none';
     controlsEl.style.display = 'none';
-    liveWarning.style.display = 'block';
+
+    widgetMode = "jitsi";
+    updateLivestreamBanner();
 }
 
 function onJitsiEnd() {
@@ -97,3 +112,68 @@ joinButton.addEventListener('click', () => {
     joinConference(jitsiOpts, widgetApi, () => onJitsiEnd());
 });
 
+/**
+ * Updates the livestream banner.
+ * @returns The interval until the next update, in milliseconds.
+ */
+function updateLivestreamBanner(): number | null {
+    if (livestreamStartTime == null || livestreamEndTime == null) {
+        // Livestream start and end time are unavailable.
+        liveBanner.style.display = 'none';
+        return null;
+    }
+
+    const now = Date.now();
+    if (now < livestreamStartTime - 5 * 60 * 1000) {
+        // The start of the livestream is more than 5 minutes in the future.
+        // Don't show anything.
+        liveBanner.style.display = 'none';
+        return livestreamStartTime - 5 * 60 * 1000 - now;
+    } else if (now < livestreamStartTime) {
+        // The livestream starts within 5 minutes.
+        // Show a countdown.
+        const countdown = formatDuration(livestreamStartTime - now);
+        let shortText: string;
+        let longText: string;
+        if (widgetMode === "video") {
+            // In the browser, the short text line wraps after "IN".
+            shortText = `LIVE IN ${countdown}`;
+            longText = `The live broadcast starts in ${countdown}`;
+        } else if (widgetMode === "jitsi") {
+            // In the browser, the short text line wraps after "IN".
+            shortText = `LIVE IN ${countdown}`;
+            longText = `You will be live broadcasted in ${countdown}`;
+        }
+        if (liveBannerShortText.innerText !== shortText) {
+            liveBannerShortText.innerText = shortText;
+        }
+        if (liveBannerLongText.innerText !== longText) {
+            liveBannerLongText.innerText = longText;
+        }
+        liveBanner.style.display = 'block';
+        return 100;
+    } else if (now < livestreamEndTime) {
+        // The livestream is ongoing.
+        if (widgetMode === "video") {
+            liveBannerShortText.innerText = "LIVE";
+            liveBannerLongText.innerText = "The live broadcast is ongoing";
+        } else if (widgetMode === "jitsi") {
+            liveBannerShortText.innerText = "LIVE";
+            liveBannerLongText.innerText = "You are being live broadcasted";
+        }
+        liveBanner.style.display = 'block';
+        return livestreamEndTime - now;
+    } else {
+        // The livestream has ended.
+        liveBanner.style.display = 'none';
+        return null;
+    }
+}
+
+function updateLivestreamBannerTimer() {
+    const nextUpdateInterval = updateLivestreamBanner();
+    if (nextUpdateInterval !== null) {
+        setTimeout(updateLivestreamBannerTimer, nextUpdateInterval);
+    }
+}
+updateLivestreamBannerTimer();
