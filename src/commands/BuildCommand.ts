@@ -68,6 +68,10 @@ export class BuildCommand implements ICommand {
             return;
         }
 
+        // Create support rooms
+        await conference.createSupportRooms();
+        await client.sendNotice(roomId, "Support rooms have been created");
+
         // Create subspaces
         let subspacesCreated = 0;
         const subspacesConfig = Object.entries(config.conference.subspaces);

@@ -15,15 +15,13 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { LogLevel, LogService, MatrixClient, MembershipEvent, RoomAlias } from "matrix-bot-sdk";
+import { LogLevel, LogService, MatrixClient, MembershipEvent } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { invitePersonToRoom, ResolvedPersonIdentifier, resolveIdentifiers } from "../invites";
 import { RS_3PID_PERSON_ID } from "../models/room_state";
 import { runRoleCommand } from "./actions/roles";
 import { IDbPerson, Role } from "../db/DbPerson";
 import config from "../config";
-import { safeCreateRoom } from "../utils";
-import { AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, mergeWithCreationTemplate } from "../models/room_kinds";
 import { logMessage } from "../LogProxy";
 
 export class InviteCommand implements ICommand {
@@ -32,17 +30,7 @@ export class InviteCommand implements ICommand {
     private async createInvites(client: MatrixClient, people: IDbPerson[], alias: string) {
         const resolved = await resolveIdentifiers(people);
 
-        let targetRoomId: string;
-        try {
-            targetRoomId = await client.resolveRoom(alias);
-        } catch (e) {
-            // probably doesn't exist
-            targetRoomId = await safeCreateRoom(client, mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
-                room_alias_name: (new RoomAlias(alias)).localpart,
-                invite: [config.moderatorUserId],
-            }));
-        }
-
+        const targetRoomId = await client.resolveRoom(alias);
         await InviteCommand.ensureInvited(client, targetRoomId, resolved);
     }
 

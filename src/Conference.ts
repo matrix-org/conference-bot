@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { LogService, MatrixClient, Space } from "matrix-bot-sdk";
+import { LogService, MatrixClient, RoomAlias, Space } from "matrix-bot-sdk";
 import {
     AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE,
     AUDITORIUM_CREATION_TEMPLATE,
@@ -253,6 +253,32 @@ export class Conference {
 
     public async getSpace(): Promise<Space> {
         return this.dbRoom.getSpace();
+    }
+
+    /**
+     * Creates the support rooms for the conference.
+     */
+    public async createSupportRooms() {
+        const roomAliases = [
+            config.conference.supportRooms.speakers,
+            config.conference.supportRooms.specialInterest,
+            config.conference.supportRooms.coordinators,
+        ];
+        for (const alias of roomAliases) {
+            try {
+                await this.client.resolveRoom(alias);
+            } catch (e) {
+                // The room doesn't exist yet, probably.
+                const roomId = await safeCreateRoom(
+                    this.client,
+                    mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
+                        room_alias_name: (new RoomAlias(alias)).localpart,
+                        invite: [config.moderatorUserId],
+                    }),
+                );
+                (await this.getSpace()).addChildRoom(roomId);
+            }
+        }
     }
 
     /**
