@@ -112,6 +112,20 @@ joinButton.addEventListener('click', () => {
     joinConference(jitsiOpts, widgetApi, () => onJitsiEnd());
 });
 
+let liveBannerVisible: boolean = false;
+/**
+ * Shows or hides the live banner.
+ * @param visible `true` to show the live banner; `false` to hide it.
+ */
+function setLiveBannerVisible(visible: boolean) {
+    if (liveBannerVisible === visible) {
+        return;
+    }
+
+    liveBannerVisible = visible;
+    liveBanner.style.display = visible ? 'block' : 'none';
+}
+
 /**
  * Updates the livestream banner.
  * @returns The interval until the next update, in milliseconds.
@@ -119,7 +133,7 @@ joinButton.addEventListener('click', () => {
 function updateLivestreamBanner(): number | null {
     if (livestreamStartTime == null || livestreamEndTime == null) {
         // Livestream start and end time are unavailable.
-        liveBanner.style.display = 'none';
+        setLiveBannerVisible(false);
         return null;
     }
 
@@ -127,7 +141,7 @@ function updateLivestreamBanner(): number | null {
     if (now < livestreamStartTime - 5 * 60 * 1000) {
         // The start of the livestream is more than 5 minutes in the future.
         // Don't show anything.
-        liveBanner.style.display = 'none';
+        setLiveBannerVisible(false);
         return livestreamStartTime - 5 * 60 * 1000 - now;
     } else if (now < livestreamStartTime) {
         // The livestream starts within 5 minutes.
@@ -150,7 +164,7 @@ function updateLivestreamBanner(): number | null {
         if (liveBannerLongText.innerText !== longText) {
             liveBannerLongText.innerText = longText;
         }
-        liveBanner.style.display = 'block';
+        setLiveBannerVisible(true);
         return 100;
     } else if (now < livestreamEndTime) {
         // The livestream is ongoing.
@@ -161,11 +175,11 @@ function updateLivestreamBanner(): number | null {
             liveBannerShortText.innerText = "LIVE";
             liveBannerLongText.innerText = "You are being live broadcasted";
         }
-        liveBanner.style.display = 'block';
+        setLiveBannerVisible(true);
         return livestreamEndTime - now;
     } else {
         // The livestream has ended.
-        liveBanner.style.display = 'none';
+        setLiveBannerVisible(false);
         return null;
     }
 }
