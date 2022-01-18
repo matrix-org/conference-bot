@@ -20,6 +20,12 @@ import { MatrixRoom } from "./MatrixRoom";
 import { deprefix } from "../parsers/PentabarfParser";
 import { PhysicalRoom } from "./PhysicalRoom";
 
+/**
+ * Represents an interest room.
+ *
+ * Interest rooms may be new rooms created by the bot, or existing rooms created by another user.
+ * As such, they do not necessarily have any special state events.
+ */
 export class InterestRoom extends MatrixRoom implements PhysicalRoom {
     private id: string;
     private name: string;

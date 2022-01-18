@@ -245,6 +245,10 @@ conference:
     displayNameSuffixes:
       #"S.": " stand"
 
+  # A mapping of pre-existing rooms to re-use as interest rooms.
+  existingInterestRooms:
+    #"I.infodesk": "#infodesk:example.org"
+
   # The subspaces to create under the main conference space
   subspaces:
     #stands:

@@ -74,6 +74,9 @@ interface IConfig {
                 [auditoriumId: string]: string;
             };
         };
+        existingInterestRooms: {
+            [id: string]: string;
+        };
         subspaces: {
             [name: string]: {
                 displayName: string;
