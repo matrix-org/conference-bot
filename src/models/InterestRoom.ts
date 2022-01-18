@@ -17,7 +17,6 @@ limitations under the License.
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { MatrixRoom } from "./MatrixRoom";
-import { RSC_SPECIAL_INTEREST_ID } from "./room_kinds";
 import { deprefix } from "../parsers/PentabarfParser";
 import { PhysicalRoom } from "./PhysicalRoom";
 
@@ -25,25 +24,18 @@ export class InterestRoom extends MatrixRoom implements PhysicalRoom {
     private id: string;
     private name: string;
 
-    constructor(roomId: string, client: MatrixClient, conference: Conference) {
+    constructor(roomId: string, client: MatrixClient, conference: Conference, id: string) {
         super(roomId, client, conference);
-    }
 
-    private async doFetch() {
-        if (this.id || this.name) return;
-
-        const createEvent = await this.client.getRoomStateEvent(this.roomId, "m.room.create", "");
-        this.id = createEvent[RSC_SPECIAL_INTEREST_ID];
-        this.name = deprefix(this.id).name;
+        this.id = id;
+        this.name = deprefix(id).name;
     }
 
     public async getName(): Promise<string> {
-        await this.doFetch();
         return this.name;
     }
 
     public async getId(): Promise<string> {
-        await this.doFetch();
         return this.id;
     }
 }

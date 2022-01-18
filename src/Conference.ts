@@ -192,7 +192,7 @@ export class Conference {
                                 this.talks[createEvent[RSC_TALK_ID]] = new Talk(roomId, this.client, this);
                                 break;
                             case RoomKind.SpecialInterest:
-                                this.interestRooms[createEvent[RSC_SPECIAL_INTEREST_ID]] = new InterestRoom(roomId, this.client, this);
+                                this.interestRooms[createEvent[RSC_SPECIAL_INTEREST_ID]] = new InterestRoom(roomId, this.client, this, createEvent[RSC_SPECIAL_INTEREST_ID]);
                                 break;
                             default:
                                 break;
@@ -330,7 +330,9 @@ export class Conference {
         }));
         await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + interestRoom.name, interestRoom.id);
         await this.dbRoom.addDirectChild(roomId);
-        this.interestRooms[interestRoom.id] = new InterestRoom(roomId, this.client, this);
+        this.interestRooms[interestRoom.id] = new InterestRoom(
+            roomId, this.client, this, interestRoom.id
+        );
         await parentSpace.addChildRoom(roomId, { order: `interest-${interestRoom.id}` });
 
         return this.interestRooms[interestRoom.id];
