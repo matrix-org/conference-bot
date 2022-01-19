@@ -192,7 +192,7 @@ export class Conference {
                                 this.talks[createEvent[RSC_TALK_ID]] = new Talk(roomId, this.client, this);
                                 break;
                             case RoomKind.SpecialInterest:
-                                this.interestRooms[createEvent[RSC_SPECIAL_INTEREST_ID]] = new InterestRoom(roomId, this.client, this);
+                                this.interestRooms[createEvent[RSC_SPECIAL_INTEREST_ID]] = new InterestRoom(roomId, this.client, this, createEvent[RSC_SPECIAL_INTEREST_ID]);
                                 break;
                             default:
                                 break;
@@ -201,6 +201,24 @@ export class Conference {
                 }
             );
             await Promise.all(tasks);
+        }
+
+        // Resolve pre-existing interest rooms
+        for (const interestId in config.conference.existingInterestRooms) {
+            if (interestId in this.interestRooms) {
+                continue;
+            }
+
+            const roomIdOrAlias = config.conference.existingInterestRooms[interestId];
+            let roomId: string;
+            try {
+                roomId = await this.client.resolveRoom(roomIdOrAlias);
+            } catch (e) {
+                // The room probably doesn't exist yet.
+                continue;
+            }
+
+            this.interestRooms[interestId] = new InterestRoom(roomId, this.client, this, interestId);
         }
 
         // Locate other metadata in the room
@@ -313,25 +331,48 @@ export class Conference {
     }
 
     public async createInterestRoom(interestRoom: IInterestRoom): Promise<InterestRoom> {
-        if (this.interestRooms[interestRoom.id]) {
-            return this.interestRooms[interestRoom.id];
+        const parentSpace = await this.getDesiredParentSpace(interestRoom);
+
+        // Resolve pre-existing rooms that were created after the bot started up.
+        if (!this.interestRooms[interestRoom.id] &&
+            interestRoom.id in config.conference.existingInterestRooms) {
+            const roomIdOrAlias = config.conference.existingInterestRooms[interestRoom.id];
+            const roomId = await this.client.resolveRoom(roomIdOrAlias);
+            this.interestRooms[interestRoom.id] = new InterestRoom(
+                roomId, this.client, this, interestRoom.id
+            );
         }
 
-        const parentSpace = await this.getDesiredParentSpace(interestRoom);
-        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(SPECIAL_INTEREST_CREATION_TEMPLATE, {
-            creation_content: {
-                [RSC_CONFERENCE_ID]: this.id,
-                [RSC_SPECIAL_INTEREST_ID]: interestRoom.id,
-            },
-            initial_state: [
-                makeStoredInterestRoom(this.id, interestRoom),
-                makeParentRoom(this.dbRoom.roomId),
-            ],
-        }));
-        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + interestRoom.name, interestRoom.id);
-        await this.dbRoom.addDirectChild(roomId);
-        this.interestRooms[interestRoom.id] = new InterestRoom(roomId, this.client, this);
-        await parentSpace.addChildRoom(roomId, { order: `interest-${interestRoom.id}` });
+        if (!this.interestRooms[interestRoom.id]) {
+            // Create a new interest room.
+            const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(SPECIAL_INTEREST_CREATION_TEMPLATE, {
+                creation_content: {
+                    [RSC_CONFERENCE_ID]: this.id,
+                    [RSC_SPECIAL_INTEREST_ID]: interestRoom.id,
+                },
+                initial_state: [
+                    makeStoredInterestRoom(this.id, interestRoom),
+                    makeParentRoom(this.dbRoom.roomId),
+                ],
+            }));
+            await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + interestRoom.name, interestRoom.id);
+            await this.dbRoom.addDirectChild(roomId);
+            this.interestRooms[interestRoom.id] = new InterestRoom(
+                roomId, this.client, this, interestRoom.id
+            );
+            await parentSpace.addChildRoom(roomId, { order: `interest-${interestRoom.id}` });
+        } else {
+            // The interest room already exists, either because the conference has already been
+            // built, or a pre-existing room is being reused as an interest room.
+            const roomId = this.interestRooms[interestRoom.id].roomId;
+            // Put the room in the correct space.
+            if (!(roomId in await parentSpace.getChildEntities())) {
+                await parentSpace.addChildRoom(roomId, { order: `interest-${interestRoom.id}` });
+            }
+            
+            // In the future we may want to ensure that aliases are set in accordance with the
+            // config.
+        }
 
         return this.interestRooms[interestRoom.id];
     }
