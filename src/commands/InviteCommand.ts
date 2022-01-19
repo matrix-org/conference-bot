@@ -61,6 +61,7 @@ export class InviteCommand implements ICommand {
                 if (!(await aud.getId()).startsWith("D.")) {
                     // HACK: Only invite coordinators for D.* auditoriums.
                     // TODO: Make invitations for support rooms more configurable.
+                    //       https://github.com/matrix-org/conference-bot/issues/76
                     continue;
                 }
 
