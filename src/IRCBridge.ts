@@ -23,8 +23,10 @@ import { makeLocalpart } from "./utils/aliases";
 
 export interface IRCBridgeOpts {
     botNick: string;
+    botUsername?: string;
     botPassword?: string;
     serverName: string;
+    sasl?: boolean;
     port: number;
     botUserId: string;
     channelPrefix: string;
@@ -88,7 +90,8 @@ export class IRCBridge {
         this.ircClient = new irc.Client(this.config.serverName, this.config.botNick, {
             port: this.config.port,
             password: this.config.botPassword,
-            userName: 'mx-conf-bot',
+            sasl: this.config.sasl || false,
+            userName: this.config.botUsername || "mx-conf-bot",
             realName: 'matrix-conference-bot',
             secure: this.config.secure !== undefined ? this.config.secure : true, // Default to true
         });
