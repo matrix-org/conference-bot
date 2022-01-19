@@ -30,7 +30,7 @@ export interface IRCBridgeOpts {
     port: number;
     botUserId: string;
     channelPrefix: string;
-    moderationBotNick: string;
+    moderationBotNick: string|string[];
     ircBridgeNick: string;
     secure: boolean;
 }
@@ -113,7 +113,9 @@ export class IRCBridge {
             throw Error(`IRC bridge gave an error: ${resultText}`);
         }
         await this.ircClient.send("MODE", channel, "+o", this.config.ircBridgeNick);
-        await this.ircClient.send("MODE", channel, "+o", this.config.moderationBotNick);
+        for (const nick of Array.isArray(this.config.moderationBotNick) ? this.config.moderationBotNick : [this.config.moderationBotNick]) {
+            await this.ircClient.send("MODE", channel, "+o", nick);
+        }
     }
 
     public async executeCommand(command: string): Promise<MatrixEvent<any>> {
