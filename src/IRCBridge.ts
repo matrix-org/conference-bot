@@ -23,12 +23,14 @@ import { makeLocalpart } from "./utils/aliases";
 
 export interface IRCBridgeOpts {
     botNick: string;
+    botUsername?: string;
     botPassword?: string;
     serverName: string;
+    sasl?: boolean;
     port: number;
     botUserId: string;
     channelPrefix: string;
-    moderationBotNick: string;
+    moderationBotNick: string|string[];
     ircBridgeNick: string;
     secure: boolean;
 }
@@ -88,7 +90,8 @@ export class IRCBridge {
         this.ircClient = new irc.Client(this.config.serverName, this.config.botNick, {
             port: this.config.port,
             password: this.config.botPassword,
-            userName: 'mx-conf-bot',
+            sasl: this.config.sasl || false,
+            userName: this.config.botUsername || "mx-conf-bot",
             realName: 'matrix-conference-bot',
             secure: this.config.secure !== undefined ? this.config.secure : true, // Default to true
         });
@@ -110,7 +113,10 @@ export class IRCBridge {
             throw Error(`IRC bridge gave an error: ${resultText}`);
         }
         await this.ircClient.send("MODE", channel, "+o", this.config.ircBridgeNick);
-        await this.ircClient.send("MODE", channel, "+o", this.config.moderationBotNick);
+        const moderatorNicks = Array.isArray(this.config.moderationBotNick) ? this.config.moderationBotNick : [this.config.moderationBotNick];
+        for (const nick of moderatorNicks) {
+            await this.ircClient.send("MODE", channel, "+o", nick);
+        }
     }
 
     public async executeCommand(command: string): Promise<MatrixEvent<any>> {
