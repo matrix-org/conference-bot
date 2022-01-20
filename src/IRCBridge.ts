@@ -113,7 +113,8 @@ export class IRCBridge {
             throw Error(`IRC bridge gave an error: ${resultText}`);
         }
         await this.ircClient.send("MODE", channel, "+o", this.config.ircBridgeNick);
-        for (const nick of Array.isArray(this.config.moderationBotNick) ? this.config.moderationBotNick : [this.config.moderationBotNick]) {
+        const moderatorNicks = Array.isArray(this.config.moderationBotNick) ? this.config.moderationBotNick : [this.config.moderationBotNick];
+        for (const nick of moderatorNicks) {
             await this.ircClient.send("MODE", channel, "+o", nick);
         }
     }
