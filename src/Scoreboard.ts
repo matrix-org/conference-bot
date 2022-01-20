@@ -17,6 +17,9 @@ limitations under the License.
 import { Conference } from "./Conference";
 import { LogService, MatrixClient, Permalinks, UserID } from "matrix-bot-sdk";
 import AwaitLock from "await-lock";
+import {promises as fs} from "fs";
+import * as path from "path";
+import config from "./config";
 import { isEmojiVariant } from "./utils";
 
 export interface RoomMessage {
@@ -59,6 +62,10 @@ export interface CachedScoreboard {
 }
 
 export class Scoreboard {
+    private static readonly JSON_FORMAT_VERSION = 1;
+
+    private path: string;
+
     private byRoom: {
         [roomId: string]: RoomScoreboard;
     } = {};
@@ -71,6 +78,8 @@ export class Scoreboard {
     private lock = new AwaitLock();
 
     constructor(private conference: Conference, private client: MatrixClient) {
+        this.path = path.join(config.dataPath, 'scoreboard.json');
+
         this.client.on("room.event", async (roomId: string, event: any) => {
             if (event['type'] === 'm.reaction') {
                 await this.tryAddReaction(roomId, event);
@@ -84,6 +93,81 @@ export class Scoreboard {
             const parsed = new UserID(uid);
             this.domain = parsed.domain;
         });
+    }
+
+    /**
+     * Loads all room scoreboards from disk, if possible.
+     *
+     * Expects the scoreboard lock to not be held by the caller.
+     */
+    public async load() {
+        let json: any;
+        try {
+            const data = await fs.readFile(this.path, {encoding: 'utf-8'});
+            json = JSON.parse(data);
+        } catch (e) {
+            if (e.code === 'ENOENT') {
+                // No previous scoreboard to load
+            } else if (e instanceof SyntaxError) {
+                LogService.info("Scoreboard", `Cannot load scoreboard: invalid JSON: ${e.message}`);
+            } else {
+                LogService.info("Scoreboard", "Cannot load scoreboard:", e);
+            }
+
+            return;
+        }
+
+        if (json.version !== Scoreboard.JSON_FORMAT_VERSION) {
+            LogService.info("Scoreboard", `Cannot load scoreboard version ${json.version}`);
+            return;
+        }
+
+        await this.lock.acquireAsync();
+        try {
+            for (const roomId in json.rooms) {
+                // Replace the scoreboard for each room with the saved scoreboard.
+                // It's assumed that the bot hasn't started processing messages yet.
+                this.byRoom[roomId] = json.rooms[roomId];
+                await this.calculateRoom(roomId);
+
+                // TODO: Can the bot miss messages and reactions that are sent while offline?
+                //       If so:
+                //        * Use `MatrixClient.unstableApis.getRelationsForEvent()` to pick up any
+                //         reactions that happened while the bot was offline.
+                //        * Check if messages have been deleted while the bot was offline.
+                //        * Or somehow get the bot to pick up from where it left off?
+                //
+                //       In testing, the bot seems to pick up new messages from where it left off,
+                //       at least when the list of missed messages is small. Not making any requests
+                //       to the homeserver has the benefit of keeping startup times minimal.
+            }
+        } finally {
+            this.lock.release();
+        }
+    }
+
+    /**
+     * Saves all room scoreboards to disk.
+     *
+     * Expects the scoreboard lock to not be held by the caller.
+     */
+    public async save() {
+        await this.lock.acquireAsync();
+        try {
+            const json = {
+                version: Scoreboard.JSON_FORMAT_VERSION,
+                rooms: this.byRoom,
+            };
+
+            // Write to a temporary file, then replace the previous data atomically.
+            // This ensures that the saved data remains valid even if the bot dies while writing
+            // new data.
+            const tempFilePath = this.path + '.tmp';
+            await fs.writeFile(tempFilePath, JSON.stringify(json));
+            await fs.rename(tempFilePath, this.path);
+        } finally {
+            this.lock.release();
+        }
     }
 
     public getScoreboard(roomId: string): CachedScoreboard {
@@ -101,6 +185,8 @@ export class Scoreboard {
         } finally {
             this.lock.release();
         }
+
+        await this.save();
     }
 
     /**
@@ -124,6 +210,8 @@ export class Scoreboard {
         } finally {
             this.lock.release();
         }
+
+        await this.save();
     }
 
     private async calculateRoom(roomId: string) {
@@ -213,6 +301,8 @@ export class Scoreboard {
         } finally {
             this.lock.release();
         }
+
+        await this.save();
     }
 
     private async tryRemoveReaction(roomId: string, event: any) {
@@ -243,6 +333,8 @@ export class Scoreboard {
         } finally {
             this.lock.release();
         }
+
+        await this.save();
     }
 
     private async tryRemoveMessage(roomId: string, event: any) {
@@ -266,5 +358,7 @@ export class Scoreboard {
         } finally {
             this.lock.release();
         }
+
+        await this.save();
     }
 }

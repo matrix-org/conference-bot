@@ -131,6 +131,7 @@ let userId;
         );
     }
 
+    await scoreboard.load();
     await scheduler.prepare();
     await client.start();
 
