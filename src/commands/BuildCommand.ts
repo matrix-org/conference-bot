@@ -48,26 +48,6 @@ export class BuildCommand implements ICommand {
         reply["msgtype"] = "m.notice";
         await client.sendMessage(roomId, reply);
 
-        if (args[0] === "talk") {
-            const audId = args[1];
-            const talkId = args[2];
-
-            const pentaAud = parsed.auditoriums.find(a => a.id === audId);
-            if (!pentaAud) return await logMessage(LogLevel.ERROR, "BuildCommand", `Cannot find auditorium: ${audId}`);
-
-            const allTalks: ITalk[] = [];
-            Object.values(pentaAud.talksByDate).forEach(ea => allTalks.push(...ea));
-            const pentaTalk =  allTalks.find(t => t.id === talkId);
-            if (!pentaTalk) return await logMessage(LogLevel.ERROR, "BuildCommand", `Cannot find talk in room: ${audId} ${talkId}`);
-
-            await conference.createAuditoriumBackstage(pentaAud);
-            const aud = await conference.createAuditorium(pentaAud);
-            await conference.createTalk(pentaTalk, aud);
-
-            await client.sendNotice(roomId, "Talk room created");
-            return;
-        }
-
         // Create support rooms
         await conference.createSupportRooms();
         await client.sendNotice(roomId, "Support rooms have been created");
@@ -90,6 +70,26 @@ export class BuildCommand implements ICommand {
                 statusEventId,
                 `${subspacesCreated}/${subspacesConfig.length} subspaces have been created`,
             );
+        }
+
+        if (args[0] === "talk") {
+            const audId = args[1];
+            const talkId = args[2];
+
+            const pentaAud = parsed.auditoriums.find(a => a.id === audId);
+            if (!pentaAud) return await logMessage(LogLevel.ERROR, "BuildCommand", `Cannot find auditorium: ${audId}`);
+
+            const allTalks: ITalk[] = [];
+            Object.values(pentaAud.talksByDate).forEach(ea => allTalks.push(...ea));
+            const pentaTalk =  allTalks.find(t => t.id === talkId);
+            if (!pentaTalk) return await logMessage(LogLevel.ERROR, "BuildCommand", `Cannot find talk in room: ${audId} ${talkId}`);
+
+            await conference.createAuditoriumBackstage(pentaAud);
+            const aud = await conference.createAuditorium(pentaAud);
+            await conference.createTalk(pentaTalk, aud);
+
+            await client.sendNotice(roomId, "Talk room created");
+            return;
         }
 
         if (!args.includes("sionly")) {
