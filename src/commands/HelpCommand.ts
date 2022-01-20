@@ -35,6 +35,7 @@ export class HelpCommand implements ICommand {
             "                                                            'notalks' excludes talk rooms.\n" +
             "                                                            'nosi' excludes special interest rooms.\n" +
             "!conference build talk &lt;aud&gt; &lt;talk-id&gt;                    - Builds the auditorium and room for a single talk.\n" +
+            "!conference build interest &lt;interest-id&gt;                  - Builds a single interest room.\n" +
             "!conference run &lt;aud&gt;                                     - Runs the schedule in the given auditorium. If 'all' is used,\n" +
             "                                                            then all auditoriums will be run.\n" +
             "!conference stop                                          - Halts all scheduling, resetting the bot back to no watched auditoriums.\n" +

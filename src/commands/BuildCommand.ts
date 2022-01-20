@@ -86,6 +86,17 @@ export class BuildCommand implements ICommand {
 
             await client.sendNotice(roomId, "Talk room created");
             return;
+        } else if (args[0] === "interest") {
+            const interestId = args[1];
+
+            const interestRoom = parsed.interestRooms.find(i => i.id === interestId);
+            if (interestRoom) {
+                await conference.createInterestRoom(interestRoom);
+                await client.sendNotice(roomId, "Interest room created");
+            } else {
+                await client.sendNotice(roomId, `Cannot find interest room ${interestId} in schedule`);
+            }
+            return;
         }
 
         // Create support rooms
