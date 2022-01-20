@@ -48,10 +48,6 @@ export class BuildCommand implements ICommand {
         reply["msgtype"] = "m.notice";
         await client.sendMessage(roomId, reply);
 
-        // Create support rooms
-        await conference.createSupportRooms();
-        await client.sendNotice(roomId, "Support rooms have been created");
-
         // Create subspaces
         let subspacesCreated = 0;
         const subspacesConfig = Object.entries(config.conference.subspaces);
@@ -91,6 +87,10 @@ export class BuildCommand implements ICommand {
             await client.sendNotice(roomId, "Talk room created");
             return;
         }
+
+        // Create support rooms
+        await conference.createSupportRooms();
+        await client.sendNotice(roomId, "Support rooms have been created");
 
         if (!args.includes("sionly")) {
             let auditoriumsCreated = 0;
