@@ -40,6 +40,7 @@ export function renderAuditoriumWidget(req: Request, res: Response) {
     });
 
     return res.render('auditorium.liquid', {
+        theme: req.query?.['theme'] === 'dark' ? 'dark' : 'light',
         videoUrl: streamUrl,
         roomName: audId,
     });
@@ -81,6 +82,7 @@ export async function renderTalkWidget(req: Request, res: Response) {
     });
 
     return res.render('talk.liquid', {
+        theme: req.query?.['theme'] === 'dark' ? 'dark' : 'light',
         videoUrl: streamUrl,
         roomName: await talk.getName(),
         conferenceDomain: config.livestream.jitsiDomain,
@@ -101,6 +103,7 @@ export async function renderHybridWidget(req: Request, res: Response) {
     });
 
     return res.render('talk.liquid', { // it's the same widget
+        theme: req.query?.['theme'] === 'dark' ? 'dark' : 'light',
         videoUrl: streamUrl,
         roomName: "Livestream / Q&A",
         conferenceDomain: config.livestream.jitsiDomain,
@@ -185,6 +188,7 @@ export async function renderScoreboardWidget(req: Request, res: Response) {
     }
 
     return res.render('scoreboard.liquid', {
+        theme: req.query?.['theme'] === 'dark' ? 'dark' : 'light',
         trackingAlias: await aud.getCanonicalAlias(),
         trackingId: aud.roomId,
     });

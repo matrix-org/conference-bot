@@ -52,7 +52,7 @@ export class LiveWidget {
                 waitForIframeLoad: true,
                 name: "Livestream",
                 avatar_url: config.livestream.widgetAvatar,
-                url: config.webserver.publicBaseUrl + "/widgets/auditorium.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId",
+                url: config.webserver.publicBaseUrl + "/widgets/auditorium.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&theme=$theme",
                 data: {
                     title: await aud.getName(),
                     auditoriumId: await aud.getId(),
@@ -73,7 +73,7 @@ export class LiveWidget {
                 waitForIframeLoad: true,
                 name: "Livestream / Q&A",
                 avatar_url: config.livestream.widgetAvatar,
-                url: config.webserver.publicBaseUrl + "/widgets/talk.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&talkId=$talkId#displayName=$matrix_display_name&avatarUrl=$matrix_avatar_url&userId=$matrix_user_id&roomId=$matrix_room_id&auth=openidtoken-jwt",
+                url: config.webserver.publicBaseUrl + "/widgets/talk.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&talkId=$talkId&theme=$theme#displayName=$matrix_display_name&avatarUrl=$matrix_avatar_url&userId=$matrix_user_id&roomId=$matrix_room_id&auth=openidtoken-jwt",
                 data: {
                     title: await talk.getName(),
                     auditoriumId: await talk.getAuditoriumId(),
@@ -95,7 +95,7 @@ export class LiveWidget {
                 waitForIframeLoad: true,
                 name: "Livestream / Q&A",
                 avatar_url: config.livestream.widgetAvatar,
-                url: config.webserver.publicBaseUrl + "/widgets/hybrid.html?widgetId=$matrix_widget_id&roomId=$matrix_room_id#displayName=$matrix_display_name&avatarUrl=$matrix_avatar_url&userId=$matrix_user_id&roomId=$matrix_room_id&auth=openidtoken-jwt",
+                url: config.webserver.publicBaseUrl + "/widgets/hybrid.html?widgetId=$matrix_widget_id&roomId=$matrix_room_id&theme=$theme#displayName=$matrix_display_name&avatarUrl=$matrix_avatar_url&userId=$matrix_user_id&roomId=$matrix_room_id&auth=openidtoken-jwt",
                 data: {
                     title: "Join the conference to ask questions",
                 },
@@ -117,7 +117,7 @@ export class LiveWidget {
                 waitForIframeLoad: true,
                 name: "Upvoted messages",
                 avatar_url: config.livestream.widgetAvatar,
-                url: config.webserver.publicBaseUrl + "/widgets/scoreboard.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&talkId=$talkId",
+                url: config.webserver.publicBaseUrl + "/widgets/scoreboard.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&talkId=$talkId&theme=$theme",
                 data: {
                     title: title,
                     auditoriumId: await talk.getAuditoriumId(),
