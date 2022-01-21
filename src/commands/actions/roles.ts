@@ -20,6 +20,7 @@ import { Conference } from "../../Conference";
 
 export async function runRoleCommand(action: IAction, conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[], isInvite = true) {
     const backstageOnly = args.includes("backstage");
+    const skipTalks = args.includes("notalks");
 
     if (args[0] && args[0] !== "backstage") {
         const aud = backstageOnly ? conference.getAuditoriumBackstage(args[0]) : conference.getAuditorium(args[0]);
@@ -28,12 +29,12 @@ export async function runRoleCommand(action: IAction, conference: Conference, cl
             if (!spiRoom) return client.replyNotice(roomId, event, "Unknown auditorium/interest room");
             await doInterestResolveAction(action, client, spiRoom, conference, isInvite);
         } else {
-            await doAuditoriumResolveAction(action, client, aud, conference, backstageOnly, isInvite);
+            await doAuditoriumResolveAction(action, client, aud, conference, backstageOnly, skipTalks, isInvite);
         }
     } else {
         if (!args.includes("sionly")) {
             for (const auditorium of conference.storedAuditoriums) {
-                await doAuditoriumResolveAction(action, client, auditorium, conference, backstageOnly, isInvite);
+                await doAuditoriumResolveAction(action, client, auditorium, conference, backstageOnly, skipTalks, isInvite);
             }
         }
         if (!args.includes("nosi")) {
