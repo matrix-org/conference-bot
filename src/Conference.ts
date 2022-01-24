@@ -240,29 +240,42 @@ export class Conference {
         }
     }
 
+    /**
+     * Creates the data store room and top-level space for the conference.
+     * @param conference The description of the conference.
+     */
     public async createDb(conference: IConference) {
-        if (this.dbRoom) {
-            throw new Error("Conference has already been created");
+        let space: Space;
+        if (!this.dbRoom) {
+            space = await this.client.createSpace({
+                isPublic: true,
+                localpart: config.conference.id,
+                name: config.conference.name,
+            });
+
+            const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(CONFERENCE_ROOM_CREATION_TEMPLATE, {
+                creation_content: {
+                    [RSC_CONFERENCE_ID]: this.id,
+                },
+                name: `[DB] Conference ${conference.title}`,
+                initial_state: [
+                    makeStoredConference(this.id, conference),
+                    makeStoredSpace(space.roomId),
+                ],
+            }));
+
+            this.dbRoom = new MatrixRoom(roomId, this.client, this);
+        } else {
+            space = await this.dbRoom.getSpace();
         }
 
-        const space = await this.client.createSpace({
-            isPublic: true,
-            localpart: config.conference.id,
-            name: config.conference.name,
-        });
-
-        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(CONFERENCE_ROOM_CREATION_TEMPLATE, {
-            creation_content: {
-                [RSC_CONFERENCE_ID]: this.id,
-            },
-            name: `[DB] Conference ${conference.title}`,
-            initial_state: [
-                makeStoredConference(this.id, conference),
-                makeStoredSpace(space.roomId),
-            ],
-        }));
-
-        this.dbRoom = new MatrixRoom(roomId, this.client, this);
+        // Ensure that the space can be viewed by guest users.
+        await this.client.sendStateEvent(
+            space.roomId,
+            "m.room.guest_access",
+            "",
+            {guest_access:"can_join"},
+        );
     }
 
     public async getPentaDb(): Promise<PentaDb> {
