@@ -323,22 +323,32 @@ export class Conference {
     public async createSubspace(
         subspaceId: string, name: string, aliasLocalpart: string
     ): Promise<Space> {
-        if (this.subspaces[subspaceId]) {
-            return this.subspaces[subspaceId];
+        let subspace: Space;
+        if (!this.subspaces[subspaceId]) {
+            subspace = await this.client.createSpace({
+                isPublic: true,
+                localpart: "space-" + config.conference.prefixes.aliases + aliasLocalpart,
+                name: name,
+            });
+            this.subspaces[subspaceId] = subspace;
+
+            await this.client.sendStateEvent(this.dbRoom.roomId, RS_STORED_SUBSPACE, subspaceId, {
+                roomId: subspace.roomId,
+            } as IStoredSubspace);
+        } else {
+            subspace = this.subspaces[subspaceId];
         }
 
-        const subspace = await this.client.createSpace({
-            isPublic: true,
-            localpart: "space-" + config.conference.prefixes.aliases + aliasLocalpart,
-            name: name,
-        });
+        // Ensure that the subspace appears within the conference space.
         await (await this.getSpace()).addChildSpace(subspace);
 
-        await this.client.sendStateEvent(this.dbRoom.roomId, RS_STORED_SUBSPACE, subspaceId, {
-            roomId: subspace.roomId,
-        } as IStoredSubspace);
-
-        this.subspaces[subspaceId] = subspace;
+        // Ensure that the subspace can be viewed by guest users.
+        await this.client.sendStateEvent(
+            subspace.roomId,
+            "m.room.guest_access",
+            "",
+            {guest_access:"can_join"},
+        );
 
         return subspace;
     }
