@@ -454,31 +454,33 @@ export class Conference {
     }
 
     public async createTalk(talk: ITalk, auditorium: Auditorium): Promise<MatrixRoom> {
-        if (this.talks[talk.id]) {
-            return this.talks[talk.id];
+        let roomId: string;
+        if (!this.talks[talk.id]) {
+            roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(TALK_CREATION_TEMPLATE, {
+                name: talk.title,
+                creation_content: {
+                    [RSC_CONFERENCE_ID]: this.id,
+                    [RSC_TALK_ID]: talk.id,
+                    [RSC_AUDITORIUM_ID]: await auditorium.getId(),
+                },
+                initial_state: [
+                    makeStoredTalk(this.id, talk),
+                    makeParentRoom(auditorium.roomId),
+                ],
+            }));
+            await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + (await auditorium.getName()) + '-' + talk.slug);
+            await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + 'talk-' + talk.id);
+            this.talks[talk.id] = new Talk(roomId, this.client, this);
+        } else {
+            roomId = this.talks[talk.id].roomId;
         }
-
-        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(TALK_CREATION_TEMPLATE, {
-            name: talk.title,
-            creation_content: {
-                [RSC_CONFERENCE_ID]: this.id,
-                [RSC_TALK_ID]: talk.id,
-                [RSC_AUDITORIUM_ID]: await auditorium.getId(),
-            },
-            initial_state: [
-                makeStoredTalk(this.id, talk),
-                makeParentRoom(auditorium.roomId),
-            ],
-        }));
-        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + (await auditorium.getName()) + '-' + talk.slug);
-        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + 'talk-' + talk.id);
-        await auditorium.addDirectChild(roomId);
-        this.talks[talk.id] = new Talk(roomId, this.client, this);
 
         // TODO: Send widgets after creation
         // const widget = await LiveWidget.forTalk(this.talks[talk.id], this.client);
         // await this.client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
 
+        // Ensure that the room appears within the correct space.
+        await auditorium.addDirectChild(roomId);
         const startTime = new Date(talk.startTime).toISOString();
         await (await auditorium.getSpace()).addChildRoom(roomId, { order: `3-talk-${startTime}` });
 
