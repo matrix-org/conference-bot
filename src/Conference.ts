@@ -473,6 +473,9 @@ export class Conference {
             this.talks[talk.id] = new Talk(roomId, this.client, this);
         } else {
             roomId = this.talks[talk.id].roomId;
+
+            // Ensure that the room has the correct name.
+            await this.client.sendStateEvent(roomId, "m.room.name", "", {name: talk.title});
         }
 
         // TODO: Send widgets after creation
