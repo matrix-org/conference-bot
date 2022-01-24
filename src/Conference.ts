@@ -366,6 +366,11 @@ export class Conference {
             roomId = this.interestRooms[interestRoom.id].roomId;
         }
 
+        // Ensure that widget modification is restricted to admins.
+        const powerLevels = await this.client.getRoomStateEvent(roomId, "m.room.power_levels", "");
+        powerLevels.events["im.vector.modular.widgets"] = 100;
+        await this.client.sendStateEvent(roomId, "m.room.power_levels", "", powerLevels);
+
         // Ensure that the room appears within the correct space.
         await this.dbRoom.addDirectChild(roomId);
         const parentSpace = await this.getDesiredParentSpace(interestRoom);

@@ -149,7 +149,6 @@ export const SPECIAL_INTEREST_CREATION_TEMPLATE = {
         ...PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
         events: {
             ...PUBLIC_ROOM_POWER_LEVELS_TEMPLATE['events'],
-            "im.vector.modular.widgets": 100, // don't allow moderators to modify widgets
             "m.room.power_levels": 50,
         },
     },
