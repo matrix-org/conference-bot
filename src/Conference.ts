@@ -240,29 +240,42 @@ export class Conference {
         }
     }
 
+    /**
+     * Creates the data store room and top-level space for the conference.
+     * @param conference The description of the conference.
+     */
     public async createDb(conference: IConference) {
-        if (this.dbRoom) {
-            throw new Error("Conference has already been created");
+        let space: Space;
+        if (!this.dbRoom) {
+            space = await this.client.createSpace({
+                isPublic: true,
+                localpart: config.conference.id,
+                name: config.conference.name,
+            });
+
+            const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(CONFERENCE_ROOM_CREATION_TEMPLATE, {
+                creation_content: {
+                    [RSC_CONFERENCE_ID]: this.id,
+                },
+                name: `[DB] Conference ${conference.title}`,
+                initial_state: [
+                    makeStoredConference(this.id, conference),
+                    makeStoredSpace(space.roomId),
+                ],
+            }));
+
+            this.dbRoom = new MatrixRoom(roomId, this.client, this);
+        } else {
+            space = await this.dbRoom.getSpace();
         }
 
-        const space = await this.client.createSpace({
-            isPublic: true,
-            localpart: config.conference.id,
-            name: config.conference.name,
-        });
-
-        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(CONFERENCE_ROOM_CREATION_TEMPLATE, {
-            creation_content: {
-                [RSC_CONFERENCE_ID]: this.id,
-            },
-            name: `[DB] Conference ${conference.title}`,
-            initial_state: [
-                makeStoredConference(this.id, conference),
-                makeStoredSpace(space.roomId),
-            ],
-        }));
-
-        this.dbRoom = new MatrixRoom(roomId, this.client, this);
+        // Ensure that the space can be viewed by guest users.
+        await this.client.sendStateEvent(
+            space.roomId,
+            "m.room.guest_access",
+            "",
+            {guest_access:"can_join"},
+        );
     }
 
     public async getPentaDb(): Promise<PentaDb> {
@@ -310,22 +323,32 @@ export class Conference {
     public async createSubspace(
         subspaceId: string, name: string, aliasLocalpart: string
     ): Promise<Space> {
-        if (this.subspaces[subspaceId]) {
-            return this.subspaces[subspaceId];
+        let subspace: Space;
+        if (!this.subspaces[subspaceId]) {
+            subspace = await this.client.createSpace({
+                isPublic: true,
+                localpart: "space-" + config.conference.prefixes.aliases + aliasLocalpart,
+                name: name,
+            });
+            this.subspaces[subspaceId] = subspace;
+
+            await this.client.sendStateEvent(this.dbRoom.roomId, RS_STORED_SUBSPACE, subspaceId, {
+                roomId: subspace.roomId,
+            } as IStoredSubspace);
+        } else {
+            subspace = this.subspaces[subspaceId];
         }
 
-        const subspace = await this.client.createSpace({
-            isPublic: true,
-            localpart: "space-" + config.conference.prefixes.aliases + aliasLocalpart,
-            name: name,
-        });
+        // Ensure that the subspace appears within the conference space.
         await (await this.getSpace()).addChildSpace(subspace);
 
-        await this.client.sendStateEvent(this.dbRoom.roomId, RS_STORED_SUBSPACE, subspaceId, {
-            roomId: subspace.roomId,
-        } as IStoredSubspace);
-
-        this.subspaces[subspaceId] = subspace;
+        // Ensure that the subspace can be viewed by guest users.
+        await this.client.sendStateEvent(
+            subspace.roomId,
+            "m.room.guest_access",
+            "",
+            {guest_access:"can_join"},
+        );
 
         return subspace;
     }
