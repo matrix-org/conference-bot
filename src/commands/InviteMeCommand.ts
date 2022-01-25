@@ -49,10 +49,11 @@ export class InviteMeCommand implements ICommand {
                     await logMessage(LogLevel.WARN, "InviteMeCommand", `Error inviting ${userId} to ${spi.roomId}: ${e?.message || e?.body?.message}`);
                 }
             }
+            await client.replyNotice(roomId, event, "Invite sent");
         } else {
             const targetRoomId = await client.resolveRoom(args[0]);
             await client.inviteUser(userId, targetRoomId);
+            await client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
         }
-        await client.replyNotice(roomId, event, "Invite sent");
     }
 }
