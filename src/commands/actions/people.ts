@@ -25,7 +25,15 @@ export interface IAction {
     (client: MatrixClient, roomId: string, people: ResolvedPersonIdentifier[]): Promise<void>;
 }
 
-export async function doAuditoriumResolveAction(action: IAction, client: MatrixClient, aud: Auditorium, conference: Conference, backstageOnly = false, isInvite = true): Promise<void> {
+export async function doAuditoriumResolveAction(
+    action: IAction,
+    client: MatrixClient,
+    aud: Auditorium,
+    conference: Conference,
+    backstageOnly = false,
+    skipTalks = false,
+    isInvite = true,
+): Promise<void> {
     // We know that everyone should be in the backstage room, so resolve that list of people
     // to make the identity server lookup efficient.
     const backstagePeople = isInvite
@@ -51,15 +59,24 @@ export async function doAuditoriumResolveAction(action: IAction, client: MatrixC
 
     await action(client, realAud.roomId, resolvedAudPeople);
 
-    const talks = await asyncFilter(conference.storedTalks, async t => (await t.getAuditoriumId()) === (await aud.getId()));
-    for (const talk of talks) {
-        const talkPeople = isInvite
-            ? await conference.getInviteTargetsForTalk(talk)
-            : await conference.getModeratorsForTalk(talk);
-        const resolvedTalkPeople = talkPeople.map(p => allPossiblePeople.find(b => p.person_id === b.person.person_id));
-        if (resolvedTalkPeople.some(p => !p)) throw new Error("Failed to resolve all targets for talk");
+    if (!skipTalks) {
+        const talks = await asyncFilter(
+            conference.storedTalks,
+            async t => (await t.getAuditoriumId()) === (await aud.getId()),
+        );
+        for (const talk of talks) {
+            const talkPeople = isInvite
+                ? await conference.getInviteTargetsForTalk(talk)
+                : await conference.getModeratorsForTalk(talk);
+            const resolvedTalkPeople = talkPeople.map(
+                p => allPossiblePeople.find(b => p.person_id === b.person.person_id)
+            );
+            if (resolvedTalkPeople.some(p => !p)) {
+                throw new Error("Failed to resolve all targets for talk");
+            }
 
-        await action(client, talk.roomId, resolvedTalkPeople);
+            await action(client, talk.roomId, resolvedTalkPeople);
+        }
     }
 }
 
