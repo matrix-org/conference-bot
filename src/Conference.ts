@@ -367,6 +367,7 @@ export class Conference {
         }
 
         // Ensure that widget modification is restricted to admins.
+        // TODO: Handle missing or malformed `m.room.power_levels` events from pre-existing rooms.
         const powerLevels = await this.client.getRoomStateEvent(roomId, "m.room.power_levels", "");
         powerLevels.events ||= {};
         powerLevels.events["im.vector.modular.widgets"] = 100;
