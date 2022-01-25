@@ -131,6 +131,11 @@ let userId;
         );
     }
 
+    // Load the previous room scoreboards. This has to happen before we start syncing, otherwise
+    // new scoreboard changes will get lost. The `MatrixClient` resumes syncing from where it left
+    // off, so events will only be missed if the bot dies while processing them.
+    await scoreboard.load();
+
     await scheduler.prepare();
     await client.start();
 
