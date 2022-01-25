@@ -80,6 +80,8 @@ export class Scoreboard {
     constructor(private conference: Conference, private client: MatrixClient) {
         this.path = path.join(config.dataPath, 'scoreboard.json');
 
+        // We expect the `MatrixClient` to only start / resume syncing after
+        // `load()` has been called.
         this.client.on("room.event", async (roomId: string, event: any) => {
             if (event['type'] === 'm.reaction') {
                 await this.tryAddReaction(roomId, event);
@@ -98,6 +100,8 @@ export class Scoreboard {
     /**
      * Loads all room scoreboards from disk, if possible.
      *
+     * Replaces all room scoreboards with their previously-saved versions, if they exist.
+     *
      * Expects the scoreboard lock to not be held by the caller.
      */
     public async load() {
@@ -109,16 +113,16 @@ export class Scoreboard {
             if (e.code === 'ENOENT') {
                 // No previous scoreboard to load
             } else if (e instanceof SyntaxError) {
-                LogService.info("Scoreboard", `Cannot load scoreboard: invalid JSON: ${e.message}`);
+                LogService.warn("Scoreboard", `Cannot load scoreboard: invalid JSON: ${e.message}`);
             } else {
-                LogService.info("Scoreboard", "Cannot load scoreboard:", e);
+                LogService.warn("Scoreboard", "Cannot load scoreboard:", e);
             }
 
             return;
         }
 
         if (json.version !== Scoreboard.JSON_FORMAT_VERSION) {
-            LogService.info("Scoreboard", `Cannot load scoreboard version ${json.version}`);
+            LogService.warn("Scoreboard", `Cannot load scoreboard version ${json.version}`);
             return;
         }
 
@@ -129,17 +133,6 @@ export class Scoreboard {
                 // It's assumed that the bot hasn't started processing messages yet.
                 this.byRoom[roomId] = json.rooms[roomId];
                 await this.calculateRoom(roomId);
-
-                // TODO: Can the bot miss messages and reactions that are sent while offline?
-                //       If so:
-                //        * Use `MatrixClient.unstableApis.getRelationsForEvent()` to pick up any
-                //         reactions that happened while the bot was offline.
-                //        * Check if messages have been deleted while the bot was offline.
-                //        * Or somehow get the bot to pick up from where it left off?
-                //
-                //       In testing, the bot seems to pick up new messages from where it left off,
-                //       at least when the list of missed messages is small. Not making any requests
-                //       to the homeserver has the benefit of keeping startup times minimal.
             }
         } finally {
             this.lock.release();
