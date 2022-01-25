@@ -368,6 +368,7 @@ export class Conference {
 
         // Ensure that widget modification is restricted to admins.
         const powerLevels = await this.client.getRoomStateEvent(roomId, "m.room.power_levels", "");
+        powerLevels.events ||= {};
         powerLevels.events["im.vector.modular.widgets"] = 100;
         await this.client.sendStateEvent(roomId, "m.room.power_levels", "", powerLevels);
 
