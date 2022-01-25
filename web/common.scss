@@ -21,7 +21,20 @@ html, body {
   margin: 0;
   height: 100%; /* to trick the layout into working */
   font-family: 'Inter', sans-serif;
-  background-color: #fff;
+}
+
+body.light {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+body.dark {
+  background-color: #15191e;
+  color: #ffffff;
+}
+
+a:hover, a:link, a:visited {
+  color: #238CF5;
 }
 
 #livestream {
