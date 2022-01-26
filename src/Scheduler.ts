@@ -304,11 +304,20 @@ export class Scheduler {
             await this.scoreboard.resetScoreboard(confAud.roomId);
             if (!task.talk.prerecorded) {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk is not pre-recorded.</h3><p>You are entering the Q&A for your talk's duration now.</p>`);
-                await this.client.sendHtmlText(confAud.roomId, `<h3>${await confTalk.getName()}</h3><p><b>There is no video for this talk.</b> Ask your questions here and they'll try to answer them!</p>`);
+                await this.client.sendHtmlText(
+                    confAud.roomId,
+                    `<h3>${await confTalk.getName()}</h3>` +
+                    `<p><b>There is no video for this talk.</b> ` +
+                    `Ask your questions here and they'll try to answer them!</p>`,
+                );
                 return;
             }
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk is starting shortly.</h3>`);
-            await this.client.sendHtmlText(confAud.roomId, `<h3>Up next: ${await confTalk.getName()}</h3><p>Ask your questions here for the Q&A at the end of the talk.</p>`);
+            await this.client.sendHtmlText(
+                confAud.roomId,
+                `<h3>Up next: ${await confTalk.getName()}</h3>` +
+                `<p>Ask your questions here for the Q&A at the end of the talk.</p>`,
+            );
         } else if (task.type === ScheduledTaskType.TalkQA) {
             if (!task.talk.prerecorded) return;
             await this.client.sendHtmlText(
@@ -317,7 +326,11 @@ export class Scheduler {
                 `<p>Remember that the broadcast feed is buffered and lags many seconds behind. ` +
                 `Do not wait for it to finish, otherwise you will create a long pause!</p>`,
             );
-            await this.client.sendHtmlText(confAud.roomId, `<h3>Q&A is starting shortly</h3><p>Feel free to continue asking questions in this room for the speakers - the conversation will continue in the hallway after the Q&A.</p>`);
+            await this.client.sendHtmlText(
+                confAud.roomId,
+                `<h3>Q&A is starting shortly</h3>` +
+                `<p>Feel free to continue asking questions in this room for the speakers - the conversation will continue in the hallway after the Q&A.</p>`,
+            );
         } else if (task.type === ScheduledTaskType.TalkEnd) {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk has ended - opening up this room to all attendees.</h3><p>@room - They won't see the history in this room.</p>`);
             const widget = await LiveWidget.forTalk(confTalk, this.client);
