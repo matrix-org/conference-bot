@@ -20,7 +20,7 @@ import AwaitLock from "await-lock";
 import { logMessage } from "./LogProxy";
 import config from "./config";
 import { LogLevel, LogService, MatrixClient, MentionPill } from "matrix-bot-sdk";
-import { makeRoomPublic } from "./utils";
+import { makeRoomPublic, setEventPowerLevel } from "./utils";
 import { Scoreboard } from "./Scoreboard";
 import { LiveWidget } from "./models/LiveWidget";
 import { ResolvedPersonIdentifier, resolveIdentifiers } from "./invites";
@@ -348,6 +348,8 @@ export class Scheduler {
             await this.client.sendStateEvent(confTalk.roomId, scoreboard.type, scoreboard.state_key, {});
             await this.client.sendStateEvent(confTalk.roomId, layout.type, layout.state_key, layout.content);
             await makeRoomPublic(confTalk.roomId, this.client);
+            // Allow moderators to remove the Jitsi widget.
+            await setEventPowerLevel(this.client, confTalk.roomId, "m.room.power_levels", 50);
             const talkPill = await MentionPill.forRoom(confTalk.roomId, this.client);
             await this.client.sendHtmlText(confAud.roomId, `<h3>The talk will end shortly</h3><p>If the speakers are available, they'll be hanging out in ${talkPill.html}</p>`);
         } else if (task.type === ScheduledTaskType.TalkStart1H) {
