@@ -42,7 +42,7 @@ import {
     RS_STORED_PERSON,
     RS_STORED_SUBSPACE,
 } from "./models/room_state";
-import { makeDisplayName, objectFastClone, safeCreateRoom } from "./utils";
+import { makeDisplayName, objectFastClone, safeCreateRoom, setEventPowerLevel } from "./utils";
 import { assignAliasVariations, makeLocalpart } from "./utils/aliases";
 import config from "./config";
 import { MatrixRoom } from "./models/MatrixRoom";
@@ -390,11 +390,7 @@ export class Conference {
         }
 
         // Ensure that widget modification is restricted to admins.
-        // TODO: Handle missing or malformed `m.room.power_levels` events from pre-existing rooms.
-        const powerLevels = await this.client.getRoomStateEvent(roomId, "m.room.power_levels", "");
-        powerLevels.events ||= {};
-        powerLevels.events["im.vector.modular.widgets"] = 100;
-        await this.client.sendStateEvent(roomId, "m.room.power_levels", "", powerLevels);
+        await setEventPowerLevel(this.client, roomId, "im.vector.modular.widgets", 100);
 
         // Ensure that the room appears within the correct space.
         await this.dbRoom.addDirectChild(roomId);

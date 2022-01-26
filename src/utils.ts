@@ -142,6 +142,26 @@ export async function makeRoomPublic(roomId: string, client: MatrixClient) {
 }
 
 /**
+ * Changes the power level required to send an event in a room.
+ * @param client The matrix-bot-sdk client.
+ * @param roomId The room whose power levels are to be changed.
+ * @param eventType The event type.
+ * @param powerLevel The required power level.
+ */
+export async function setEventPowerLevel(
+    client: MatrixClient,
+    roomId: string,
+    eventType: string,
+    powerLevel: number,
+) {
+    // TODO: Handle missing or malformed `m.room.power_levels` events.
+    const powerLevels = await client.getRoomStateEvent(roomId, "m.room.power_levels", "");
+    powerLevels.events ||= {};
+    powerLevels.events[eventType] = powerLevel;
+    await client.sendStateEvent(roomId, "m.room.power_levels", "", powerLevels);
+}
+
+/**
  * Edits a previously sent notice.
  * @param client The matrix-bot-sdk client.
  * @param roomId The room containing the notice.
