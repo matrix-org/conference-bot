@@ -308,7 +308,8 @@ export class Scheduler {
                     confAud.roomId,
                     `<h3>${await confTalk.getName()}</h3>` +
                     `<p><b>There is no video for this talk.</b> ` +
-                    `Ask your questions here and they'll try to answer them!</p>`,
+                    `Ask your questions here and they'll try to answer them! ` +
+                    `The questions with the most 👍 votes will be answered first.</p>`,
                 );
                 return;
             }
@@ -316,7 +317,8 @@ export class Scheduler {
             await this.client.sendHtmlText(
                 confAud.roomId,
                 `<h3>Up next: ${await confTalk.getName()}</h3>` +
-                `<p>Ask your questions here for the Q&A at the end of the talk.</p>`,
+                `<p>During the talk, you can ask questions here for the Q&A at the end. ` +
+                `The questions with the most 👍 votes will be answered first.</p>`,
             );
         } else if (task.type === ScheduledTaskType.TalkQA) {
             if (!task.talk.prerecorded) return;
@@ -329,7 +331,7 @@ export class Scheduler {
             await this.client.sendHtmlText(
                 confAud.roomId,
                 `<h3>Q&A is starting shortly</h3>` +
-                `<p>Feel free to continue asking questions in this room for the speakers - the conversation will continue in the hallway after the Q&A.</p>`,
+                `<p>Ask questions in this room for the speakers - the questions with the most 👍 votes will be answered first.</p>`,
             );
         } else if (task.type === ScheduledTaskType.TalkEnd) {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk has ended - opening up this room to all attendees.</h3><p>@room - They won't see the history in this room.</p>`);
