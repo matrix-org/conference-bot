@@ -23,6 +23,7 @@ import { sha256 } from "./utils";
 import * as dns from "dns";
 import { Scoreboard } from "./Scoreboard";
 import { LiveWidget } from "./models/LiveWidget";
+import { IDbTalk } from "./db/DbTalk";
 
 export function renderAuditoriumWidget(req: Request, res: Response) {
     const audId = req.query?.['auditoriumId'] as string;
@@ -44,6 +45,32 @@ export function renderAuditoriumWidget(req: Request, res: Response) {
         videoUrl: streamUrl,
         roomName: audId,
     });
+}
+
+const TALK_CACHE_DURATION = 60 * 1000; // ms
+const dbTalksCache: {
+    [talkId: string]: {
+        talk: Promise<IDbTalk | null>,
+        cachedAt: number, // ms
+    },
+} = {};
+
+/**
+ * Gets the Pentabarf database record for a talk, with a cache.
+ * @param talkId The talk ID.
+ * @returns The database record for the talk, if it exists; `null` otherwise.
+ */
+async function getDbTalk(talkId: string): Promise<IDbTalk | null> {
+    const now = Date.now();
+    if (!(talkId in dbTalksCache) ||
+        now - dbTalksCache[talkId].cachedAt > TALK_CACHE_DURATION) {
+        dbTalksCache[talkId] = {
+            talk: config.RUNTIME.conference.getDbTalk(talkId),
+            cachedAt: now,
+        };
+    }
+
+    return dbTalksCache[talkId].talk;
 }
 
 export async function renderTalkWidget(req: Request, res: Response) {
@@ -70,10 +97,9 @@ export async function renderTalkWidget(req: Request, res: Response) {
         return res.sendStatus(404);
     }
 
-    // TODO: Cache dbTalk so that the Pentabarf database isn't hit every time.
-    //       This endpoint is only used by speakers/hosts/coordinators,
-    //       so we don't expect too much load.
-    const dbTalk = await config.RUNTIME.conference.getDbTalk(talkId);
+    // Fetch the corresponding talk from Pentabarf. We cache the `IDbTalk` to avoid hitting the
+    // Pentabarf database for every visiting attendee once talk rooms are opened to the public.
+    const dbTalk = await getDbTalk(talkId);
 
     const streamUrl = template(config.livestream.talkUrl, {
         audId: audId.toLowerCase(),
