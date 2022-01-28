@@ -309,7 +309,7 @@ export class Scheduler {
                     `<h3>${await confTalk.getName()}</h3>` +
                     `<p><b>There is no video for this talk.</b> ` +
                     `Ask your questions here and they'll try to answer them! ` +
-                    `The questions with the most 👍 votes will be answered first.</p>`,
+                    `The questions with the most 👍 votes are most visible to the speaker.</p>`,
                 );
                 return;
             }
