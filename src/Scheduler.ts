@@ -331,7 +331,7 @@ export class Scheduler {
             await this.client.sendHtmlText(
                 confAud.roomId,
                 `<h3>Q&A is starting shortly</h3>` +
-                `<p>Ask questions in this room for the speakers - the questions with the most 👍 votes will be answered first.</p>`,
+                `<p>Ask questions in this room for the speakers - the questions with the most 👍 votes are most visible to the speaker.</p>`,
             );
         } else if (task.type === ScheduledTaskType.TalkEnd) {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk has ended - opening up this room to all attendees.</h3><p>@room - They won't see the history in this room.</p>`);
