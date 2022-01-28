@@ -318,7 +318,7 @@ export class Scheduler {
                 confAud.roomId,
                 `<h3>Up next: ${await confTalk.getName()}</h3>` +
                 `<p>During the talk, you can ask questions here for the Q&A at the end. ` +
-                `The questions with the most 👍 votes will be answered first.</p>`,
+                `The questions with the most 👍 votes are most visible to the speaker.</p>`,
             );
         } else if (task.type === ScheduledTaskType.TalkQA) {
             if (!task.talk.prerecorded) return;
