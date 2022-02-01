@@ -33,6 +33,7 @@ export enum ScheduledTaskType {
     TalkStart5M = "talk_start_5m",
     TalkStart1H = "talk_start_1h",
     TalkQA5M = "talk_q&a_5m",
+    TalkLivestreamEnd1M = "talk_livestream_end_1m",
     TalkEnd5M = "talk_end_5m",
     TalkEnd1M = "talk_end_1m",
 
@@ -93,6 +94,8 @@ export function getStartTime(task: ITask): number {
             return task.talk.qa_start_datetime - (5 * 60 * 1000);
         case ScheduledTaskType.TalkQA:
             return task.talk.qa_start_datetime;
+        case ScheduledTaskType.TalkLivestreamEnd1M:
+            return task.talk.livestream_end_datetime - (1 * 60 * 1000);
         default:
             throw new Error("Unknown task type for getStartTime(): " + task.type);
     }
@@ -102,6 +105,7 @@ export function sortTasks(tasks: ITask[]): ITask[] {
     const implicitTaskOrder = [
         // Unconventionally, we order this backwards so the messages show up as
         // concluding a talk before starting a new one.
+        ScheduledTaskType.TalkLivestreamEnd1M,
         ScheduledTaskType.TalkEnd5M,
         ScheduledTaskType.TalkEnd1M,
         ScheduledTaskType.TalkEnd,
@@ -196,6 +200,8 @@ export class Scheduler {
                     } else if (type === ScheduledTaskType.TalkEnd) {
                         talks.filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkEnd5M, e)))
                             .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkEnd5M, e));
+                        talks.filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkLivestreamEnd1M, e)))
+                            .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkLivestreamEnd1M, e));
                         talks.filter(e => !this.completedIds.includes(makeTaskId(ScheduledTaskType.TalkEnd1M, e)))
                             .forEach(e => this.tryScheduleTask(ScheduledTaskType.TalkEnd1M, e));
                     }
@@ -373,9 +379,10 @@ export class Scheduler {
         } else if (task.type === ScheduledTaskType.TalkEnd5M) {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 5 minutes</h3><p>The next talk will start automatically after yours. In 5 minutes, this room will be opened up for anyone to join. They will not be able to see history.</p>`);
             await this.client.sendHtmlText(confAud.roomId, `<h3>This talk ends in about 5 minutes</h3><p>Ask questions here for the speakers!</p>`);
-        } else if (task.type === ScheduledTaskType.TalkEnd1M) {
+        } else if (task.type === ScheduledTaskType.TalkLivestreamEnd1M) {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 1 minute!</h3><p>The next talk will start automatically after yours. Wrap it up!</p>`);
-            await this.client.sendHtmlText(confAud.roomId, `<h3>This talk ends in about 1 minute!</h3><p>Last question!</p>`);
+        } else if (task.type === ScheduledTaskType.TalkEnd1M) {
+            await this.client.sendHtmlText(confAud.roomId, `<h3>This talk ends in about 1 minute!</h3>`);
         } else if (task.type === ScheduledTaskType.TalkCheckin45M) {
             if (!task.talk.prerecorded) return;
             const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
