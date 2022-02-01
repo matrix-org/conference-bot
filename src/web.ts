@@ -114,7 +114,7 @@ export async function renderTalkWidget(req: Request, res: Response) {
         conferenceDomain: config.livestream.jitsiDomain,
         conferenceId: base32.stringify(Buffer.from(talk.roomId), { pad: false }).toLowerCase(),
         livestreamStartTime: dbTalk?.livestream_start_datetime ?? "",
-        livestreamEndTime: dbTalk?.end_datetime ?? "",
+        livestreamEndTime: dbTalk?.livestream_end_datetime ?? "",
     });
 }
 

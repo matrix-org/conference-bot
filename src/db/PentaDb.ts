@@ -139,12 +139,14 @@ export class PentaDb {
             // For live talks, both the preroll and interroll are shown, followed by the live talk.
             livestreamStartDatetime = talk.start_datetime + config.conference.database.schedulePreBufferSeconds * 1000;
         }
+        const livestreamEndDatetime = talk.end_datetime - config.conference.database.schedulePostBufferSeconds * 1000;
 
         return {
             ...talk,
 
             qa_start_datetime: qaStartDatetime,
             livestream_start_datetime: livestreamStartDatetime,
+            livestream_end_datetime: livestreamEndDatetime,
         };
     }
 
