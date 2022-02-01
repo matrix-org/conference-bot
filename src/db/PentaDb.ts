@@ -129,7 +129,7 @@ export class PentaDb {
     }
 
     private postprocessDbTalk(talk: IRawDbTalk): IDbTalk {
-        const qaStartDatetime = talk.qa_start_datetime + config.conference.database.scheduleBufferSeconds * 1000;
+        const qaStartDatetime = talk.qa_start_datetime + config.conference.database.schedulePreBufferSeconds * 1000;
         let livestreamStartDatetime: number;
         if (talk.prerecorded) {
             // For prerecorded talks, a preroll is shown, followed by the talk recording, then an
@@ -137,7 +137,7 @@ export class PentaDb {
             livestreamStartDatetime = qaStartDatetime;
         } else {
             // For live talks, both the preroll and interroll are shown, followed by the live talk.
-            livestreamStartDatetime = talk.start_datetime + config.conference.database.scheduleBufferSeconds * 1000;
+            livestreamStartDatetime = talk.start_datetime + config.conference.database.schedulePreBufferSeconds * 1000;
         }
 
         return {

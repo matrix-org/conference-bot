@@ -93,7 +93,7 @@ interface IConfig {
             sslmode: string;
             tblPeople: string;
             tblSchedule: string;
-            scheduleBufferSeconds: number;
+            schedulePreBufferSeconds: number;
         };
     };
     ircBridge: IRCBridgeOpts;
