@@ -119,10 +119,12 @@ a:hover, a:link, a:visited {
 }
 
 #liveBanner #liveBannerShortText {
+  white-space: pre-line; /* respect new lines */
   display: none;
 }
 
 #liveBanner #liveBannerLongText {
+  white-space: pre-line; /* respect new lines */
   display: inline;
 }
 

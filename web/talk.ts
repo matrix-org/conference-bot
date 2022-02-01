@@ -162,15 +162,13 @@ function updateLivestreamBanner(): number | null {
         // Show a countdown.
         const countdown = formatDuration(livestreamStartTime - now);
         if (widgetMode === "video") {
-            // In the browser, the short text line wraps after "IN".
             setLiveBannerText(
-                `LIVE IN ${countdown}`,
+                `LIVE IN\n${countdown}`,
                 `The live broadcast starts in ${countdown}`,
             );
         } else if (widgetMode === "jitsi") {
-            // In the browser, the short text line wraps after "IN".
             setLiveBannerText(
-                `LIVE IN ${countdown}`,
+                `LIVE IN\n${countdown}`,
                 `You will be live broadcasted in ${countdown}`,
             );
         }
