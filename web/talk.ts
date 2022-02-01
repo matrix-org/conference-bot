@@ -176,19 +176,13 @@ function updateLivestreamBanner(): number | null {
         return 100;
     } else if (now < livestreamEndTime) {
         // The livestream is ongoing.
-        if (widgetMode === "video") {
-            setLiveBannerText(
-                "LIVE",
-                "The live broadcast is ongoing",
-            );
-        } else if (widgetMode === "jitsi") {
-            setLiveBannerText(
-                "LIVE",
-                "You are being live broadcasted",
-            );
-        }
+        const countdown = formatDuration(livestreamEndTime - now);
+        setLiveBannerText(
+            `LIVE\n${countdown}`,
+            `Live broadcast finishes in ${countdown}`,
+        );
         setLiveBannerVisible(true);
-        return livestreamEndTime - now;
+        return 100;
     } else {
         // The livestream has ended.
         setLiveBannerVisible(false);
