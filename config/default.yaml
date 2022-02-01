@@ -216,6 +216,10 @@ conference:
     # such as sponsor segments. If this is built into the table already then set this to zero.
     schedulePreBufferSeconds: 30
 
+    # The duration in seconds added to the talk `duration` to account for postroll material
+    # such as sponsor segments. If this is built into the table already then set this to zero.
+    schedulePostBufferSeconds: 30
+
   # Various prefixes used by the bot when parsing information.
   prefixes:
     # The prefixes for the rooms listed in the pentabarf definition which

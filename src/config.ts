@@ -94,6 +94,7 @@ interface IConfig {
             tblPeople: string;
             tblSchedule: string;
             schedulePreBufferSeconds: number;
+            schedulePostBufferSeconds: number;
         };
     };
     ircBridge: IRCBridgeOpts;
