@@ -212,9 +212,13 @@ conference:
     # how you (the bot's admin) are the one entering it: don't do that to yourself.
     tblSchedule: "view_matrix_bot_export_schedule"
 
-    # The time in seconds added to the presentation_length to account for preroll material such
-    # as sponsor segments. If this is built into the table already then set this to zero.
-    scheduleBufferSeconds: 30
+    # The duration in seconds added to the `presentation_length` to account for preroll material
+    # such as sponsor segments. If this is built into the table already then set this to zero.
+    schedulePreBufferSeconds: 30
+
+    # The duration in seconds added to the talk `duration` to account for postroll material
+    # such as sponsor segments. If this is built into the table already then set this to zero.
+    schedulePostBufferSeconds: 30
 
   # Various prefixes used by the bot when parsing information.
   prefixes:

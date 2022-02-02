@@ -33,4 +33,11 @@ export interface IDbTalk extends IRawDbTalk {
      * non-prerecorded talks.
      */
     livestream_start_datetime: number; // ms timestamp, utc
+
+    /**
+     * The end time of the talk's livestream, as a Unix timestamp in milliseconds.
+     *
+     * This may occur before the end of the talk.
+     */
+    livestream_end_datetime: number; // ms timestamp, utc
 }
