@@ -367,6 +367,14 @@ export class Scheduler {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 5 minutes</h3><p>Please join the Jitsi conference at the top of this room to prepare for your Q&A.</p>`);
             }
         } else if (task.type === ScheduledTaskType.TalkQA5M) {
+            if (getStartTime(task) < task.talk.start_datetime) {
+                // Don't do anything if this talk hasn't started yet, otherwise things get confusing
+                // for the previous talk. The Q&A scoreboard will not show a countdown for this
+                // talk, which is unfortunate. However the talk widget next to it will still show
+                // a correct countdown.
+                return;
+            }
+
             if (!task.talk.prerecorded) return;
             await this.client.sendHtmlText(
                 confTalk.roomId,
