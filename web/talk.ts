@@ -127,6 +127,20 @@ function setLiveBannerVisible(visible: boolean) {
 }
 
 /**
+ * Sets the text in the live banner.
+ * @param shortText The text to show when horizontal space is limited.
+ * @param longText The text to show when there is sufficient horizontal space.
+ */
+function setLiveBannerText(shortText: string, longText: string) {
+    if (liveBannerShortText.innerText !== shortText) {
+        liveBannerShortText.innerText = shortText;
+    }
+    if (liveBannerLongText.innerText !== longText) {
+        liveBannerLongText.innerText = longText;
+    }
+}
+
+/**
  * Updates the livestream banner.
  * @returns The interval until the next update, in milliseconds.
  */
@@ -147,36 +161,28 @@ function updateLivestreamBanner(): number | null {
         // The livestream starts within 5 minutes.
         // Show a countdown.
         const countdown = formatDuration(livestreamStartTime - now);
-        let shortText: string;
-        let longText: string;
         if (widgetMode === "video") {
-            // In the browser, the short text line wraps after "IN".
-            shortText = `LIVE IN ${countdown}`;
-            longText = `The live broadcast starts in ${countdown}`;
+            setLiveBannerText(
+                `LIVE IN\n${countdown}`,
+                `The live broadcast starts in ${countdown}`,
+            );
         } else if (widgetMode === "jitsi") {
-            // In the browser, the short text line wraps after "IN".
-            shortText = `LIVE IN ${countdown}`;
-            longText = `You will be live broadcasted in ${countdown}`;
-        }
-        if (liveBannerShortText.innerText !== shortText) {
-            liveBannerShortText.innerText = shortText;
-        }
-        if (liveBannerLongText.innerText !== longText) {
-            liveBannerLongText.innerText = longText;
+            setLiveBannerText(
+                `LIVE IN\n${countdown}`,
+                `You will be live broadcasted in ${countdown}`,
+            );
         }
         setLiveBannerVisible(true);
         return 100;
     } else if (now < livestreamEndTime) {
         // The livestream is ongoing.
-        if (widgetMode === "video") {
-            liveBannerShortText.innerText = "LIVE";
-            liveBannerLongText.innerText = "The live broadcast is ongoing";
-        } else if (widgetMode === "jitsi") {
-            liveBannerShortText.innerText = "LIVE";
-            liveBannerLongText.innerText = "You are being live broadcasted";
-        }
+        const countdown = formatDuration(livestreamEndTime - now);
+        setLiveBannerText(
+            `LIVE\n${countdown}`,
+            `Live broadcast finishes in ${countdown}`,
+        );
         setLiveBannerVisible(true);
-        return livestreamEndTime - now;
+        return 100;
     } else {
         // The livestream has ended.
         setLiveBannerVisible(false);
