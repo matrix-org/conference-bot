@@ -24,11 +24,13 @@ import {
 } from "./room_state";
 import config from "../config";
 
+export const KickPowerLevel = 50;
+
 export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = {
     ban: 50,
     events_default: 0,
     invite: 50,
-    kick: 50,
+    kick: KickPowerLevel,
     redact: 50,
     state_default: 50,
     users_default: 0,

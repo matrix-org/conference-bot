@@ -19,6 +19,7 @@ import { LogLevel, LogService, MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { IRCBridge } from "../IRCBridge";
 import { logMessage } from "../LogProxy";
+import { KickPowerLevel } from "../models/room_kinds";
 
 const PLUMB_WAIT_MS = 1000;
 
@@ -81,6 +82,13 @@ export class IrcPlumbCommand implements ICommand {
         }
         try {
             await this.ircBridge.plumbChannelToRoom(channel, resolvedRoomId);
+        } catch (ex) {
+            LogService.warn("IrcPlumbCommand", ex);
+            return await logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel to room`);
+        }
+        // The bridge needs the ability to kick KLINED users.
+        try {
+            await client.setUserPowerLevel(this.ircBridge.botUserId, resolvedRoomId, KickPowerLevel);
         } catch (ex) {
             LogService.warn("IrcPlumbCommand", ex);
             return await logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel to room`);
