@@ -51,6 +51,10 @@ export class IRCBridge {
         }
     }
 
+    public get botUserId() {
+        return this.config.botUserId;
+    }
+
     public async deriveChannelName(auditorium: Auditorium) {
         const name = await auditorium.getName();
         if (!name) {
