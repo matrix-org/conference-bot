@@ -15,21 +15,22 @@ limitations under the License.
 */
 
 import { MatrixClient } from "matrix-bot-sdk";
-import { IStoredPerson, IStoredTalk, RS_STORED_PERSON, RS_STORED_TALK } from "./room_state";
+import { RS_STORED_PERSON, RS_STORED_TALK } from "./room_state";
 import { Conference } from "../Conference";
 import { MatrixRoom } from "./MatrixRoom";
 import { RSC_AUDITORIUM_ID, RSC_TALK_ID } from "./room_kinds";
+import { IPerson, ITalk } from "./schedule";
 
 export class Talk extends MatrixRoom {
-    private storedTalk: IStoredTalk;
+    private storedTalk: ITalk;
     private auditoriumId: string;
-    private people: IStoredPerson[];
+    private people: IPerson[];
 
     constructor(roomId: string, client: MatrixClient, conference: Conference) {
         super(roomId, client, conference);
     }
 
-    public async getDefinition(): Promise<IStoredTalk> {
+    public async getDefinition(): Promise<ITalk> {
         if (this.storedTalk) {
             return this.storedTalk;
         }
@@ -58,7 +59,7 @@ export class Talk extends MatrixRoom {
         return this.auditoriumId;
     }
 
-    public async getSpeakers(): Promise<IStoredPerson[]> {
+    public async getSpeakers(): Promise<IPerson[]> {
         if (this.people) {
             return this.people;
         }

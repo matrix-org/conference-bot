@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import { Conference } from "./Conference";
-import { IDbTalk } from "./db/DbTalk";
 import AwaitLock from "await-lock";
 import { logMessage } from "./LogProxy";
 import config from "./config";
@@ -24,7 +23,7 @@ import { makeRoomPublic } from "./utils";
 import { Scoreboard } from "./Scoreboard";
 import { LiveWidget } from "./models/LiveWidget";
 import { ResolvedPersonIdentifier, resolveIdentifiers } from "./invites";
-import { Role } from "./db/DbPerson";
+import { ITalk, Role } from "./models/schedule";
 
 export enum ScheduledTaskType {
     TalkStart = "talk_start",
@@ -63,39 +62,39 @@ interface ISchedulerAccountData {
 interface ITask {
     id: string;
     type: ScheduledTaskType;
-    talk: IDbTalk;
+    talk: ITalk;
 }
 
-function makeTaskId(type: ScheduledTaskType, talk: IDbTalk): string {
-    return `${type}::${talk.event_id}::${talk.conference_room}`;
+function makeTaskId(type: ScheduledTaskType, talk: ITalk): string {
+    return `${type}::${talk.id}`;
 }
 
 export function getStartTime(task: ITask): number {
     switch (task.type) {
         case ScheduledTaskType.TalkStart1H:
-            return task.talk.start_datetime - (60 * 60 * 1000);
+            return task.talk.startTime - (60 * 60 * 1000);
         case ScheduledTaskType.TalkStart5M:
-            return task.talk.start_datetime - (5 * 60 * 1000);
+            return task.talk.startTime - (5 * 60 * 1000);
         case ScheduledTaskType.TalkCheckin45M:
-            return task.talk.start_datetime - (45 * 60 * 1000);
+            return task.talk.startTime - (45 * 60 * 1000);
         case ScheduledTaskType.TalkCheckin30M:
-            return task.talk.start_datetime - (30 * 60 * 1000);
+            return task.talk.startTime - (30 * 60 * 1000);
         case ScheduledTaskType.TalkCheckin15M:
-            return task.talk.start_datetime - (15 * 60 * 1000);
+            return task.talk.startTime - (15 * 60 * 1000);
         case ScheduledTaskType.TalkStart:
-            return task.talk.start_datetime;
+            return task.talk.startTime;
         case ScheduledTaskType.TalkEnd5M:
-            return task.talk.end_datetime - (5 * 60 * 1000);
+            return task.talk.endTime - (5 * 60 * 1000);
         case ScheduledTaskType.TalkEnd1M:
-            return task.talk.end_datetime - (1 * 60 * 1000);
+            return task.talk.endTime - (1 * 60 * 1000);
         case ScheduledTaskType.TalkEnd:
-            return task.talk.end_datetime;
+            return task.talk.endTime;
         case ScheduledTaskType.TalkQA5M:
-            return task.talk.qa_start_datetime - (5 * 60 * 1000);
+            return task.talk.qa_startTime - (5 * 60 * 1000);
         case ScheduledTaskType.TalkQA:
-            return task.talk.qa_start_datetime;
+            return task.talk.qa_startTime;
         case ScheduledTaskType.TalkLivestreamEnd1M:
-            return task.talk.livestream_end_datetime - (1 * 60 * 1000);
+            return task.talk.livestream_endTime - (1 * 60 * 1000);
         default:
             throw new Error("Unknown task type for getStartTime(): " + task.type);
     }
@@ -178,16 +177,16 @@ export class Scheduler {
     private async runTasks() {
         try {
             const now = (new Date()).getTime();
-            const pentaDb = await this.conference.getPentaDb();
+            // const pentaDb = await this.conference.getPentaDb();
             await this.lock.acquireAsync();
             LogService.info("Scheduler", "Scheduling tasks");
             try {
                 const minVar = config.conference.lookaheadMinutes;
-                const upcomingTalks = await pentaDb.getUpcomingTalkStarts(minVar, minVar);
-                const upcomingQA = await pentaDb.getUpcomingQAStarts(minVar, minVar);
-                const upcomingEnds = await pentaDb.getUpcomingTalkEnds(minVar, minVar);
+                const upcomingTalks = await this.conference.getUpcomingTalkStarts(minVar, minVar);
+                const upcomingQA = await this.conference.getUpcomingQAStarts(minVar, minVar);
+                const upcomingEnds = await this.conference.getUpcomingTalkEnds(minVar, minVar);
 
-                const scheduleAll = (talks: IDbTalk[], type: ScheduledTaskType) => {
+                const scheduleAll = (talks: ITalk[], type: ScheduledTaskType) => {
                     talks.filter(e => !this.completedIds.includes(makeTaskId(type, e)))
                         .forEach(e => this.tryScheduleTask(type, e));
 
@@ -211,7 +210,7 @@ export class Scheduler {
                 scheduleAll(upcomingQA, ScheduledTaskType.TalkQA);
                 scheduleAll(upcomingEnds, ScheduledTaskType.TalkEnd);
 
-                const earlyWarnings = await pentaDb.getUpcomingTalkStarts(75, 15);
+                const earlyWarnings = await this.conference.getUpcomingTalkStarts(75, 15);
                 scheduleAll(earlyWarnings, ScheduledTaskType.TalkStart1H);
                 scheduleAll(earlyWarnings, ScheduledTaskType.TalkCheckin15M);
                 scheduleAll(earlyWarnings, ScheduledTaskType.TalkCheckin30M);
@@ -296,9 +295,9 @@ export class Scheduler {
     }
 
     private async _execute(task: ITask) {
-        const confTalk = this.conference.getTalk(task.talk.event_id);
-        const confAud = this.conference.getAuditorium(task.talk.conference_room);
-        const confAudBackstage = this.conference.getAuditoriumBackstage(task.talk.conference_room);
+        const confTalk = this.conference.getTalk(task.talk.id);
+        const confAud = this.conference.getAuditorium(task.talk.conferenceId);
+        const confAudBackstage = this.conference.getAuditoriumBackstage(task.talk.conferenceId);
 
         if (!confAud || !confTalk || !confAudBackstage) {
             // probably a special interest room
@@ -367,7 +366,7 @@ export class Scheduler {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 5 minutes</h3><p>Please join the Jitsi conference at the top of this room to prepare for your Q&A.</p>`);
             }
         } else if (task.type === ScheduledTaskType.TalkQA5M) {
-            if (getStartTime(task) < task.talk.start_datetime) {
+            if (getStartTime(task) < task.talk.startTime) {
                 // Don't do anything if this talk hasn't started yet, otherwise things get confusing
                 // for the previous talk. The Q&A scoreboard will not show a countdown for this
                 // talk, which is unfortunate. However the talk widget next to it will still show
@@ -383,7 +382,7 @@ export class Scheduler {
                 `<p>Remember that the broadcast feed is buffered and lags many seconds behind. ` +
                 `Do not wait for it to finish, otherwise you will create a long pause!</p>`,
             );
-            await this.scoreboard.showQACountdown(confAud.roomId, task.talk.qa_start_datetime);
+            await this.scoreboard.showQACountdown(confAud.roomId, task.talk.qa_startTime);
         } else if (task.type === ScheduledTaskType.TalkEnd5M) {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 5 minutes</h3><p>The next talk will start automatically after yours. In 5 minutes, this room will be opened up for anyone to join. They will not be able to see history.</p>`);
             await this.client.sendHtmlText(confAud.roomId, `<h3>This talk ends in about 5 minutes</h3><p>Ask questions here for the speakers!</p>`);
@@ -395,9 +394,9 @@ export class Scheduler {
             if (!task.talk.prerecorded) return;
             const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
             const resolved = await resolveIdentifiers(userIds);
-            const speakers = resolved.filter(p => p.person.event_role === Role.Speaker);
-            const hosts = resolved.filter(p => p.person.event_role === Role.Host);
-            const coordinators = resolved.filter(p => p.person.event_role === Role.Coordinator);
+            const speakers = resolved.filter(p => p.person.role === Role.Speaker);
+            const hosts = resolved.filter(p => p.person.role === Role.Host);
+            const coordinators = resolved.filter(p => p.person.role === Role.Coordinator);
 
             const required = [...speakers, ...hosts];
             const missing: ResolvedPersonIdentifier[] = [];
@@ -430,9 +429,9 @@ export class Scheduler {
             if (!task.talk.prerecorded) return;
             const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
             const resolved = await resolveIdentifiers(userIds);
-            const speakers = resolved.filter(p => p.person.event_role === Role.Speaker);
-            const hosts = resolved.filter(p => p.person.event_role === Role.Host);
-            const coordinators = resolved.filter(p => p.person.event_role === Role.Coordinator);
+            const speakers = resolved.filter(p => p.person.role === Role.Speaker);
+            const hosts = resolved.filter(p => p.person.role === Role.Host);
+            const coordinators = resolved.filter(p => p.person.role === Role.Coordinator);
 
             const required = [...speakers, ...hosts];
             const missing: ResolvedPersonIdentifier[] = [];
@@ -465,9 +464,9 @@ export class Scheduler {
             if (!task.talk.prerecorded) return;
             const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
             const resolved = await resolveIdentifiers(userIds);
-            const speakers = resolved.filter(p => p.person.event_role === Role.Speaker);
-            const hosts = resolved.filter(p => p.person.event_role === Role.Host);
-            const coordinators = resolved.filter(p => p.person.event_role === Role.Coordinator);
+            const speakers = resolved.filter(p => p.person.role === Role.Speaker);
+            const hosts = resolved.filter(p => p.person.role === Role.Host);
+            const coordinators = resolved.filter(p => p.person.role === Role.Coordinator);
 
             const required = [...speakers, ...hosts];
             const missing: ResolvedPersonIdentifier[] = [];
@@ -503,7 +502,7 @@ export class Scheduler {
         }
     }
 
-    public async tryScheduleTask(type: ScheduledTaskType, talk: IDbTalk) {
+    public async tryScheduleTask(type: ScheduledTaskType, talk: ITalk) {
         const id = makeTaskId(type, talk);
         const existingTask = this.pending[id];
         if (existingTask) return;
@@ -511,7 +510,7 @@ export class Scheduler {
         await this.lock.acquireAsync();
         try {
             const isCompleted = this.completedIds.includes(id);
-            if (!isCompleted && this.isWatchingAuditorium(talk.conference_room)) {
+            if (!isCompleted && this.isWatchingAuditorium(talk.conferenceId)) {
                 this.pending[id] = {id, type, talk};
                 LogService.debug("Scheduler", `Task ${id} scheduled`);
             } else {

@@ -16,9 +16,18 @@ limitations under the License.
 
 import { RoomKind } from "./room_kinds";
 
+export enum Role {
+    Speaker = "speaker",
+    Host = "host",
+    Coordinator = "coordinator",
+}
+
 export interface IPerson {
     id: string;
     name: string;
+    role: Role;
+    matrix_id: string;
+    email: string;
 }
 
 export interface ITalk {
@@ -26,11 +35,15 @@ export interface ITalk {
     dateTs: number; // ms
     startTime: number; // ms
     endTime: number; // ms
+    qa_startTime: number;
+    livestream_endTime: number;
     slug: string;
     title: string;
     subtitle: string;
     track: string;
     speakers: IPerson[];
+    prerecorded: boolean;
+    conferenceId: string;
 }
 
 export interface IAuditorium {

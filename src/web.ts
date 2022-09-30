@@ -23,7 +23,7 @@ import { sha256 } from "./utils";
 import * as dns from "dns";
 import { Scoreboard } from "./Scoreboard";
 import { LiveWidget } from "./models/LiveWidget";
-import { IDbTalk } from "./db/DbTalk";
+import { ITalk } from "./models/schedule";
 
 export function renderAuditoriumWidget(req: Request, res: Response) {
     const audId = req.query?.['auditoriumId'] as string;
@@ -50,7 +50,7 @@ export function renderAuditoriumWidget(req: Request, res: Response) {
 const TALK_CACHE_DURATION = 60 * 1000; // ms
 const dbTalksCache: {
     [talkId: string]: {
-        talk: Promise<IDbTalk | null>,
+        talk: Promise<ITalk | null>,
         cachedAt: number, // ms
     },
 } = {};
@@ -60,18 +60,18 @@ const dbTalksCache: {
  * @param talkId The talk ID.
  * @returns The database record for the talk, if it exists; `null` otherwise.
  */
-async function getDbTalk(talkId: string): Promise<IDbTalk | null> {
-    const now = Date.now();
-    if (!(talkId in dbTalksCache) ||
-        now - dbTalksCache[talkId].cachedAt > TALK_CACHE_DURATION) {
-        dbTalksCache[talkId] = {
-            talk: config.RUNTIME.conference.getDbTalk(talkId),
-            cachedAt: now,
-        };
-    }
+// async function getDbTalk(talkId: string): Promise<IDbTalk | null> {
+//     const now = Date.now();
+//     if (!(talkId in dbTalksCache) ||
+//         now - dbTalksCache[talkId].cachedAt > TALK_CACHE_DURATION) {
+//         dbTalksCache[talkId] = {
+//             talk: config.RUNTIME.conference.getDbTalk(talkId),
+//             cachedAt: now,
+//         };
+//     }
 
-    return dbTalksCache[talkId].talk;
-}
+//     return dbTalksCache[talkId].talk;
+// }
 
 export async function renderTalkWidget(req: Request, res: Response) {
     const audId = req.query?.['auditoriumId'] as string;
@@ -99,7 +99,7 @@ export async function renderTalkWidget(req: Request, res: Response) {
 
     // Fetch the corresponding talk from Pentabarf. We cache the `IDbTalk` to avoid hitting the
     // Pentabarf database for every visiting attendee once talk rooms are opened to the public.
-    const dbTalk = await getDbTalk(talkId);
+    // const dbTalk = await getDbTalk(talkId);
 
     const streamUrl = template(config.livestream.talkUrl, {
         audId: audId.toLowerCase(),
@@ -113,8 +113,8 @@ export async function renderTalkWidget(req: Request, res: Response) {
         roomName: await talk.getName(),
         conferenceDomain: config.livestream.jitsiDomain,
         conferenceId: base32.stringify(Buffer.from(talk.roomId), { pad: false }).toLowerCase(),
-        livestreamStartTime: dbTalk?.livestream_start_datetime ?? "",
-        livestreamEndTime: dbTalk?.livestream_end_datetime ?? "",
+        // livestreamStartTime: dbTalk?.livestream_start_datetime ?? "",
+        // livestreamEndTime: dbTalk?.livestream_end_datetime ?? "",
     });
 }
 
