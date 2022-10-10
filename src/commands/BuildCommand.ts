@@ -24,6 +24,7 @@ import config from "../config";
 import { Conference } from "../Conference";
 import { logMessage } from "../LogProxy";
 import { editNotice } from "../utils";
+import { ICSParser } from "../parsers/ICSParser";
 
 export class BuildCommand implements ICommand {
     public readonly prefixes = ["build", "b"];
@@ -33,8 +34,13 @@ export class BuildCommand implements ICommand {
 
         await client.sendReadReceipt(roomId, event['event_id']);
 
-        const xml = await fetch(config.conference.pentabarfDefinition).then(r => r.text());
-        const parsed = new PentabarfParser(xml);
+        const icsDescs: string[] = [];
+
+        for (let icsTracksUrl in config.conference.icsTracksUrls) {
+            icsDescs.push(await fetch(icsTracksUrl).then(r => r.text()));
+        }
+
+        const parsed = new ICSParser(icsDescs);
 
         if (!conference.isCreated) {
             await conference.createDb(parsed.conference);
