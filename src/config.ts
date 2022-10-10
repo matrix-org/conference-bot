@@ -52,7 +52,9 @@ interface IConfig {
     conference: {
         id: string;
         name: string;
-        pentabarfDefinition: string;
+        
+        //pentabarfDefinition: string;
+        icsTracksUrls: string[],
         timezone: string;
         lookaheadMinutes: number;
         supportRooms: {
@@ -83,18 +85,6 @@ interface IConfig {
                 alias: string;
                 prefixes: string[];
             };
-        };
-        database: {
-            host: string;
-            port: number;
-            username: string;
-            password: string;
-            database: string;
-            sslmode: string;
-            tblPeople: string;
-            tblSchedule: string;
-            schedulePreBufferSeconds: number;
-            schedulePostBufferSeconds: number;
         };
     };
     ircBridge: IRCBridgeOpts;
