@@ -56,6 +56,9 @@ import { ScheduleCommand } from "./commands/ScheduleCommand";
 import { CheckInMap } from "./CheckInMap";
 import { FDMCommand } from "./commands/FDMCommand";
 
+import { install } from 'source-map-support';
+install();
+
 config.RUNTIME = {
     client: null,
     conference: null,
