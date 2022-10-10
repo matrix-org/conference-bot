@@ -18,8 +18,8 @@ import { ICommand } from "./ICommand";
 import { LogLevel, MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { invitePersonToRoom, resolveIdentifiers } from "../invites";
-import { IDbPerson } from "../db/DbPerson";
 import { logMessage } from "../LogProxy";
+import { IPerson } from "../models/schedule";
 
 export class FDMCommand implements ICommand {
     public readonly prefixes = ["fdm"];
@@ -30,16 +30,16 @@ export class FDMCommand implements ICommand {
         const vol = await client.resolveRoom("#volunteers:fosdem.org");
         const volBackstage = await client.resolveRoom("#volunteers-backstage:fosdem.org");
 
-        const db = await conference.getPentaDb();
+        // const db = await conference.getPentaDb();
 
-        let volunteers = await db.findAllPeopleWithRemark("volunteer");
-        const dedupe: IDbPerson[] = [];
-        for (const volunteer of volunteers) {
-            if (!dedupe.some(p => p.person_id === volunteer.person_id)) {
-                dedupe.push(volunteer);
-            }
-        }
-        volunteers = dedupe;
+        // let volunteers = await db.findAllPeopleWithRemark("volunteer");
+        const dedupe: IPerson[] = [];
+        // for (const volunteer of volunteers) {
+        //     if (!dedupe.some(p => p.person_id === volunteer.person_id)) {
+        //         dedupe.push(volunteer);
+        //     }
+        // }
+        let volunteers = dedupe;
 
         if (args[0] === 'verify') {
             let html = "<h3>Volunteers</h3><ul>";
@@ -59,7 +59,7 @@ export class FDMCommand implements ICommand {
                     if (person.mxid && inBsJoined.includes(person.mxid)) continue;
                     await invitePersonToRoom(person, infBackstage);
                 } catch (e) {
-                    await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.person_id} to ${infBackstage} - ignoring`);
+                    await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.id} to ${infBackstage} - ignoring`);
                 }
             }
             const volResolved = await resolveIdentifiers(volunteers);
@@ -68,13 +68,13 @@ export class FDMCommand implements ICommand {
                     if (person.mxid && volJoined.includes(person.mxid)) continue;
                     await invitePersonToRoom(person, vol);
                 } catch (e) {
-                    await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.person_id} to ${vol} - ignoring`);
+                    await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.id} to ${vol} - ignoring`);
                 }
                 try {
                     if (person.mxid && volBsJoined.includes(person.mxid)) continue;
                     await invitePersonToRoom(person, volBackstage);
                 } catch (e) {
-                    await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.person_id} to ${volBackstage} - ignoring`);
+                    await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.id} to ${volBackstage} - ignoring`);
                 }
             }
             await client.sendNotice(roomId, "Invites sent");

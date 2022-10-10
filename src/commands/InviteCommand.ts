@@ -20,14 +20,14 @@ import { Conference } from "../Conference";
 import { invitePersonToRoom, ResolvedPersonIdentifier, resolveIdentifiers } from "../invites";
 import { RS_3PID_PERSON_ID } from "../models/room_state";
 import { runRoleCommand } from "./actions/roles";
-import { IDbPerson, Role } from "../db/DbPerson";
 import config from "../config";
 import { logMessage } from "../LogProxy";
+import { IPerson, Role } from "../models/schedule";
 
 export class InviteCommand implements ICommand {
     public readonly prefixes = ["invite", "inv"];
 
-    private async createInvites(client: MatrixClient, people: IDbPerson[], alias: string) {
+    private async createInvites(client: MatrixClient, people: IPerson[], alias: string) {
         const resolved = await resolveIdentifiers(people);
 
         const targetRoomId = await client.resolveRoom(alias);
@@ -43,20 +43,20 @@ export class InviteCommand implements ICommand {
         // that a subset of people are joined.
 
         if (args[0] && args[0] === "speakers-support") {
-            let people: IDbPerson[] = [];
+            let people: IPerson[] = [];
             for (const aud of conference.storedAuditoriumBackstages) {
                 people.push(...await conference.getInviteTargetsForAuditorium(aud, true));
             }
-            people = people.filter(p => p.event_role === Role.Speaker);
-            const newPeople: IDbPerson[] = [];
+            people = people.filter(p => p.role === Role.Speaker);
+            const newPeople: IPerson[] = [];
             people.forEach(p => {
-                if (!newPeople.some(n => n.person_id === p.person_id)) {
+                if (!newPeople.some(n => n.id === p.id)) {
                     newPeople.push(p);
                 }
             });
             await this.createInvites(client, newPeople, config.conference.supportRooms.speakers);
         } else if (args[0] && args[0] === "coordinators-support") {
-            let people: IDbPerson[] = [];
+            let people: IPerson[] = [];
             for (const aud of conference.storedAuditoriums) {
                 if (!(await aud.getId()).startsWith("D.")) {
                     // HACK: Only invite coordinators for D.* auditoriums.
@@ -66,17 +66,17 @@ export class InviteCommand implements ICommand {
                 }
 
                 const inviteTargets = await conference.getInviteTargetsForAuditorium(aud, true);
-                people.push(...inviteTargets.filter(i => i.event_role === Role.Coordinator));
+                people.push(...inviteTargets.filter(i => i.role === Role.Coordinator));
             }
-            const newPeople: IDbPerson[] = [];
+            const newPeople: IPerson[] = [];
             people.forEach(p => {
-                if (!newPeople.some(n => n.person_id == p.person_id)) {
+                if (!newPeople.some(n => n.id == p.id)) {
                     newPeople.push(p);
                 }
             });
             await this.createInvites(client, newPeople, config.conference.supportRooms.coordinators);
         } else if (args[0] && args[0] === "si-support") {
-            const people: IDbPerson[] = [];
+            const people: IPerson[] = [];
             for (const sir of conference.storedInterestRooms) {
                 people.push(...await conference.getInviteTargetsForInterest(sir));
             }
@@ -97,12 +97,12 @@ export class InviteCommand implements ICommand {
         const effectiveJoinedUserIds = members.filter(m => m.effectiveMembership === "join").map(m => m.membershipFor);
         for (const target of people) {
             if (target.mxid && effectiveJoinedUserIds.includes(target.mxid)) continue;
-            if (emailInvitePersonIds.includes(target.person.person_id)) continue;
+            if (emailInvitePersonIds.includes(target.person.id)) continue;
             try {
                 await invitePersonToRoom(target, roomId);
             } catch (e) {
                 LogService.error("InviteCommand", e);
-                await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${target.mxid} / ${target.person.person_id} to ${roomId} - ignoring`);
+                await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${target.mxid} / ${target.person.id} to ${roomId} - ignoring`);
             }
         }
     }

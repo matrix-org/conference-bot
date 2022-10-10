@@ -14,10 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { IConference, ITalk, IAuditorium, IInterestRoom } from "./schedule";
+import { IConference, ITalk, IAuditorium, IInterestRoom, IPerson, Role } from "./schedule";
 import { objectFastClone, objectFastCloneWithout } from "../utils";
 import { Space } from "matrix-bot-sdk";
-import { IDbPerson } from "../db/DbPerson";
 
 export interface IStateEvent<T> {
     type: string;
@@ -45,37 +44,21 @@ export interface IStoredSubspace {
 export const RS_3PID_PERSON_ID = "org.matrix.confbot.person.v2";
 
 export const RS_STORED_TALK = "org.matrix.confbot.talk";
-export interface IStoredTalk extends Omit<ITalk, "speakers"> {
-    conferenceId: string;
-}
-export function makeStoredTalk(confId: string, talk: ITalk): IStateEvent<IStoredTalk> {
+
+export function makeStoredTalk(talk: ITalk): IStateEvent<ITalk> {
     return {
         type: RS_STORED_TALK,
         state_key: talk.id,
-        content: {
-            ...objectFastCloneWithout(talk, ['speakers']),
-            conferenceId: confId,
-        } as IStoredTalk,
+        content: talk,
     };
 }
 
 export const RS_STORED_PERSON = "org.matrix.confbot.person.v2";
-export interface IStoredPerson {
-    pentaId: string;
-    name: string;
-    userId?: string;
-    conferenceId: string;
-}
-export function makeStoredPerson(confId: string, person: IDbPerson): IStateEvent<IStoredPerson> {
+export function makeStoredPerson(person: IPerson): IStateEvent<IPerson> {
     return {
         type: RS_STORED_PERSON,
-        state_key: person.person_id.toString(),
-        content: {
-            pentaId: person.person_id.toString(),
-            name: person.name,
-            userId: person.matrix_id,
-            conferenceId: confId,
-        },
+        state_key: person.id.toString(),
+        content: person,
     };
 }
 
