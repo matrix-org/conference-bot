@@ -453,6 +453,7 @@ export class Conference {
                 makeParentRoom(this.dbRoom.roomId),
                 makeStoredSpace(audSpace.roomId),
             ],
+            name: auditorium.name,
         }));
         await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.slug, auditorium.id);
         await this.dbRoom.addDirectChild(roomId);
