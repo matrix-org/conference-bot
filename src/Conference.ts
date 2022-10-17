@@ -55,7 +55,7 @@ import { IStateEvent } from "./models/room_state";
 
 export class Conference {
     private dbRoom: MatrixRoom;
-    private pentaDb = new PentaDb();
+    private pentaDb: PentaDb | null = null;
     private subspaces: {
         [subspaceId: string]: Space
     } = {};
@@ -164,6 +164,10 @@ export class Conference {
 
     public async construct() {
         this.reset();
+
+        if (config.conference.database !== null) {
+            this.pentaDb = new PentaDb();
+        }
 
         // Locate all the rooms for the conference
         const roomIds = await this.client.getJoinedRooms();
@@ -274,7 +278,8 @@ export class Conference {
         );
     }
 
-    public async getPentaDb(): Promise<PentaDb> {
+    public async getPentaDb(): Promise<PentaDb | null> {
+        if (this.pentaDb === null) return null;
         await this.pentaDb.connect();
         return this.pentaDb;
     }
