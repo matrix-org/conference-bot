@@ -14,7 +14,8 @@ export class JsonScheduleLoader {
         // TODO: Validate and give errors. Assuming it's correct is a bit cheeky.
         const jsonSchedule = jsonDesc as JSONSchedule;
 
-        this.auditoriums = jsonSchedule.streams.map(aud => this.convertAuditorium(aud));
+        const conferenceId = ""; // TODO What's this?
+        this.auditoriums = jsonSchedule.streams.map(aud => this.convertAuditorium(aud, conferenceId));
 
         // TODO: Interest rooms are currently not supported by the JSON schedule backend.
         this.interestRooms = [];
@@ -37,7 +38,7 @@ export class JsonScheduleLoader {
         };
     }
 
-    private convertTalk(talk: JSONTalk): ITalk {
+    private convertTalk(talk: JSONTalk, conferenceId: string, auditoriumId: string): ITalk {
         const startMoment = moment.utc(talk.start, moment.ISO_8601, true);
         const endMoment = moment.utc(talk.end, moment.ISO_8601, true);
 
@@ -47,7 +48,8 @@ export class JsonScheduleLoader {
             subtitle: talk.description, // TODO is this valid?
             slug: this.slugify(talk.title),
 
-            conferenceId: "https://example.com?TODO",
+            conferenceId,
+            auditoriumId,
             prerecorded: true, // TODO
             qa_startTime: null, // TODO
             livestream_endTime: endMoment.valueOf(), // TODO is this right?
@@ -61,10 +63,12 @@ export class JsonScheduleLoader {
         };
     }
 
-    private convertAuditorium(stream: JSONStream): IAuditorium {
+    private convertAuditorium(stream: JSONStream, conferenceId: string): IAuditorium {
         const talksByDate: Record<number, ITalk[]> = Object.create(null);
 
-        const allTalksSortedByStart: ITalk[] = stream.talks.map(talk => this.convertTalk(talk))
+        const auditoriumId = this.slugify(stream.stream_name);
+
+        const allTalksSortedByStart: ITalk[] = stream.talks.map(talk => this.convertTalk(talk, conferenceId, auditoriumId))
             .sort((a, b) => a.startTime - b.startTime);
 
         if (allTalksSortedByStart.length > 0) {
@@ -82,7 +86,7 @@ export class JsonScheduleLoader {
         }
 
         return {
-            id: this.slugify(stream.stream_name),
+            id: auditoriumId,
             slug: this.slugify(stream.stream_name),
             name: stream.stream_name,
             kind: RoomKind.Auditorium, // TODO!!!
