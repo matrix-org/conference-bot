@@ -28,9 +28,8 @@ import {
     RSC_TALK_ID, SPECIAL_INTEREST_CREATION_TEMPLATE,
     TALK_CREATION_TEMPLATE
 } from "./models/room_kinds";
-import { IAuditorium, IConference, IInterestRoom, ITalk } from "./models/schedule";
+import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from "./models/schedule";
 import {
-    IStoredPerson,
     IStoredSubspace,
     makeParentRoom,
     makeStoredAuditorium,
@@ -49,12 +48,10 @@ import { MatrixRoom } from "./models/MatrixRoom";
 import { Auditorium, AuditoriumBackstage } from "./models/Auditorium";
 import { Talk } from "./models/Talk";
 import { ResolvedPersonIdentifier, resolveIdentifiers } from "./invites";
-import { IDbPerson, Role } from "./db/DbPerson";
 import { PentaDb } from "./db/PentaDb";
 import { PermissionsCommand } from "./commands/PermissionsCommand";
 import { InterestRoom } from "./models/InterestRoom";
 import { IStateEvent } from "./models/room_state";
-import { IDbTalk } from "./db/DbTalk";
 
 export class Conference {
     private dbRoom: MatrixRoom;
@@ -75,7 +72,7 @@ export class Conference {
         [interestId: string]: InterestRoom;
     } = {};
     private people: {
-        [personId: string]: IStoredPerson;
+        [personId: string]: IPerson;
     } = {};
 
     constructor(public readonly id: string, public readonly client: MatrixClient) {
@@ -100,7 +97,7 @@ export class Conference {
                                     const clonedPerson = objectFastClone(person);
                                     clonedPerson.matrix_id = event['state_key'];
                                     await this.createUpdatePerson(clonedPerson);
-                                    LogService.info("Conference", `Updated ${clonedPerson.person_id} to be associated with ${clonedPerson.matrix_id}`);
+                                    LogService.info("Conference", `Updated ${clonedPerson.id} to be associated with ${clonedPerson.matrix_id}`);
                                 }
 
                                 // Update permissions while we're here (if we can identify the room kind)
@@ -148,7 +145,7 @@ export class Conference {
         return Object.values(this.auditoriumBackstages);
     }
 
-    public get storedPeople(): IStoredPerson[] {
+    public get storedPeople(): IPerson[] {
         return Object.values(this.people);
     }
 
@@ -163,7 +160,6 @@ export class Conference {
         this.auditoriumBackstages = {};
         this.talks = {};
         this.interestRooms = {};
-        this.people = {};
     }
 
     public async construct() {
@@ -225,9 +221,9 @@ export class Conference {
         if (!this.dbRoom) return;
         const dbState = (await this.client.getRoomState(this.dbRoom.roomId)).filter(s => !!s.content);
 
-        const people = dbState.filter(s => s.type === RS_STORED_PERSON).map(s => s.content as IStoredPerson);
+        const people = dbState.filter(s => s.type === RS_STORED_PERSON).map(s => s.content as IPerson);
         for (const person of people) {
-            this.people[person.pentaId] = person;
+            this.people[person.id] = person;
         }
 
         // Locate created subspaces
@@ -520,11 +516,11 @@ export class Conference {
         return this.talks[talk.id];
     }
 
-    public async createUpdatePerson(person: IDbPerson): Promise<IStoredPerson> {
-        const storedPerson = makeStoredPerson(this.id, person);
+    public async createUpdatePerson(person: IPerson): Promise<IPerson> {
+        const storedPerson = makeStoredPerson(person);
         await this.client.sendStateEvent(this.dbRoom.roomId, storedPerson.type, storedPerson.state_key, storedPerson.content);
-        this.people[storedPerson.content.pentaId] = storedPerson.content;
-        return this.people[storedPerson.content.pentaId];
+        this.people[storedPerson.content.id] = storedPerson.content;
+        return this.people[storedPerson.content.id];
     }
 
     /**
@@ -553,72 +549,72 @@ export class Conference {
         return await this.getSpace();
     }
 
-    public getPerson(personId: string): IStoredPerson {
+    public getPerson(personId: string): IPerson {
         return this.people[personId];
     }
 
-    public async getPeopleForAuditorium(auditorium: Auditorium): Promise<IDbPerson[]> {
         const db = await this.getPentaDb();
         return await this.resolvePeople(await db.findAllPeopleForAuditorium(await auditorium.getId()));
+    public async getPeopleForAuditorium(auditorium: Auditorium): Promise<IPerson[]> {
     }
 
-    public async getPeopleForTalk(talk: Talk): Promise<IDbPerson[]> {
         const db = await this.getPentaDb();
         return await this.resolvePeople(await db.findAllPeopleForTalk(await talk.getId()));
+    public async getPeopleForTalk(talk: Talk): Promise<IPerson[]> {
     }
 
-    public async getPeopleForInterest(int: InterestRoom): Promise<IDbPerson[]> {
         const db = await this.getPentaDb();
         // Yes, an interest room is an auditorium to Penta.
         return await this.resolvePeople(await db.findAllPeopleForAuditorium(await int.getId()));
+    public async getPeopleForInterest(int: InterestRoom): Promise<IPerson[]> {
     }
 
-    public async getInviteTargetsForAuditorium(auditorium: Auditorium, backstage = false): Promise<IDbPerson[]> {
+    public async getInviteTargetsForAuditorium(auditorium: Auditorium, backstage = false): Promise<IPerson[]> {
         const people = await this.getPeopleForAuditorium(auditorium);
         const roles = [Role.Coordinator, Role.Host, Role.Speaker];
-        return people.filter(p => roles.includes(p.event_role));
+        return people.filter(p => roles.includes(p.role));
     }
 
-    public async getInviteTargetsForTalk(talk: Talk): Promise<IDbPerson[]> {
+    public async getInviteTargetsForTalk(talk: Talk): Promise<IPerson[]> {
         const people = await this.getPeopleForTalk(talk);
         const roles = [Role.Speaker, Role.Host, Role.Coordinator];
-        return people.filter(p => roles.includes(p.event_role));
+        return people.filter(p => roles.includes(p.role));
     }
 
-    public async getInviteTargetsForInterest(int: InterestRoom): Promise<IDbPerson[]> {
+    public async getInviteTargetsForInterest(int: InterestRoom): Promise<IPerson[]> {
         const people = await this.getPeopleForInterest(int);
         const roles = [Role.Speaker, Role.Host, Role.Coordinator];
-        return people.filter(p => roles.includes(p.event_role));
+        return people.filter(p => roles.includes(p.role));
     }
 
-    public async getModeratorsForAuditorium(auditorium: Auditorium): Promise<IDbPerson[]> {
+    public async getModeratorsForAuditorium(auditorium: Auditorium): Promise<IPerson[]> {
         const people = await this.getPeopleForAuditorium(auditorium);
         const roles = [Role.Coordinator];
-        return people.filter(p => roles.includes(p.event_role));
+        return people.filter(p => roles.includes(p.role));
     }
 
-    public async getModeratorsForTalk(talk: Talk): Promise<IDbPerson[]> {
+    public async getModeratorsForTalk(talk: Talk): Promise<IPerson[]> {
         const people = await this.getPeopleForTalk(talk);
         const roles = [Role.Coordinator, Role.Speaker, Role.Host];
-        return people.filter(p => roles.includes(p.event_role));
+        return people.filter(p => roles.includes(p.role));
     }
 
-    public async getModeratorsForInterest(int: InterestRoom): Promise<IDbPerson[]> {
+    public async getModeratorsForInterest(int: InterestRoom): Promise<IPerson[]> {
         const people = await this.getPeopleForInterest(int);
         const roles = [Role.Host, Role.Coordinator];
-        return people.filter(p => roles.includes(p.event_role));
+        return people.filter(p => roles.includes(p.role));
     }
 
-    private async resolvePeople(people: IDbPerson[]): Promise<IDbPerson[]> {
+    private async resolvePeople(people: IPerson[]): Promise<IPerson[]> {
         // Clone people from the DB to avoid accidentally mutating caches
         people = people.map(p => objectFastClone(p))
 
         // Fill in any details we have that the database doesn't
         for (const person of people) {
             if (person.matrix_id) continue;
-            const storedPerson = this.getPerson(person.person_id);
-            if (storedPerson?.userId) {
-                person.matrix_id = storedPerson.userId;
+            const storedPerson = this.getPerson(person.id);
+            if (storedPerson?.matrix_id) {
+                person.matrix_id = storedPerson.matrix_id;
             }
         }
 

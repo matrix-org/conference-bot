@@ -17,9 +17,9 @@ limitations under the License.
 import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
-import { IDbPerson } from "../db/DbPerson";
 import { resolveIdentifiers } from "../invites";
 import { COLOR_GREEN, COLOR_RED } from "../models/colors";
+import { IPerson } from "../models/schedule";
 
 export class AttendanceCommand implements ICommand {
     public readonly prefixes = ["attendance"];
@@ -45,7 +45,7 @@ export class AttendanceCommand implements ICommand {
         }
 
         let html = "<ul>";
-        const append = async (invitePeople: IDbPerson[], bsPeople: IDbPerson[], name: string, roomId: string, bsRoomId: string, withHtml: boolean) => {
+        const append = async (invitePeople: IPerson[], bsPeople: IPerson[], name: string, roomId: string, bsRoomId: string, withHtml: boolean) => {
             const inviteTargets = await resolveIdentifiers(invitePeople);
 
             const joinedMembers = await client.getJoinedRoomMembers(roomId);

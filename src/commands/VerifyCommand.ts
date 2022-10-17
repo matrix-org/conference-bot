@@ -18,10 +18,10 @@ import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { asyncFilter } from "../utils";
-import { IDbPerson } from "../db/DbPerson";
 import { Auditorium } from "../models/Auditorium";
 import { PhysicalRoom } from "../models/PhysicalRoom";
 import { InterestRoom } from "../models/InterestRoom";
+import { IPerson } from "../models/schedule";
 
 export class VerifyCommand implements ICommand {
     public readonly prefixes = ["verify", "v"];
@@ -45,16 +45,16 @@ export class VerifyCommand implements ICommand {
 
         let html = `<h1>${await aud.getName()} (${await aud.getId()})</h1>`;
 
-        const appendPeople = (invite: IDbPerson[], mods: IDbPerson[]) => {
+        const appendPeople = (invite: IPerson[], mods: IPerson[]) => {
             for (const target of invite) {
-                const isMod = mods.some(m => m.person_id === target.person_id);
-                html += `<li>${target.name} (${target.event_role}${isMod ? ' + room moderator' : ''})</li>`;
+                const isMod = mods.some(m => m.id === target.id);
+                html += `<li>${target.name} (${target.role}${isMod ? ' + room moderator' : ''})</li>`;
             }
         };
 
-        let audToInvite: IDbPerson[];
-        let audBackstageToInvite: IDbPerson[];
-        let audToMod: IDbPerson[];
+        let audToInvite: IPerson[];
+        let audBackstageToInvite: IPerson[];
+        let audToMod: IPerson[];
 
         if (aud instanceof Auditorium) {
             audToInvite = await conference.getInviteTargetsForAuditorium(aud);

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Role } from "../../models/schedule";
+import { IPerson, Role } from "../../models/schedule";
 
 export interface IDbPerson {
     event_id: string; // penta talk ID
@@ -25,4 +25,15 @@ export interface IDbPerson {
     matrix_id: string;
     conference_room: string;
     remark: string;
+}
+
+export function dbPersonToPerson(dbPerson: IDbPerson): IPerson {
+    return {
+        id: dbPerson.person_id,
+        matrix_id: dbPerson.matrix_id,
+        role: dbPerson.event_role,
+        email: dbPerson.email,
+        name: dbPerson.name,
+        // TODO There are other attributes which we don't carry over right now.
+    };
 }

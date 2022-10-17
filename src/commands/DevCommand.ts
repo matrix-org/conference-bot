@@ -17,20 +17,20 @@ limitations under the License.
 import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
-import { IDbPerson, Role } from "../db/DbPerson";
+import { IPerson, Role } from "../models/schedule";
 
 export class DevCommand implements ICommand {
     public readonly prefixes = ["dev"];
 
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
-        let people: IDbPerson[] = [];
+        let people: IPerson[] = [];
         for (const aud of conference.storedAuditoriums) {
             const inviteTargets = await conference.getInviteTargetsForAuditorium(aud, true);
-            people.push(...inviteTargets.filter(i => i.event_role === Role.Coordinator));
+            people.push(...inviteTargets.filter(i => i.role === Role.Coordinator));
         }
-        const newPeople: IDbPerson[] = [];
+        const newPeople: IPerson[] = [];
         people.forEach(p => {
-            if (!newPeople.some(n => n.person_id == p.person_id)) {
+            if (!newPeople.some(n => n.id == p.id)) {
                 newPeople.push(p);
             }
         });

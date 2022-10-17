@@ -57,7 +57,7 @@ export async function doAuditoriumResolveAction(
     const audPeople = isInvite
         ? await conference.getInviteTargetsForAuditorium(realAud)
         : await conference.getModeratorsForAuditorium(realAud);
-    const resolvedAudPeople = audPeople.map(p => allPossiblePeople.find(b => p.person_id === b.person.person_id));
+    const resolvedAudPeople = audPeople.map(p => allPossiblePeople.find(b => p.id === b.person.id));
     if (resolvedAudPeople.some(p => !p)) throw new Error("Failed to resolve all targets for auditorium");
 
     await action(client, realAud.roomId, resolvedAudPeople);
@@ -72,7 +72,7 @@ export async function doAuditoriumResolveAction(
                 ? await conference.getInviteTargetsForTalk(talk)
                 : await conference.getModeratorsForTalk(talk);
             const resolvedTalkPeople = talkPeople.map(
-                p => allPossiblePeople.find(b => p.person_id === b.person.person_id)
+                p => allPossiblePeople.find(b => p.id === b.person.id)
             );
             if (resolvedTalkPeople.some(p => !p)) {
                 throw new Error("Failed to resolve all targets for talk");

@@ -16,9 +16,18 @@ limitations under the License.
 
 import { RoomKind } from "./room_kinds";
 
+export enum Role {
+    Speaker = "speaker",
+    Host = "host",
+    Coordinator = "coordinator",
+}
+
 export interface IPerson {
     id: string;
     name: string;
+    role: Role;
+    matrix_id: string;
+    email: string;
 }
 
 export interface ITalk {
