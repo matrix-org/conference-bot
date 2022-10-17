@@ -6,9 +6,6 @@ storage/
 lib/
 srv/
 
-# Derived from /src/parsers/jsonschemas
-/src/backends/jsontypes
-
 # Logs
 logs
 *.log
