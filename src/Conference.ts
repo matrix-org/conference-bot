@@ -167,7 +167,7 @@ export class Conference {
         this.reset();
 
         if (config.conference.database !== null) {
-            this.pentaDb = new PentaDb();
+            this.pentaDb = new PentaDb(config.conference.database);
         }
 
         // Locate all the rooms for the conference
@@ -698,14 +698,14 @@ export class Conference {
         const from = Date.now() - minBefore * 60000;
         const until = Date.now() + inNextMinutes * 60000;
 
-        const upcomingTalks = []
+        const upcomingTalks: ITalk[] = [];
         for (const t of Object.values(this.talks)) {
             const talk = await t.getDefinition();
             const talkEventTime = lambda(talk);
             // If null is returned then the talk does not have this event, so don't return it as upcoming.
             if (talkEventTime === null) continue;
 
-            if (lambda(talk) >= from && lambda(talk) <= until) {
+            if (talkEventTime >= from && talkEventTime <= until) {
                 upcomingTalks.push(talk);
             }
         }

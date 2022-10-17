@@ -84,18 +84,7 @@ interface IConfig {
                 prefixes: string[];
             };
         };
-        database: {
-            host: string;
-            port: number;
-            username: string;
-            password: string;
-            database: string;
-            sslmode: string;
-            tblPeople: string;
-            tblSchedule: string;
-            schedulePreBufferSeconds: number;
-            schedulePostBufferSeconds: number;
-        } | null;
+        database: IPentaDbConfig | null;
     };
     ircBridge: IRCBridgeOpts | null;
 
@@ -103,9 +92,22 @@ interface IConfig {
         client: MatrixClient;
         conference: Conference;
         scheduler: Scheduler;
-        ircBridge: IRCBridge;
+        ircBridge: IRCBridge | null;
         checkins: CheckInMap;
     };
+}
+
+export interface IPentaDbConfig {
+    host: string;
+    port: number;
+    username: string;
+    password: string;
+    database: string;
+    sslmode: string;
+    tblPeople: string;
+    tblSchedule: string;
+    schedulePreBufferSeconds: number;
+    schedulePostBufferSeconds: number;
 }
 
 export default <IConfig>config;

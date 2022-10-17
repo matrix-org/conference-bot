@@ -15,36 +15,36 @@ limitations under the License.
 */
 
 import { Pool } from "pg";
-import config from "../../config";
+import config, { IPentaDbConfig } from "../../config";
 import { dbPersonToPerson, IDbPerson } from "./DbPerson";
 import { LogService, UserID } from "matrix-bot-sdk";
 import { objectFastClone } from "../../utils";
 import { IDbTalk, IRawDbTalk } from "./DbTalk";
 import { IPerson, Role } from "../../models/schedule";
 
-const PEOPLE_SELECT = "SELECT event_id::text, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text, remark::text FROM " + config.conference.database.tblPeople;
-const NONEVENT_PEOPLE_SELECT = "SELECT DISTINCT 'ignore' AS event_id, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM " + config.conference.database.tblPeople;
+const PEOPLE_SELECT = "SELECT event_id::text, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text, remark::text FROM " + config.conference.database?.tblPeople;
+const NONEVENT_PEOPLE_SELECT = "SELECT DISTINCT 'ignore' AS event_id, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM " + config.conference.database?.tblPeople;
 
 const START_QUERY = "start_datetime AT TIME ZONE $1 AT TIME ZONE 'UTC'";
 const QA_START_QUERY = "(start_datetime + presentation_length) AT TIME ZONE $1 AT TIME ZONE 'UTC'";
 const END_QUERY = "(start_datetime + duration) AT TIME ZONE $1 AT TIME ZONE 'UTC'";
-const SCHEDULE_SELECT = `SELECT DISTINCT event_id::text, conference_room::text, EXTRACT(EPOCH FROM ${START_QUERY}) * 1000 AS start_datetime, EXTRACT(EPOCH FROM duration) AS duration_seconds, EXTRACT(EPOCH FROM presentation_length) AS presentation_length_seconds, EXTRACT(EPOCH FROM ${END_QUERY}) * 1000 AS end_datetime, EXTRACT(EPOCH FROM ${QA_START_QUERY}) * 1000 AS qa_start_datetime, prerecorded FROM ` + config.conference.database.tblSchedule;
+const SCHEDULE_SELECT = `SELECT DISTINCT event_id::text, conference_room::text, EXTRACT(EPOCH FROM ${START_QUERY}) * 1000 AS start_datetime, EXTRACT(EPOCH FROM duration) AS duration_seconds, EXTRACT(EPOCH FROM presentation_length) AS presentation_length_seconds, EXTRACT(EPOCH FROM ${END_QUERY}) * 1000 AS end_datetime, EXTRACT(EPOCH FROM ${QA_START_QUERY}) * 1000 AS qa_start_datetime, prerecorded FROM ` + config.conference.database?.tblSchedule;
 
 export class PentaDb {
     private client: Pool;
     private isConnected = false;
 
-    constructor() {
+    constructor(private readonly config: IPentaDbConfig) {
         this.client = new Pool({
-            host: config.conference.database.host,
-            port: config.conference.database.port,
-            user: config.conference.database.username,
-            password: config.conference.database.password,
-            database: config.conference.database.database,
+            host: this.config.host,
+            port: this.config.port,
+            user: this.config.username,
+            password: this.config.password,
+            database: this.config.database,
 
             // sslmode parsing is largely interpreted from pg-connection-string handling
-            ssl: config.conference.database.sslmode === 'disable' ? false : {
-                rejectUnauthorized: config.conference.database.sslmode === 'no-verify',
+            ssl: this.config.sslmode === 'disable' ? false : {
+                rejectUnauthorized: this.config.sslmode === 'no-verify',
             },
         });
     }
@@ -130,7 +130,8 @@ export class PentaDb {
     }
 
     private postprocessDbTalk(talk: IRawDbTalk): IDbTalk {
-        const qaStartDatetime = talk.qa_start_datetime + config.conference.database.schedulePreBufferSeconds * 1000;
+        
+        const qaStartDatetime = talk.qa_start_datetime + this.config.schedulePreBufferSeconds * 1000;
         let livestreamStartDatetime: number;
         if (talk.prerecorded) {
             // For prerecorded talks, a preroll is shown, followed by the talk recording, then an
@@ -138,9 +139,9 @@ export class PentaDb {
             livestreamStartDatetime = qaStartDatetime;
         } else {
             // For live talks, both the preroll and interroll are shown, followed by the live talk.
-            livestreamStartDatetime = talk.start_datetime + config.conference.database.schedulePreBufferSeconds * 1000;
+            livestreamStartDatetime = talk.start_datetime + this.config.schedulePreBufferSeconds * 1000;
         }
-        const livestreamEndDatetime = talk.end_datetime - config.conference.database.schedulePostBufferSeconds * 1000;
+        const livestreamEndDatetime = talk.end_datetime - this.config.schedulePostBufferSeconds * 1000;
 
         return {
             ...talk,

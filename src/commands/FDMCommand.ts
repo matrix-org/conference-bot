@@ -31,6 +31,10 @@ export class FDMCommand implements ICommand {
         const volBackstage = await client.resolveRoom("#volunteers-backstage:fosdem.org");
 
         const db = await conference.getPentaDb();
+        if (db === null) {
+            await client.replyNotice(roomId, event, "Command not available as PentaDb is not enabled.");
+            return;
+        }
 
         let volunteers = await db.findAllPeopleWithRemark("volunteer");
         const dedupe: IPerson[] = [];

@@ -157,7 +157,6 @@ function registerCommands() {
         new VerifyCommand(),
         new InviteCommand(),
         new DevCommand(),
-        new IrcPlumbCommand(ircBridge),
         new PermissionsCommand(),
         new InviteMeCommand(),
         new WidgetsCommand(),
@@ -168,6 +167,9 @@ function registerCommands() {
         new ScheduleCommand(),
         new FDMCommand(),
     ];
+    if (ircBridge !== null) {
+        commands.push(new IrcPlumbCommand(ircBridge));
+    }
 
     client.on("room.message", async (roomId: string, event: any) => {
         if (roomId !== config.managementRoom) return;

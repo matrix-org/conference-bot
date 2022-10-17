@@ -23,8 +23,8 @@ import { IPerson, ITalk } from "./schedule";
 
 export class Talk extends MatrixRoom {
     private storedTalk: ITalk;
-    private auditoriumId: string;
-    private people: IPerson[];
+    private auditoriumId: string | null = null;
+    private people: IPerson[] | null = null;
 
     constructor(roomId: string, client: MatrixClient, conference: Conference) {
         super(roomId, client, conference);
@@ -55,12 +55,14 @@ export class Talk extends MatrixRoom {
     }
 
     public async getAuditoriumId(): Promise<string> {
-        await this.getDefinition(); // grabs ID
+        if (this.auditoriumId !== null) {
+            await this.getDefinition(); // grabs ID
+        }
         return this.auditoriumId;
     }
 
     public async getSpeakers(): Promise<IPerson[]> {
-        if (this.people) {
+        if (this.people !== null) {
             return this.people;
         }
         const state = await this.client.getRoomState(this.roomId);
