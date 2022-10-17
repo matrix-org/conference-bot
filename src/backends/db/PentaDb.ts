@@ -15,10 +15,10 @@ limitations under the License.
 */
 
 import { Pool } from "pg";
-import config from "../config";
-import { IDbPerson, Role } from "./DbPerson";
+import config from "../../config";
+import { IDbPerson } from "./DbPerson";
 import { LogService, UserID } from "matrix-bot-sdk";
-import { objectFastClone } from "../utils";
+import { objectFastClone } from "../../utils";
 import { IDbTalk, IRawDbTalk } from "./DbTalk";
 
 const PEOPLE_SELECT = "SELECT event_id::text, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text, remark::text FROM " + config.conference.database.tblPeople;
