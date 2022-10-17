@@ -663,15 +663,6 @@ export class Conference {
         return this.talks[talkId];
     }
 
-    /**
-     * Gets the Pentabarf database record for a talk.
-     * @param talkId The talk ID.
-     * @returns The database record for the talk, if it exists; `null` otherwise.
-     */
-    public async getDbTalk(talkId: string): Promise<IDbTalk | null> {
-        return this.pentaDb.getTalk(talkId);
-    }
-
     public getInterestRoom(intId: string): InterestRoom {
         return this.interestRooms[intId];
     }
