@@ -19,7 +19,6 @@ import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from ".
 import * as moment from "moment";
 import { RoomKind } from "../models/room_kinds";
 import config from "../config";
-import { ISchedule } from './model';
 
 function arrayLike<T>(val: T | T[]): T[] {
     if (Array.isArray(val)) return val;
@@ -47,8 +46,70 @@ export function deprefix(id: string): {kind: RoomKind, name: string} {
     return {kind: RoomKind.SpecialInterest, name: override || id};
 }
 
+export interface IPentabarfEvent {
+    attr: {
+        "@_id": string; // number
+    };
+    start: string;
+    duration: string;
+    room: string;
+    slug: string;
+    title: string;
+    subtitle: string;
+    track: string;
+    type: "devroom";
+    language: string;
+    abstract: string;
+    description: string;
+    persons: {
+        person: {
+            attr: {
+                "@_id": string; // number
+            };
+            "#text": string;
+        }[];
+    };
+    attachments: unknown; // TODO
+    links: {
+        link: {
+            attr: {
+                "@_href": string;
+            };
+            "#text": string;
+        }[];
+    };
+}
+
+export interface IPentabarfSchedule {
+    schedule: {
+        conference: {
+            title: string;
+            subtitle: string;
+            venue: string;
+            city: string;
+            start: string;
+            end: string;
+            days: number;
+            day_change: string;
+            timeslot_duration: string;
+        };
+        day: {
+            attr: {
+                "@_index": string; // number
+                "@_date": string;
+            };
+            room: {
+                attr: {
+                    "@_name": string;
+                };
+                event: IPentabarfEvent[];
+            }[];
+        }[];
+    };
+}
+
 export class PentabarfParser {
-    public readonly parsed: ISchedule;
+    private readonly parsed: IPentabarfSchedule;
 
     public readonly conference: IConference;
     public readonly auditoriums: IAuditorium[];
