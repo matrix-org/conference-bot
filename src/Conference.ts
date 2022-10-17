@@ -90,7 +90,7 @@ export class Conference {
                     if (verifiableCreateEvent?.['sender'] === (await this.client.getUserId())) {
                         if (verifiable3pidInvite?.['sender'] === (await this.client.getUserId())) {
                             // Alright, we know it's us who sent it. Now let's check the database.
-                            const people = await (await this.getPentaDb()).findPeopleWithId(emailInvite[RS_3PID_PERSON_ID]);
+                            const people = await this.findPeopleWithId(emailInvite[RS_3PID_PERSON_ID]);
                             if (people?.length) {
                                 // Finally, associate the users.
                                 for (const person of people) {
@@ -566,20 +566,35 @@ export class Conference {
         return this.people[personId];
     }
 
-        const db = await this.getPentaDb();
-        return await this.resolvePeople(await db.findAllPeopleForAuditorium(await auditorium.getId()));
     public async getPeopleForAuditorium(auditorium: Auditorium): Promise<IPerson[]> {
+        const audit = await auditorium.getDefinition();
+        const people = [];
+        for (const t of Object.values(this.talks)) {
+            const talk = await t.getDefinition();
+            if (talk.conferenceId == audit.id) {
+                people.push(...talk.speakers);
+            }
+        }
+        return people;
     }
 
-        const db = await this.getPentaDb();
-        return await this.resolvePeople(await db.findAllPeopleForTalk(await talk.getId()));
     public async getPeopleForTalk(talk: Talk): Promise<IPerson[]> {
+        const db = await this.getPentaDb();
+        if (db !== null) {
+            return await this.resolvePeople(await db.findAllPeopleForTalk(await talk.getId()));
+        }
+
+        return talk.getSpeakers();
     }
 
-        const db = await this.getPentaDb();
-        // Yes, an interest room is an auditorium to Penta.
-        return await this.resolvePeople(await db.findAllPeopleForAuditorium(await int.getId()));
     public async getPeopleForInterest(int: InterestRoom): Promise<IPerson[]> {
+        const db = await this.getPentaDb();
+        if (db !== null) {
+            // Yes, an interest room is an auditorium to Penta.
+            return await this.resolvePeople(await db.findAllPeopleForAuditorium(await int.getId()));
+        }
+
+        return [];
     }
 
     public async getInviteTargetsForAuditorium(auditorium: Auditorium, backstage = false): Promise<IPerson[]> {
@@ -675,5 +690,15 @@ export class Conference {
             pls['users'][userId] = 50;
         }
         await this.client.sendStateEvent(roomId, "m.room.power_levels", "", pls);
+    }
+
+    public async findPeopleWithId(personId: string): Promise<IPerson[]> {
+        // TODO
+        const db = await this.getPentaDb();
+        if (db !== null) {
+            return await db.findPeopleWithId(personId);
+        }
+
+        return [];
     }
 }
