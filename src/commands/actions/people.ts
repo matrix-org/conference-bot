@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MatrixClient } from "matrix-bot-sdk";
+import { LogService, MatrixClient } from "matrix-bot-sdk";
 import { ResolvedPersonIdentifier, resolveIdentifiers } from "../../invites";
 import { Auditorium } from "../../models/Auditorium";
 import { Conference } from "../../Conference";
@@ -39,8 +39,11 @@ export async function doAuditoriumResolveAction(
     const backstagePeople = isInvite
         ? await conference.getInviteTargetsForAuditorium(aud, true)
         : await conference.getModeratorsForAuditorium(aud);
+    LogService.info("backstagePeople", `${backstagePeople}`);
     const resolvedBackstagePeople = await resolveIdentifiers(backstagePeople);
     const backstage = conference.getAuditoriumBackstage(await aud.getId());
+
+    LogService.info("resolvedBackstagePeople", `${resolvedBackstagePeople}`);
 
     const allPossiblePeople = isInvite
         ? resolvedBackstagePeople
