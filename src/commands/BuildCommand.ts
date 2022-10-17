@@ -19,11 +19,32 @@ import { LogLevel, MatrixClient, MentionPill, RichReply } from "matrix-bot-sdk";
 import * as fetch from "node-fetch";
 import { PentabarfParser } from "../backends/PentabarfParser";
 import { Auditorium } from "../models/Auditorium";
-import { ITalk } from "../models/schedule";
+import { IAuditorium, IConference, IInterestRoom, ITalk } from "../models/schedule";
 import config from "../config";
 import { Conference } from "../Conference";
 import { logMessage } from "../LogProxy";
 import { editNotice } from "../utils";
+import { JsonScheduleLoader } from "../backends/JsonScheduleLoader";
+import { readFile } from "fs";
+
+/**
+ * Reads a JSON file from disk.
+ */
+function readJsonFileAsync(path: string): Promise<object> {
+    return new Promise((resolve, reject) => {
+        readFile(path, {}, (err, buf: string) => {
+            if (err) {
+                reject(err);
+            } else {
+                try {
+                    resolve(JSON.parse(buf));
+                } catch (err) {
+                    reject(err);
+                }
+            }
+        })
+    });
+}
 
 export class BuildCommand implements ICommand {
     public readonly prefixes = ["build", "b"];
@@ -33,8 +54,27 @@ export class BuildCommand implements ICommand {
 
         await client.sendReadReceipt(roomId, event['event_id']);
 
-        const xml = await fetch(config.conference.pentabarfDefinition).then(r => r.text());
-        const parsed = new PentabarfParser(xml);
+        let parsed: {conference: IConference, auditoriums: IAuditorium[], interestRooms: IInterestRoom[]};
+
+        // Load the schedule from a JSON file or a Pentabarf XML file, according to configuration.
+        if (config.conference.jsonDefinition !== undefined) {
+            const jsonDefinitionUrl = config.conference.jsonDefinition;
+            let jsonDesc: object;
+            if (jsonDefinitionUrl.startsWith("http")) {
+                // Fetch the JSON track over the network
+                jsonDesc = await fetch(jsonDefinitionUrl).then(r => r.json());
+            } else {
+                // Load the JSON from disk
+                jsonDesc = await readJsonFileAsync(jsonDefinitionUrl);
+            }
+
+            parsed = new JsonScheduleLoader(jsonDesc);
+        } else if (config.conference.pentabarfDefinition !== undefined) {
+            const xml = await fetch(config.conference.pentabarfDefinition).then(r => r.text());
+            parsed = new PentabarfParser(xml);
+        } else {
+            throw "No conference format in use (neither JSON nor Pentabarf in use!)";
+        }
 
         if (!conference.isCreated) {
             await conference.createDb(parsed.conference);
