@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { LogService, MatrixClient, RoomAlias, Space } from "matrix-bot-sdk";
+import { LogLevel, LogService, MatrixClient, RoomAlias, Space } from "matrix-bot-sdk";
 import {
     AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE,
     AUDITORIUM_CREATION_TEMPLATE,
@@ -52,6 +52,7 @@ import { PentaDb } from "./backends/db/PentaDb";
 import { PermissionsCommand } from "./commands/PermissionsCommand";
 import { InterestRoom } from "./models/InterestRoom";
 import { IStateEvent } from "./models/room_state";
+import { logMessage } from "./LogProxy";
 
 export class Conference {
     private dbRoom: MatrixRoom;
@@ -495,6 +496,12 @@ export class Conference {
     public async createTalk(talk: ITalk, auditorium: Auditorium): Promise<MatrixRoom> {
         let roomId: string;
         if (!this.talks[talk.id]) {
+            const speakers_state: IStateEvent<IPerson>[] = [];
+            for(const speaker of talk.speakers) {
+                speakers_state.push(
+                    makeStoredPerson(speaker)
+                );
+            }
             roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(TALK_CREATION_TEMPLATE, {
                 name: talk.title,
                 creation_content: {
@@ -503,8 +510,9 @@ export class Conference {
                     [RSC_AUDITORIUM_ID]: await auditorium.getId(),
                 },
                 initial_state: [
-                    makeStoredTalk(this.id, talk),
+                    makeStoredTalk(talk),
                     makeParentRoom(auditorium.roomId),
+                    ...speakers_state
                 ],
             }));
             await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + (await auditorium.getSlug()) + '-' + talk.slug);
@@ -681,6 +689,39 @@ export class Conference {
             pls['users'][userId] = 50;
         }
         await this.client.sendStateEvent(roomId, "m.room.power_levels", "", pls);
+    }
+
+    /**
+     * Gets talks with upcoming events, where the event timestamp is defined by a lambda.
+     */
+    private async getUpcomingTalksByLambda(lambda: (talk: ITalk) => number | null, inNextMinutes: number, minBefore: number): Promise<ITalk[]> {
+        const from = Date.now() - minBefore * 60000;
+        const until = Date.now() + inNextMinutes * 60000;
+
+        const upcomingTalks = []
+        for (const t of Object.values(this.talks)) {
+            const talk = await t.getDefinition();
+            const talkEventTime = lambda(talk);
+            // If null is returned then the talk does not have this event, so don't return it as upcoming.
+            if (talkEventTime === null) continue;
+
+            if (lambda(talk) >= from && lambda(talk) <= until) {
+                upcomingTalks.push(talk);
+            }
+        }
+        return upcomingTalks;
+    }
+
+    public async getUpcomingTalkStarts(inNextMinutes: number, minBefore: number): Promise<ITalk[]> {
+        return this.getUpcomingTalksByLambda(talk => talk.startTime, inNextMinutes, minBefore);
+    }
+
+    public async getUpcomingQAStarts(inNextMinutes: number, minBefore: number): Promise<ITalk[]> {
+        return this.getUpcomingTalksByLambda(talk => talk.qa_startTime, inNextMinutes, minBefore);
+    }
+
+    public async getUpcomingTalkEnds(inNextMinutes: number, minBefore: number): Promise<ITalk[]> {
+        return this.getUpcomingTalksByLambda(talk => talk.endTime, inNextMinutes, minBefore);
     }
 
     public async findPeopleWithId(personId: string): Promise<IPerson[]> {
