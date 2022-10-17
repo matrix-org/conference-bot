@@ -12,7 +12,7 @@
     "start:web": "webpack serve",
     "watch:web": "webpack --watch",
     "build": "yarn build:jsonschema && yarn build:ts && yarn build:web",
-    "build:jsonschema": "json2ts -i src/parsers/jsonschemas/ -o src/parsers/jsontypes/",
+    "build:jsonschema": "json2ts -i src/backends/jsonschemas/ -o src/backends/jsontypes/",
     "build:ts": "tsc",
     "build:web": "webpack",
     "run:merge-roles": "yarn build && node lib/scripts/merge-roles.js"
