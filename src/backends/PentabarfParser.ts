@@ -188,6 +188,7 @@ export class PentabarfParser {
                         speakers: [],
                         prerecorded: true,
                         conferenceId: "",
+                        auditoriumId: auditorium.id,
                         livestream_endTime: 0,
                         qa_startTime: 0,
                     };

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MatrixClient } from "matrix-bot-sdk";
+import { LogService, MatrixClient } from "matrix-bot-sdk";
 import { RS_STORED_PERSON, RS_STORED_TALK } from "./room_state";
 import { Conference } from "../Conference";
 import { MatrixRoom } from "./MatrixRoom";
@@ -23,7 +23,6 @@ import { IPerson, ITalk } from "./schedule";
 
 export class Talk extends MatrixRoom {
     private storedTalk: ITalk;
-    private auditoriumId: string | null = null;
     private people: IPerson[] | null = null;
 
     constructor(roomId: string, client: MatrixClient, conference: Conference) {
@@ -37,8 +36,11 @@ export class Talk extends MatrixRoom {
 
         const createEvent = await this.client.getRoomStateEvent(this.roomId, "m.room.create", "");
         const talkId = createEvent[RSC_TALK_ID];
-        this.auditoriumId = createEvent[RSC_AUDITORIUM_ID];
+        const auditoriumId = createEvent[RSC_AUDITORIUM_ID];
         this.storedTalk = await this.client.getRoomStateEvent(this.roomId, RS_STORED_TALK, talkId);
+        if (auditoriumId != this.storedTalk.auditoriumId) {
+            LogService.error("Talk", `In talk id=${talkId} auditoriumId from room state (${auditoriumId}) != ITalk.auditoriumId! (${this.storedTalk.auditoriumId})`)
+        }
         return this.storedTalk;
     }
 
@@ -55,10 +57,7 @@ export class Talk extends MatrixRoom {
     }
 
     public async getAuditoriumId(): Promise<string> {
-        if (this.auditoriumId !== null) {
-            await this.getDefinition(); // grabs ID
-        }
-        return this.auditoriumId;
+        return (await this.getDefinition()).auditoriumId;
     }
 
     public async getSpeakers(): Promise<IPerson[]> {

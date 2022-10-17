@@ -16,6 +16,9 @@ limitations under the License.
 
 export interface IRawDbTalk {
     event_id: string; // penta ID
+    /**
+     * ID of the **auditorium** that will hold this talk.
+     */
     conference_room: string;
     start_datetime: number; // ms timestamp, utc
     duration_seconds: number; // seconds

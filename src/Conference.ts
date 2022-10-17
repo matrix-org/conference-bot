@@ -579,7 +579,7 @@ export class Conference {
         const people = [];
         for (const t of Object.values(this.talks)) {
             const talk = await t.getDefinition();
-            if (talk.conferenceId == audit.id) {
+            if (talk.auditoriumId == audit.id) {
                 people.push(...talk.speakers);
             }
         }

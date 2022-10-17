@@ -66,7 +66,7 @@ interface ITask {
 }
 
 function makeTaskId(type: ScheduledTaskType, talk: ITalk): string {
-    return `${type}::${talk.id}`;
+    return `${type}::${talk.auditoriumId}::${talk.id}`;
 }
 
 /**
@@ -303,8 +303,8 @@ export class Scheduler {
 
     private async _execute(task: ITask) {
         const confTalk = this.conference.getTalk(task.talk.id);
-        const confAud = this.conference.getAuditorium(task.talk.conferenceId);
-        const confAudBackstage = this.conference.getAuditoriumBackstage(task.talk.conferenceId);
+        const confAud = this.conference.getAuditorium(task.talk.auditoriumId);
+        const confAudBackstage = this.conference.getAuditoriumBackstage(task.talk.auditoriumId);
 
         if (!confAud || !confTalk || !confAudBackstage) {
             // probably a special interest room
@@ -517,7 +517,7 @@ export class Scheduler {
         await this.lock.acquireAsync();
         try {
             const isCompleted = this.completedIds.includes(id);
-            if (!isCompleted && this.isWatchingAuditorium(talk.conferenceId)) {
+            if (!isCompleted && this.isWatchingAuditorium(talk.auditoriumId)) {
                 this.pending[id] = {id, type, talk};
                 LogService.debug("Scheduler", `Task ${id} scheduled`);
             } else {
