@@ -425,13 +425,21 @@ export class Conference {
         }
 
         const parentSpace = await this.getDesiredParentSpace(auditorium);
-        const audSpace = await this.client.createSpace({
-            localpart: makeLocalpart(
-                "space-" + config.conference.prefixes.aliases + auditorium.name, auditorium.id
-            ),
-            isPublic: true,
-            name: makeDisplayName(auditorium.name, auditorium.id),
-        });
+        const spaceName = "space-" + config.conference.prefixes.aliases + auditorium.slug;
+        let audSpace;
+        try {
+            audSpace = await this.client.createSpace({
+                localpart: makeLocalpart(
+                    spaceName, auditorium.id
+                ),
+                isPublic: true,
+                name: makeDisplayName(auditorium.name, auditorium.id),
+            });
+        } catch (e) {
+            await logMessage(LogLevel.ERROR, "utils", `Can't create space #${spaceName}: ${e}!`);
+            throw e;
+        }
+
         await parentSpace.addChildSpace(audSpace, { order: `auditorium-${auditorium.id}` });
 
         const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_CREATION_TEMPLATE, {
@@ -445,7 +453,7 @@ export class Conference {
                 makeStoredSpace(audSpace.roomId),
             ],
         }));
-        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.name, auditorium.id);
+        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.slug, auditorium.id);
         await this.dbRoom.addDirectChild(roomId);
         this.auditoriums[auditorium.id] = new Auditorium(roomId, this.client, this);
 
@@ -477,7 +485,7 @@ export class Conference {
                 makeParentRoom(this.dbRoom.roomId),
             ],
         }));
-        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.name + "-backstage", auditorium.id);
+        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.slug + "-backstage", auditorium.id);
         await this.dbRoom.addDirectChild(roomId);
         this.auditoriumBackstages[auditorium.id] = new AuditoriumBackstage(roomId, this.client, this);
 
@@ -499,7 +507,7 @@ export class Conference {
                     makeParentRoom(auditorium.roomId),
                 ],
             }));
-            await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + (await auditorium.getName()) + '-' + talk.slug);
+            await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + (await auditorium.getSlug()) + '-' + talk.slug);
             await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + 'talk-' + talk.id);
             this.talks[talk.id] = new Talk(roomId, this.client, this);
         } else {

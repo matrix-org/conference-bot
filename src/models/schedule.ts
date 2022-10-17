@@ -44,6 +44,10 @@ export interface ITalk {
 
 export interface IAuditorium {
     id: string;
+    /**
+     * Identifier safe for use in room aliases.
+     */
+    slug: string;
     name: string;
     kind: RoomKind;
     talksByDate: {
