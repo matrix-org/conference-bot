@@ -32,14 +32,24 @@ export interface IPerson {
 
 export interface ITalk {
     id: string;
+    /**
+     * Timestamp, in milliseconds, corresponding to the start of the day.
+     */
     dateTs: number; // ms
     startTime: number; // ms
     endTime: number; // ms
+    /**
+     * Start time of Q&A as a unix timestamp in ms, or null if Q&A is disabled for this talk.
+     */
+    qa_startTime: number | null;
+    livestream_endTime: number;
     slug: string;
     title: string;
     subtitle: string;
     track: string;
     speakers: IPerson[];
+    prerecorded: boolean;
+    conferenceId: string;
 }
 
 export interface IAuditorium {
