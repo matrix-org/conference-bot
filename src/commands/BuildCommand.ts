@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { LogLevel, MatrixClient, MentionPill, RichReply } from "matrix-bot-sdk";
+import { LogLevel, LogService, MatrixClient, MentionPill, RichReply } from "matrix-bot-sdk";
 import { Auditorium } from "../models/Auditorium";
 import { ITalk } from "../models/schedule";
 import config from "../config";
@@ -41,6 +41,14 @@ export class BuildCommand implements ICommand {
             return;
         }
 
+        try {
+            // Try to reset our view of the state first, to ensure we don't miss anything (e.g. if we got invited to a room since bot startup).
+            await conference.construct();
+        } catch (error) {
+            await client.sendNotice(roomId, `Failed to reset conference state: ${error.toString()}`)
+            return;
+        }
+
         if (!conference.isCreated) {
             await conference.createRootSpace();
             await conference.createDb(backend.conference);
@@ -61,17 +69,22 @@ export class BuildCommand implements ICommand {
             roomId,
             `0/${subspacesConfig.length} subspaces have been created`,
         );
-        for (const [subspaceId, subspaceConfig] of subspacesConfig) {
-            await conference.createSubspace(
-                subspaceId, subspaceConfig.displayName, subspaceConfig.alias
-            );
-            subspacesCreated++;
-            await editNotice(
-                client,
-                roomId,
-                statusEventId,
-                `${subspacesCreated}/${subspacesConfig.length} subspaces have been created`,
-            );
+        try {
+            for (const [subspaceId, subspaceConfig] of subspacesConfig) {
+                await conference.createSubspace(
+                    subspaceId, subspaceConfig.displayName, subspaceConfig.alias
+                );
+                subspacesCreated++;
+                await editNotice(
+                    client,
+                    roomId,
+                    statusEventId,
+                    `${subspacesCreated}/${subspacesConfig.length} subspaces have been created`,
+                );
+            }
+        } catch (error) {
+            LogService.error("BuildCommand", JSON.stringify(error));
+            await client.sendNotice(roomId, `Failed to build subspaces: ${error.toString()}`)
         }
 
         if (args[0] === "talk") {
@@ -116,30 +129,45 @@ export class BuildCommand implements ICommand {
             if (args.includes("backstages")) {
                 // Create auditorium backstages
                 for (const auditorium of backend.auditoriums.values()) {
-                    await conference.createAuditoriumBackstage(auditorium);
-                    auditoriumsCreated++;
-                    editNotice(
-                        client,
-                        roomId,
-                        statusEventId,
-                        `${auditoriumsCreated}/${backend.auditoriums.size} auditoriums have been created`,
-                    );
+                    try {
+                        await conference.createAuditoriumBackstage(auditorium);
+                        auditoriumsCreated++;
+                        editNotice(
+                            client,
+                            roomId,
+                            statusEventId,
+                            `${auditoriumsCreated}/${backend.auditoriums.size} auditoriums have been created`,
+                        );
+                    } catch (e) {
+                        throw {
+                            message: `Error whilst creating backstage for ${auditorium.id}: ${JSON.stringify(e?.body)}.`,
+                            cause: e,
+                        };
+                    }
+
                 }
             } else {
                 // Create auditoriums
                 const talks: [ITalk, Auditorium][] = [];
                 for (const auditorium of backend.auditoriums.values()) {
-                    const confAud = await conference.createAuditorium(auditorium);
-                    auditoriumsCreated++;
-                    editNotice(
-                        client,
-                        roomId,
-                        statusEventId,
-                        `${auditoriumsCreated}/${backend.auditoriums.size} auditoriums have been created`,
-                    );
+                    try {
+                        const confAud = await conference.createAuditorium(auditorium);
+                        auditoriumsCreated++;
+                        editNotice(
+                            client,
+                            roomId,
+                            statusEventId,
+                            `${auditoriumsCreated}/${backend.auditoriums.size} auditoriums have been created`,
+                        );
 
-                    for (let talk of auditorium.talks.values()) {
-                        talks.push([talk, confAud]);
+                        for (let talk of auditorium.talks.values()) {
+                            talks.push([talk, confAud]);
+                        }
+                    } catch (e) {
+                        throw {
+                            message: `Error whilst creating auditorium for ${auditorium.id}: ${JSON.stringify(e?.body)}.`,
+                            cause: e,
+                        };
                     }
                 }
 
@@ -151,14 +179,21 @@ export class BuildCommand implements ICommand {
                         `0/${talks.length} talks have been created`,
                     );
                     for (const [talk, auditorium] of talks) {
-                        await conference.createTalk(talk, auditorium);
-                        talksCreated++;
-                        editNotice(
-                            client,
-                            roomId,
-                            statusEventId,
-                            `${talksCreated}/${talks.length} talks have been created`,
-                        );
+                        try {
+                            await conference.createTalk(talk, auditorium);
+                            talksCreated++;
+                            editNotice(
+                                client,
+                                roomId,
+                                statusEventId,
+                                `${talksCreated}/${talks.length} talks have been created`,
+                            );
+                        } catch (e) {
+                            throw {
+                                message: `Error whilst creating talk for ${talk.id}: ${JSON.stringify(e?.body)}.`,
+                                cause: e,
+                            };
+                        }
                     }
                 }
             }
@@ -169,14 +204,21 @@ export class BuildCommand implements ICommand {
             let specialInterestRoomsCreated = 0;
             const statusEventId = await client.sendNotice(roomId, `0/${backend.interestRooms.size} interest rooms have been created`);
             for (const siRoom of backend.interestRooms.values()) {
-                await conference.createInterestRoom(siRoom);
-                specialInterestRoomsCreated++;
-                await editNotice(
-                    client,
-                    roomId,
-                    statusEventId,
-                    `${specialInterestRoomsCreated}/${backend.interestRooms.size} interest rooms have been created`,
-                );
+                try {
+                    await conference.createInterestRoom(siRoom);
+                    specialInterestRoomsCreated++;
+                    await editNotice(
+                        client,
+                        roomId,
+                        statusEventId,
+                        `${specialInterestRoomsCreated}/${backend.interestRooms.size} interest rooms have been created`,
+                    );
+                } catch (e) {
+                    throw {
+                        message: `Error whilst creating interest room for ${siRoom.id}: ${JSON.stringify(e?.body)}.`,
+                        cause: e,
+                    };
+                }
             }
         } else {
             await client.sendNotice(roomId, "Skipped special interest rooms");

@@ -338,18 +338,29 @@ export class Conference {
             config.conference.supportRooms.coordinators,
         ];
         for (const alias of roomAliases) {
+            // Skip aliases that aren't configured.
+            if (alias == null) continue;
             try {
                 await this.client.resolveRoom(alias);
-            } catch (e) {
+            } catch (e1) {
                 // The room doesn't exist yet, probably.
-                const roomId = await safeCreateRoom(
-                    this.client,
-                    mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
-                        room_alias_name: (new RoomAlias(alias)).localpart,
-                        invite: [config.moderatorUserId],
-                    }),
-                );
-                (await this.getSpace()).addChildRoom(roomId);
+                try {
+                    const roomId = await safeCreateRoom(
+                        this.client,
+                        mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
+                            room_alias_name: (new RoomAlias(alias)).localpart,
+                            invite: [config.moderatorUserId],
+                        }),
+                    );
+                    (await this.getSpace()).addChildRoom(roomId);
+                } catch (e) {
+                    throw {
+                        message: `Error whilst creating ${alias}: ${JSON.stringify(e?.body)}. Tried to create the room because failed to resolve it: ${JSON.stringify(e1?.body)}`,
+                        cause: e,
+                        cause2: e1,
+                    };
+                }
+
             }
         }
     }
