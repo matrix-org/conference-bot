@@ -120,13 +120,13 @@ let userId;
         displayName = localpart; // for sanity
     }
 
-    registerCommands();
+    registerCommands(conference, ircBridge);
 
     await client.joinRoom(config.managementRoom);
 
     await conference.construct();
 
-    setupWebserver();
+    setupWebserver(scoreboard);
 
     if (!conference.isCreated) {
         await client.sendHtmlNotice(config.managementRoom, "" +
@@ -167,7 +167,7 @@ async function loadBackend(): Promise<IScheduleBackend> {
     }
 }
 
-function registerCommands() {
+function registerCommands(conference: Conference, ircBridge: IRCBridge | null) {
     const commands: ICommand[] = [
         new HelpCommand(),
         new BuildCommand(),
@@ -238,7 +238,7 @@ function registerCommands() {
     });
 }
 
-function setupWebserver() {
+function setupWebserver(scoreboard: Scoreboard) {
     const app = express();
     const tmplPath = process.env.CONF_TEMPLATES_PATH || './srv';
     const engine = new Liquid({
