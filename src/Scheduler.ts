@@ -320,8 +320,8 @@ export class Scheduler {
                     confAud.roomId,
                     `<h3>${await confTalk.getName()}</h3>` +
                     `<p><b>There is no video for this talk.</b> ` +
-                    `Ask your questions here and they'll try to answer them! ` +
-                    `The questions with the most 👍 votes are most visible to the speaker.</p>`,
+                    (task.talk.qa_startTime !== null ? `Ask your questions here and they'll try to answer them! ` +
+                    `The questions with the most 👍 votes are most visible to the speaker.</p>` : ''),
                 );
                 return;
             }
@@ -329,8 +329,8 @@ export class Scheduler {
             await this.client.sendHtmlText(
                 confAud.roomId,
                 `<h3>Up next: ${await confTalk.getName()}</h3>` +
-                `<p>During the talk, you can ask questions here for the Q&A at the end. ` +
-                `The questions with the most 👍 votes are most visible to the speaker.</p>`,
+                (task.talk.qa_startTime !== null ? `<p>During the talk, you can ask questions here for the Q&A at the end. ` +
+                `The questions with the most 👍 votes are most visible to the speaker.</p>` : ''),
             );
         } else if (task.type === ScheduledTaskType.TalkQA) {
             if (!task.talk.prerecorded) return;
@@ -370,7 +370,7 @@ export class Scheduler {
             if (!task.talk.prerecorded) {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 5 minutes</h3><p><b>Your talk is not pre-recorded.</b> Your talk's full duration will be Q&A.</p>`);
             } else {
-                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 5 minutes</h3><p>Please join the Jitsi conference at the top of this room to prepare for your Q&A.</p>`);
+                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 5 minutes</h3>` + (task.talk.qa_startTime !== null ? `<p>Please join the Jitsi conference at the top of this room to prepare for your Q&A.</p>` : ''));
             }
         } else if (task.type === ScheduledTaskType.TalkQA5M) {
             if (getStartTime(task) < task.talk.startTime) {
@@ -392,7 +392,7 @@ export class Scheduler {
             await this.scoreboard.showQACountdown(confAud.roomId, task.talk.qa_startTime);
         } else if (task.type === ScheduledTaskType.TalkEnd5M) {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 5 minutes</h3><p>The next talk will start automatically after yours. In 5 minutes, this room will be opened up for anyone to join. They will not be able to see history.</p>`);
-            await this.client.sendHtmlText(confAud.roomId, `<h3>This talk ends in about 5 minutes</h3><p>Ask questions here for the speakers!</p>`);
+            await this.client.sendHtmlText(confAud.roomId, `<h3>This talk ends in about 5 minutes</h3>` + (task.talk.qa_startTime !== null ? `<p>Ask questions here for the speakers!</p>`: ''));
         } else if (task.type === ScheduledTaskType.TalkLivestreamEnd1M) {
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 1 minute!</h3><p>The next talk will start automatically after yours. Wrap it up!</p>`);
         } else if (task.type === ScheduledTaskType.TalkEnd1M) {
