@@ -189,13 +189,22 @@ export class Conference {
                                 this.dbRoom = new MatrixRoom(roomId, this.client, this);
                                 break;
                             case RoomKind.Auditorium:
-                                this.auditoriums[locatorEvent[RSC_AUDITORIUM_ID]] = new Auditorium(roomId, this.client, this);
+                                const auditoriumId = locatorEvent[RSC_AUDITORIUM_ID];
+                                if (this.backend.auditoriums.has(auditoriumId)) {
+                                    this.auditoriums[auditoriumId] = new Auditorium(roomId, this.backend.auditoriums.get(auditoriumId), this.client, this);
+                                }
                                 break;
                             case RoomKind.AuditoriumBackstage:
-                                this.auditoriumBackstages[locatorEvent[RSC_AUDITORIUM_ID]] = new AuditoriumBackstage(roomId, this.client, this);
+                                const auditoriumBsId = locatorEvent[RSC_AUDITORIUM_ID];
+                                if (this.backend.auditoriums.has(auditoriumBsId)) {
+                                    this.auditoriumBackstages[auditoriumBsId] = new AuditoriumBackstage(roomId, this.backend.auditoriums.get(auditoriumBsId), this.client, this);
+                                }
                                 break;
                             case RoomKind.Talk:
-                                this.talks[locatorEvent[RSC_TALK_ID]] = new Talk(roomId, this.client, this);
+                                const talkId = locatorEvent[RSC_TALK_ID];
+                                if (this.backend.talks.has(talkId)) {
+                                    this.talks[talkId] = new Talk(roomId, this.backend.talks.get(talkId), this.client, this);
+                                }
                                 break;
                             case RoomKind.SpecialInterest:
                                 this.interestRooms[locatorEvent[RSC_SPECIAL_INTEREST_ID]] = new InterestRoom(roomId, this.client, this, locatorEvent[RSC_SPECIAL_INTEREST_ID]);
@@ -462,7 +471,7 @@ export class Conference {
         }));
         await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.slug, auditorium.id);
         await this.dbRoom.addDirectChild(roomId);
-        this.auditoriums[auditorium.id] = new Auditorium(roomId, this.client, this);
+        this.auditoriums[auditorium.id] = new Auditorium(roomId, auditorium, this.client, this);
 
         // TODO: Send widgets after room creation
         // const widget = await LiveWidget.forAuditorium(this.auditoriums[auditorium.id], this.client);
@@ -494,7 +503,7 @@ export class Conference {
         }));
         await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.slug + "-backstage", auditorium.id);
         await this.dbRoom.addDirectChild(roomId);
-        this.auditoriumBackstages[auditorium.id] = new AuditoriumBackstage(roomId, this.client, this);
+        this.auditoriumBackstages[auditorium.id] = new AuditoriumBackstage(roomId, auditorium, this.client, this);
 
         return this.auditoriumBackstages[auditorium.id];
     }
@@ -523,7 +532,7 @@ export class Conference {
             }));
             await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + (await auditorium.getSlug()) + '-' + talk.slug);
             await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + 'talk-' + talk.id);
-            this.talks[talk.id] = new Talk(roomId, this.client, this);
+            this.talks[talk.id] = new Talk(roomId, talk, this.client, this);
         } else {
             roomId = this.talks[talk.id].roomId;
 

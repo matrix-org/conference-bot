@@ -69,6 +69,10 @@ export interface IAuditorium {
     name: string;
     kind: RoomKind;
     talks: Map<TalkId, ITalk>;
+    /**
+     * ID of the conference that this talk belongs to.
+     */
+    conferenceId: string;
 }
 
 export interface IConference {

@@ -105,6 +105,7 @@ export class JsonScheduleLoader {
             name: stream.stream_name,
             kind: RoomKind.Auditorium,
             talks
+            conferenceId
         };
     }
 
