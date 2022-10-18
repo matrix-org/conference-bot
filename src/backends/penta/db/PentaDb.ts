@@ -22,13 +22,13 @@ import { objectFastClone } from "../../../utils";
 import { IDbTalk, IRawDbTalk } from "./DbTalk";
 import { IPerson, Role } from "../../../models/schedule";
 
-const PEOPLE_SELECT = "SELECT event_id::text, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text, remark::text FROM " + config.conference.database?.tblPeople;
-const NONEVENT_PEOPLE_SELECT = "SELECT DISTINCT 'ignore' AS event_id, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM " + config.conference.database?.tblPeople;
+const PEOPLE_SELECT = "SELECT event_id::text, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text, remark::text FROM " + config.conference.schedule.database?.tblPeople;
+const NONEVENT_PEOPLE_SELECT = "SELECT DISTINCT 'ignore' AS event_id, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM " + config.conference.schedule.database?.tblPeople;
 
 const START_QUERY = "start_datetime AT TIME ZONE $1 AT TIME ZONE 'UTC'";
 const QA_START_QUERY = "(start_datetime + presentation_length) AT TIME ZONE $1 AT TIME ZONE 'UTC'";
 const END_QUERY = "(start_datetime + duration) AT TIME ZONE $1 AT TIME ZONE 'UTC'";
-const SCHEDULE_SELECT = `SELECT DISTINCT event_id::text, conference_room::text, EXTRACT(EPOCH FROM ${START_QUERY}) * 1000 AS start_datetime, EXTRACT(EPOCH FROM duration) AS duration_seconds, EXTRACT(EPOCH FROM presentation_length) AS presentation_length_seconds, EXTRACT(EPOCH FROM ${END_QUERY}) * 1000 AS end_datetime, EXTRACT(EPOCH FROM ${QA_START_QUERY}) * 1000 AS qa_start_datetime, prerecorded FROM ` + config.conference.database?.tblSchedule;
+const SCHEDULE_SELECT = `SELECT DISTINCT event_id::text, conference_room::text, EXTRACT(EPOCH FROM ${START_QUERY}) * 1000 AS start_datetime, EXTRACT(EPOCH FROM duration) AS duration_seconds, EXTRACT(EPOCH FROM presentation_length) AS presentation_length_seconds, EXTRACT(EPOCH FROM ${END_QUERY}) * 1000 AS end_datetime, EXTRACT(EPOCH FROM ${QA_START_QUERY}) * 1000 AS qa_start_datetime, prerecorded FROM ` + config.conference.schedule.database?.tblSchedule;
 
 export class PentaDb {
     private client: Pool;
