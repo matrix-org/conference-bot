@@ -187,7 +187,13 @@ export class Conference {
             // Process batches of rooms in parallel, since there may be a few hundred
             const tasks = roomIds.slice(i, i + batchSize).map(
                 async roomId => {
-                    let locatorEvent = await this.client.getRoomStateEvent(roomId, RS_LOCATOR, "");
+                    let locatorEvent;
+                    try {
+                        locatorEvent = await this.client.getRoomStateEvent(roomId, RS_LOCATOR, "");
+                    } catch (err) {
+                        LogService.info("Conference", `Can't read locator in room: ${JSON.stringify(err)}`)
+                        return;
+                    }
 
                     if (locatorEvent[RSC_CONFERENCE_ID] === this.id) {
                         switch (locatorEvent[RSC_ROOM_KIND_FLAG]) {
