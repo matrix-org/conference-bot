@@ -25,11 +25,6 @@ export class MatrixRoom {
     constructor(public readonly roomId: string, protected client: MatrixClient, protected conference: Conference) {
     }
 
-    public async addDirectChild(roomId: string) {
-        const state = makeChildRoom(roomId);
-        await this.client.sendStateEvent(this.roomId, state.type, state.state_key, state.content);
-    }
-
     public async getAssociatedSpace(): Promise<Space> {
         if (this.space) {
             return this.space;

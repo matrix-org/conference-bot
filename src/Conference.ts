@@ -36,7 +36,6 @@ import {
     makeAuditoriumLocator,
     makeDbLocator,
     makeInterestLocator,
-    makeParentRoom,
     makeRootSpaceLocator,
     makeStoredPersonOverride,
     makeTalkLocator,
@@ -414,7 +413,6 @@ export class Conference {
                     },
                     initial_state: [
                         makeInterestLocator(this.id, interestRoom.id),
-                        makeParentRoom(this.dbRoom.roomId),
                     ],
                 }));
                 await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + interestRoom.name, interestRoom.id);
@@ -439,7 +437,6 @@ export class Conference {
         await this.client.sendStateEvent(roomId, "m.room.power_levels", "", powerLevels);
 
         // Ensure that the room appears within the correct space.
-        await this.dbRoom.addDirectChild(roomId);
         const parentSpace = await this.getDesiredParentSpace(interestRoom);
         await parentSpace.addChildRoom(roomId, { order: `interest-${interestRoom.id}` });
 
@@ -490,13 +487,11 @@ export class Conference {
             },
             initial_state: [
                 makeAuditoriumLocator(this.id, auditorium.id),
-                makeParentRoom(this.dbRoom.roomId),
                 makeAssociatedSpace(audSpace.roomId),
             ],
             name: auditorium.name,
         }));
         await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.slug, auditorium.id);
-        await this.dbRoom.addDirectChild(roomId);
         this.auditoriums[auditorium.id] = new Auditorium(roomId, auditorium, this.client, this);
 
         // TODO: Send widgets after room creation
@@ -524,11 +519,9 @@ export class Conference {
             },
             initial_state: [
                 makeAuditoriumBackstageLocator(this.id, auditorium.id),
-                makeParentRoom(this.dbRoom.roomId),
             ],
         }));
         await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.slug + "-backstage", auditorium.id);
-        await this.dbRoom.addDirectChild(roomId);
         this.auditoriumBackstages[auditorium.id] = new AuditoriumBackstage(roomId, auditorium, this.client, this);
 
         return this.auditoriumBackstages[auditorium.id];
@@ -546,7 +539,6 @@ export class Conference {
                 },
                 initial_state: [
                     makeTalkLocator(this.id, talk.id),
-                    makeParentRoom(auditorium.roomId),
                 ],
             }));
             await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + (await auditorium.getSlug()) + '-' + talk.slug);
@@ -564,7 +556,6 @@ export class Conference {
         // await this.client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
 
         // Ensure that the room appears within the correct space.
-        await auditorium.addDirectChild(roomId);
         const startTime = new Date(talk.startTime).toISOString();
         await (await auditorium.getAssociatedSpace()).addChildRoom(roomId, { order: `3-talk-${startTime}` });
 

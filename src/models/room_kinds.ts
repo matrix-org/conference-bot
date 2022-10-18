@@ -14,10 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import {
-    RS_CHILD_ROOM,
-    RS_PARENT_ROOM,
-} from "./room_state";
 import config from "../config";
 
 export const KickPowerLevel = 50;
@@ -40,9 +36,7 @@ export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = {
         "m.room.name": 100,
         "m.room.power_levels": 100,
         "m.room.topic": 100,
-        [RS_PARENT_ROOM]: 100,
-        [RS_CHILD_ROOM]: 100,
-        "m.room.parent": 100, // TODO is this stabilised yet?
+        "m.space.parent": 100,
         "m.space.child": 100,
     },
     users: {
@@ -79,10 +73,10 @@ export enum RoomKind {
  */
 export const RS_LOCATOR = "org.matrix.confbot.locator";
 
-export const RSC_CONFERENCE_ID = "org.matrix.confbot.conference";
-export const RSC_AUDITORIUM_ID = "org.matrix.confbot.auditorium";
-export const RSC_TALK_ID = "org.matrix.confbot.talk";
-export const RSC_SPECIAL_INTEREST_ID = "org.matrix.confbot.interest";
+export const RSC_CONFERENCE_ID = "conferenceId";
+export const RSC_AUDITORIUM_ID = "auditoriumId";
+export const RSC_TALK_ID = "talkId";
+export const RSC_SPECIAL_INTEREST_ID = "interestId";
 
 export const CONFERENCE_ROOM_CREATION_TEMPLATE = {
     preset: 'private_chat',

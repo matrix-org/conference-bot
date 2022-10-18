@@ -62,30 +62,6 @@ export function makeStoredPersonOverride(person: IPerson): IStateEvent<IPerson> 
     };
 }
 
-export const RS_PARENT_ROOM = "org.matrix.confbot.parent";
-export interface IParentRoom {
-    roomId: string;
-}
-export function makeParentRoom(roomId: string): IStateEvent<IParentRoom> {
-    return {
-        type: RS_PARENT_ROOM,
-        state_key: "",
-        content: {roomId: roomId},
-    };
-}
-
-export const RS_CHILD_ROOM = "org.matrix.confbot.child";
-export interface IChildRoom {
-    roomId: string;
-}
-export function makeChildRoom(roomId: string): IStateEvent<IChildRoom> {
-    return {
-        type: RS_CHILD_ROOM,
-        state_key: roomId,
-        content: {roomId: roomId},
-    };
-}
-
 /**
  * Associated space: a canonical definition of which space is 'associated' with this room.
  *
