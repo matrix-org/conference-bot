@@ -7,7 +7,7 @@ import * as fetch from "node-fetch";
 
 
 export class PentaBackend implements IScheduleBackend {
-    constructor(private cfg: IPentaScheduleBackendConfig, parser: PentabarfParser, private db: PentaDb) {
+    constructor(private cfg: IPentaScheduleBackendConfig, parser: PentabarfParser, public db: PentaDb) {
         this.updateFromParser(parser);
     }
 

@@ -22,6 +22,7 @@ export class JsonScheduleLoader {
 
         this.conferenceId = ""; // TODO What's this?
         this.auditoriums = new Map();
+        this.talks = new Map();
 
         for (let aud of jsonSchedule.streams) {
             const auditorium = this.convertAuditorium(aud, this.conferenceId);

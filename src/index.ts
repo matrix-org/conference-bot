@@ -163,7 +163,7 @@ async function loadBackend(): Promise<IScheduleBackend> {
         case "json":
             return await JsonScheduleBackend.new(config.conference.schedule);
         default:
-            throw new Error(`Unknown scheduling backend '${config.conference.schedule.backend}'!`)
+            throw new Error(`Unknown scheduling backend: choose penta or json!`)
     }
 }
 

@@ -54,9 +54,11 @@ import { InterestRoom } from "./models/InterestRoom";
 import { IStateEvent } from "./models/room_state";
 import { logMessage } from "./LogProxy";
 import { IScheduleBackend } from "./backends/IScheduleBackend";
+import { PentaBackend } from "./backends/penta/PentaBackend";
 
 export class Conference {
     private dbRoom: MatrixRoom;
+    // TODO This shouldn't be here.
     private pentaDb: PentaDb | null = null;
     private subspaces: {
         [subspaceId: string]: Space
@@ -167,8 +169,9 @@ export class Conference {
     public async construct() {
         this.reset();
 
-        if (config.conference.schedule.database !== null) {
-            this.pentaDb = new PentaDb(config.conference.schedule.database);
+        if (this.backend instanceof PentaBackend) {
+            // TODO this is not nice.
+            this.pentaDb = this.backend.db;
         }
 
         // Locate all the rooms for the conference
