@@ -42,8 +42,8 @@ export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = {
         "m.room.topic": 100,
         [RS_PARENT_ROOM]: 100,
         [RS_CHILD_ROOM]: 100,
-        "org.matrix.msc1772.room.parent": 100,
-        "org.matrix.msc1772.space.child": 100,
+        "m.room.parent": 100, // TODO is this stabilised yet?
+        "m.space.child": 100,
     },
     users: {
         [config.moderatorUserId]: 100,
