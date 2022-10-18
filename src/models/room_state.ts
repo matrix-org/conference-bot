@@ -101,10 +101,10 @@ export function makeStoredSpace(roomId: string): IStateEvent<IStoredSpace> {
 /**
  * See RS_LOCATOR.
  */
-export type ILocator = IDbLocator | ITalkLocator | IAuditoriumLocator | IInterestLocator
+export type ILocator = IConferenceLocator | ITalkLocator | IAuditoriumLocator | IInterestLocator
 
-export interface IDbLocator {
-    [RSC_ROOM_KIND_FLAG]: RoomKind.ConferenceDb;
+export interface IConferenceLocator {
+    [RSC_ROOM_KIND_FLAG]: RoomKind.ConferenceDb | RoomKind.ConferenceSpace;
     conferenceId: string;
 }
 export interface ITalkLocator {
@@ -123,8 +123,18 @@ export interface IInterestLocator {
     interestId: InterestId;
 }
 
+export function makeRootSpaceLocator(conferenceId: string): IStateEvent<IConferenceLocator> {
+    return {
+        type: RS_LOCATOR,
+        state_key: "",
+        content: {
+            [RSC_ROOM_KIND_FLAG]: RoomKind.ConferenceSpace,
+            conferenceId,
+        },
+    };
+}
 
-export function makeDbLocator(conferenceId: string): IStateEvent<IDbLocator> {
+export function makeDbLocator(conferenceId: string): IStateEvent<IConferenceLocator> {
     return {
         type: RS_LOCATOR,
         state_key: "",

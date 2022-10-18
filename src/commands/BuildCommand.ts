@@ -42,6 +42,7 @@ export class BuildCommand implements ICommand {
         }
 
         if (!conference.isCreated) {
+            await conference.createRootSpace();
             await conference.createDb(backend.conference);
         }
 

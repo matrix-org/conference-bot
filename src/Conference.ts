@@ -36,6 +36,7 @@ import {
     makeDbLocator,
     makeInterestLocator,
     makeParentRoom,
+    makeRootSpaceLocator,
     makeStoredPersonOverride,
     makeStoredSpace,
     makeTalkLocator,
@@ -59,6 +60,7 @@ import { IScheduleBackend } from "./backends/IScheduleBackend";
 import { PentaBackend } from "./backends/penta/PentaBackend";
 
 export class Conference {
+    private rootSpace: Space;
     private dbRoom: MatrixRoom;
     // TODO This shouldn't be here.
     private pentaDb: PentaDb | null = null;
@@ -140,7 +142,7 @@ export class Conference {
     }
 
     public get isCreated(): boolean {
-        return !!this.dbRoom;
+        return !!this.dbRoom && !!this.rootSpace;
     }
 
     public get storedTalks(): Talk[] {
@@ -197,6 +199,9 @@ export class Conference {
 
                     if (locatorEvent[RSC_CONFERENCE_ID] === this.id) {
                         switch (locatorEvent[RSC_ROOM_KIND_FLAG]) {
+                            case RoomKind.ConferenceSpace:
+                                this.rootSpace = new Space(roomId, this.client);
+                                break;
                             case RoomKind.ConferenceDb:
                                 this.dbRoom = new MatrixRoom(roomId, this.client, this);
                                 break;
@@ -269,18 +274,37 @@ export class Conference {
     }
 
     /**
-     * Creates the data store room and top-level space for the conference.
-     * @param conference The description of the conference.
+     * Creates the top-level space for the conference.
      */
-    public async createDb(conference: IConference) {
-        let space: Space;
-        if (!this.dbRoom) {
-            space = await this.client.createSpace({
+    public async createRootSpace() {
+        if (! this.rootSpace) {
+            const space = await this.client.createSpace({
                 isPublic: true,
                 localpart: config.conference.id,
                 name: config.conference.name,
             });
 
+            const spaceLocator = makeRootSpaceLocator(config.conference.id);
+            await this.client.sendStateEvent(space.roomId, spaceLocator.type, spaceLocator.state_key, spaceLocator.content);
+
+            // Ensure that the space can be viewed by guest users.
+            await this.client.sendStateEvent(
+                space.roomId,
+                "m.room.guest_access",
+                "",
+                {guest_access:"can_join"},
+            );
+
+            this.rootSpace = space;
+        }
+    }
+
+    /**
+     * Creates the data store room for the conference.
+     * @param conference The description of the conference.
+     */
+    public async createDb(conference: IConference) {
+        if (!this.dbRoom) {
             const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(CONFERENCE_ROOM_CREATION_TEMPLATE, {
                 creation_content: {
                     [RSC_CONFERENCE_ID]: this.id,
@@ -293,17 +317,7 @@ export class Conference {
             }));
 
             this.dbRoom = new MatrixRoom(roomId, this.client, this);
-        } else {
-            space = await this.dbRoom.getSpace();
         }
-
-        // Ensure that the space can be viewed by guest users.
-        await this.client.sendStateEvent(
-            space.roomId,
-            "m.room.guest_access",
-            "",
-            {guest_access:"can_join"},
-        );
     }
 
     public async getPentaDb(): Promise<PentaDb | null> {
@@ -313,7 +327,7 @@ export class Conference {
     }
 
     public async getSpace(): Promise<Space> {
-        return this.dbRoom.getSpace();
+        return this.rootSpace;
     }
 
     /**
