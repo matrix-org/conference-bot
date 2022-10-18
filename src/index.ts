@@ -233,7 +233,7 @@ function registerCommands(conference: Conference, ircBridge: IRCBridge | null) {
             }
         } catch (e) {
             LogService.error("index", "Error processing command: ", e);
-            return await client.replyNotice(roomId, event, `There was an error processing your command: ${e.message}`);
+            return await client.replyNotice(roomId, event, `There was an error processing your command: ${e?.message}`);
         }
 
         return await client.replyNotice(roomId, event, `Unknown command. Try ${prefixUsed.trim()} help`);
