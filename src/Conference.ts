@@ -25,7 +25,7 @@ import {
     RSC_CONFERENCE_ID,
     RSC_ROOM_KIND_FLAG,
     RSC_SPECIAL_INTEREST_ID,
-    RSC_TALK_ID, SPECIAL_INTEREST_CREATION_TEMPLATE,
+    RSC_TALK_ID, RS_LOCATOR, SPECIAL_INTEREST_CREATION_TEMPLATE,
     TALK_CREATION_TEMPLATE
 } from "./models/room_kinds";
 import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from "./models/schedule";
@@ -181,23 +181,24 @@ export class Conference {
             // Process batches of rooms in parallel, since there may be a few hundred
             const tasks = roomIds.slice(i, i + batchSize).map(
                 async roomId => {
-                    const createEvent = await this.client.getRoomStateEvent(roomId, "m.room.create", "");
-                    if (createEvent[RSC_CONFERENCE_ID] === this.id) {
-                        switch (createEvent[RSC_ROOM_KIND_FLAG]) {
+                    let locatorEvent = await this.client.getRoomStateEvent(roomId, RS_LOCATOR, "");
+
+                    if (locatorEvent[RSC_CONFERENCE_ID] === this.id) {
+                        switch (locatorEvent[RSC_ROOM_KIND_FLAG]) {
                             case RoomKind.Conference:
                                 this.dbRoom = new MatrixRoom(roomId, this.client, this);
                                 break;
                             case RoomKind.Auditorium:
-                                this.auditoriums[createEvent[RSC_AUDITORIUM_ID]] = new Auditorium(roomId, this.client, this);
+                                this.auditoriums[locatorEvent[RSC_AUDITORIUM_ID]] = new Auditorium(roomId, this.client, this);
                                 break;
                             case RoomKind.AuditoriumBackstage:
-                                this.auditoriumBackstages[createEvent[RSC_AUDITORIUM_ID]] = new AuditoriumBackstage(roomId, this.client, this);
+                                this.auditoriumBackstages[locatorEvent[RSC_AUDITORIUM_ID]] = new AuditoriumBackstage(roomId, this.client, this);
                                 break;
                             case RoomKind.Talk:
-                                this.talks[createEvent[RSC_TALK_ID]] = new Talk(roomId, this.client, this);
+                                this.talks[locatorEvent[RSC_TALK_ID]] = new Talk(roomId, this.client, this);
                                 break;
                             case RoomKind.SpecialInterest:
-                                this.interestRooms[createEvent[RSC_SPECIAL_INTEREST_ID]] = new InterestRoom(roomId, this.client, this, createEvent[RSC_SPECIAL_INTEREST_ID]);
+                                this.interestRooms[locatorEvent[RSC_SPECIAL_INTEREST_ID]] = new InterestRoom(roomId, this.client, this, locatorEvent[RSC_SPECIAL_INTEREST_ID]);
                                 break;
                             default:
                                 break;

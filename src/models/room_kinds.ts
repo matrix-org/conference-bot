@@ -79,6 +79,11 @@ export const ALL_USEFUL_ROOM_KINDS = [
     RoomKind.SpecialInterest,
 ];
 
+/**
+ * Type of state event used to identify rooms that the bot has created.
+ */
+export const RS_LOCATOR = "org.matrix.confbot.locator";
+
 export const RSC_CONFERENCE_ID = "org.matrix.confbot.conference";
 export const RSC_AUDITORIUM_ID = "org.matrix.confbot.auditorium";
 export const RSC_TALK_ID = "org.matrix.confbot.talk";
