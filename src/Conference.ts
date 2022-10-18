@@ -34,7 +34,7 @@ import {
     makeParentRoom,
     makeStoredAuditorium,
     makeStoredConference, makeStoredInterestRoom,
-    makeStoredPerson,
+    makeStoredPersonOverride,
     makeStoredSpace,
     makeStoredTalk,
     RS_3PID_PERSON_ID,
@@ -75,6 +75,10 @@ export class Conference {
     private interestRooms: {
         [interestId: string]: InterestRoom;
     } = {};
+
+    /**
+     * Overrides of people. Used to e.g. associate someone's Matrix ID after registration through the e-mail invitation.
+     */
     private people: {
         [personId: string]: IPerson;
     } = {};
@@ -240,6 +244,7 @@ export class Conference {
         if (!this.dbRoom) return;
         const dbState = (await this.client.getRoomState(this.dbRoom.roomId)).filter(s => !!s.content);
 
+        // Load person overrides
         const people = dbState.filter(s => s.type === RS_STORED_PERSON).map(s => s.content as IPerson);
         for (const person of people) {
             this.people[person.id] = person;
@@ -553,7 +558,7 @@ export class Conference {
     }
 
     public async createUpdatePerson(person: IPerson): Promise<IPerson> {
-        const storedPerson = makeStoredPerson(person);
+        const storedPerson = makeStoredPersonOverride(person);
         await this.client.sendStateEvent(this.dbRoom.roomId, storedPerson.type, storedPerson.state_key, storedPerson.content);
         this.people[storedPerson.content.id] = storedPerson.content;
         return this.people[storedPerson.content.id];

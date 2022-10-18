@@ -54,7 +54,17 @@ export function makeStoredTalk(talk: ITalk): IStateEvent<ITalk> {
 }
 
 export const RS_STORED_PERSON = "org.matrix.confbot.person.v2";
-export function makeStoredPerson(person: IPerson): IStateEvent<IPerson> {
+/**
+ * This allows us to create a state event, to be stored in the Database room,
+ * which represents an override of a person from their underlying representation in the schedule.
+ *
+ * This is used when a person accepts an e-mail invite and therefore we learn of their
+ * Matrix ID, despite them not having one in the schedule.
+ *
+ * Note that the returned object contains private information and as such must not be
+ * stored in any public rooms.
+ */
+export function makeStoredPersonOverride(person: IPerson): IStateEvent<IPerson> {
     return {
         type: RS_STORED_PERSON,
         state_key: person.id.toString(),
