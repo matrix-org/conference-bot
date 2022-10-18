@@ -137,11 +137,11 @@ conference:
   timezone: "Europe/Brussels"
 
   # The various support rooms the bot supports. They will be created if they
-  # haven't already.
+  # haven't already. If commented out, they won't be created.
   supportRooms:
-    speakers: "#speakers:example.org"
-    specialInterest: "#stands:example.org"
-    coordinators: "#coordinators:example.org"
+    #speakers: "#speakers:example.org"
+    #specialInterest: "#stands:example.org"
+    #coordinators: "#coordinators:example.org"
 
   # How far in the future the bot should be looking before considering something "finalized".
   # Should never be less than 5 minutes.
