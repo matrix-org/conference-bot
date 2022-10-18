@@ -31,12 +31,14 @@ import {
 import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from "./models/schedule";
 import {
     IStoredSubspace,
+    makeAuditoriumBackstageLocator,
+    makeAuditoriumLocator,
+    makeDbLocator,
+    makeInterestLocator,
     makeParentRoom,
-    makeStoredAuditorium,
-    makeStoredConference, makeStoredInterestRoom,
     makeStoredPersonOverride,
     makeStoredSpace,
-    makeStoredTalk,
+    makeTalkLocator,
     RS_3PID_PERSON_ID,
     RS_STORED_PERSON,
     RS_STORED_SUBSPACE,
@@ -279,7 +281,7 @@ export class Conference {
                 },
                 name: `[DB] Conference ${conference.title}`,
                 initial_state: [
-                    makeStoredConference(this.id, conference),
+                    makeDbLocator(this.id),
                     makeStoredSpace(space.roomId),
                 ],
             }));
@@ -392,7 +394,7 @@ export class Conference {
                         [RSC_SPECIAL_INTEREST_ID]: interestRoom.id,
                     },
                     initial_state: [
-                        makeStoredInterestRoom(this.id, interestRoom),
+                        makeInterestLocator(this.id, interestRoom.id),
                         makeParentRoom(this.dbRoom.roomId),
                     ],
                 }));
@@ -468,7 +470,7 @@ export class Conference {
                 [RSC_AUDITORIUM_ID]: auditorium.id,
             },
             initial_state: [
-                makeStoredAuditorium(this.id, auditorium),
+                makeAuditoriumLocator(this.id, auditorium.id),
                 makeParentRoom(this.dbRoom.roomId),
                 makeStoredSpace(audSpace.roomId),
             ],
@@ -502,7 +504,7 @@ export class Conference {
                 [RSC_AUDITORIUM_ID]: auditorium.id,
             },
             initial_state: [
-                makeStoredAuditorium(this.id, auditorium),
+                makeAuditoriumBackstageLocator(this.id, auditorium.id),
                 makeParentRoom(this.dbRoom.roomId),
             ],
         }));
@@ -516,12 +518,6 @@ export class Conference {
     public async createTalk(talk: ITalk, auditorium: Auditorium): Promise<MatrixRoom> {
         let roomId: string;
         if (!this.talks[talk.id]) {
-            const speakers_state: IStateEvent<IPerson>[] = [];
-            for(const speaker of talk.speakers) {
-                speakers_state.push(
-                    makeStoredPerson(speaker)
-                );
-            }
             roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(TALK_CREATION_TEMPLATE, {
                 name: talk.title,
                 creation_content: {
@@ -530,9 +526,8 @@ export class Conference {
                     [RSC_AUDITORIUM_ID]: await auditorium.getId(),
                 },
                 initial_state: [
-                    makeStoredTalk(talk),
+                    makeTalkLocator(this.id, talk.id),
                     makeParentRoom(auditorium.roomId),
-                    ...speakers_state
                 ],
             }));
             await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + (await auditorium.getSlug()) + '-' + talk.slug);

@@ -17,10 +17,6 @@ limitations under the License.
 import {
     RS_CHILD_ROOM,
     RS_PARENT_ROOM,
-    RS_STORED_CONFERENCE,
-    RS_STORED_PERSON,
-    RS_STORED_AUDITORIUM,
-    RS_STORED_TALK
 } from "./room_state";
 import config from "../config";
 
@@ -44,10 +40,6 @@ export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = {
         "m.room.name": 100,
         "m.room.power_levels": 100,
         "m.room.topic": 100,
-        [RS_STORED_CONFERENCE]: 100,
-        [RS_STORED_PERSON]: 100,
-        [RS_STORED_AUDITORIUM]: 100,
-        [RS_STORED_TALK]: 100,
         [RS_PARENT_ROOM]: 100,
         [RS_CHILD_ROOM]: 100,
         "org.matrix.msc1772.room.parent": 100,
@@ -64,24 +56,23 @@ export const PRIVATE_ROOM_POWER_LEVELS_TEMPLATE = {
     invite: 0,
 };
 
-export const RSC_ROOM_KIND_FLAG = "org.matrix.confbot.kind";
+/**
+ * Key in a RS_LOCATOR event that identifies what kind of room it is.
+ * Not namespaced because the event type is already privately namespaced for the bot.
+ */
+export const RSC_ROOM_KIND_FLAG = "kind";
 export enum RoomKind {
     /**
      * The value is a misnomer: 'conference' is the kind of the conference's *database* room.
      * This is *not* the public space for the conference.
      */
     ConferenceDb = "conference",
+    ConferenceSpace = "conference_space", // TODO
     Auditorium = "auditorium",
     AuditoriumBackstage = "auditorium_backstage",
     Talk = "talk",
     SpecialInterest = "other",
 }
-export const ALL_USEFUL_ROOM_KINDS = [
-    RoomKind.Auditorium,
-    RoomKind.AuditoriumBackstage,
-    RoomKind.Talk,
-    RoomKind.SpecialInterest,
-];
 
 /**
  * Type of state event used to identify rooms that the bot has created.
