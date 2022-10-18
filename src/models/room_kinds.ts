@@ -66,7 +66,11 @@ export const PRIVATE_ROOM_POWER_LEVELS_TEMPLATE = {
 
 export const RSC_ROOM_KIND_FLAG = "org.matrix.confbot.kind";
 export enum RoomKind {
-    Conference = "conference",
+    /**
+     * The value is a misnomer: 'conference' is the kind of the conference's *database* room.
+     * This is *not* the public space for the conference.
+     */
+    ConferenceDb = "conference",
     Auditorium = "auditorium",
     AuditoriumBackstage = "auditorium_backstage",
     Talk = "talk",
@@ -97,7 +101,7 @@ export const CONFERENCE_ROOM_CREATION_TEMPLATE = {
         {type: "m.room.history_visibility", state_key: "", content: {history_visibility: "shared"}},
     ],
     creation_content: {
-        [RSC_ROOM_KIND_FLAG]: RoomKind.Conference,
+        [RSC_ROOM_KIND_FLAG]: RoomKind.ConferenceDb,
     },
 };
 

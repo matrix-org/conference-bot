@@ -189,7 +189,7 @@ export class Conference {
 
                     if (locatorEvent[RSC_CONFERENCE_ID] === this.id) {
                         switch (locatorEvent[RSC_ROOM_KIND_FLAG]) {
-                            case RoomKind.Conference:
+                            case RoomKind.ConferenceDb:
                                 this.dbRoom = new MatrixRoom(roomId, this.client, this);
                                 break;
                             case RoomKind.Auditorium:
