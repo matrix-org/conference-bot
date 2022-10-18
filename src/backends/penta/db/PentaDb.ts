@@ -15,12 +15,12 @@ limitations under the License.
 */
 
 import { Pool } from "pg";
-import config, { IPentaDbConfig } from "../../config";
+import config, { IPentaDbConfig } from "../../../config";
 import { dbPersonToPerson, IDbPerson } from "./DbPerson";
 import { LogService, UserID } from "matrix-bot-sdk";
-import { objectFastClone } from "../../utils";
+import { objectFastClone } from "../../../utils";
 import { IDbTalk, IRawDbTalk } from "./DbTalk";
-import { IPerson, Role } from "../../models/schedule";
+import { IPerson, Role } from "../../../models/schedule";
 
 const PEOPLE_SELECT = "SELECT event_id::text, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text, remark::text FROM " + config.conference.database?.tblPeople;
 const NONEVENT_PEOPLE_SELECT = "SELECT DISTINCT 'ignore' AS event_id, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM " + config.conference.database?.tblPeople;
@@ -130,7 +130,7 @@ export class PentaDb {
     }
 
     private postprocessDbTalk(talk: IRawDbTalk): IDbTalk {
-        
+
         const qaStartDatetime = talk.qa_start_datetime + this.config.schedulePreBufferSeconds * 1000;
         let livestreamStartDatetime: number;
         if (talk.prerecorded) {

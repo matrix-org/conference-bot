@@ -1,5 +1,5 @@
-import { RoomKind } from "../models/room_kinds";
-import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from "../models/schedule";
+import { RoomKind } from "../../models/room_kinds";
+import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from "../../models/schedule";
 import { JSONSchedule, JSONSpeaker, JSONStream, JSONTalk } from "./jsontypes/JsonSchedule.schema";
 import * as moment from "moment";
 
