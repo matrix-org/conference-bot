@@ -55,6 +55,9 @@ import { AttendanceCommand } from "./commands/AttendanceCommand";
 import { ScheduleCommand } from "./commands/ScheduleCommand";
 import { CheckInMap } from "./CheckInMap";
 import { FDMCommand } from "./commands/FDMCommand";
+import { IScheduleBackend } from "./backends/IScheduleBackend";
+import { PentaBackend } from "./backends/penta/PentaBackend";
+import { JsonScheduleBackend } from "./backends/json/JsonScheduleBackend";
 
 config.RUNTIME = {
     client: null,
@@ -79,28 +82,31 @@ const client = new MatrixClient(config.homeserverUrl, config.accessToken, storag
 config.RUNTIME.client = client;
 client.impersonateUserId(config.userId);
 
-const conference = new Conference(config.conference.id, client);
-config.RUNTIME.conference = conference;
-
-const scoreboard = new Scoreboard(conference, client);
-
-const scheduler = new Scheduler(client, conference, scoreboard);
-config.RUNTIME.scheduler = scheduler;
-
-let ircBridge: IRCBridge | null = null;
-if (config.ircBridge != null) {
-    ircBridge = new IRCBridge(config.ircBridge, client);
-}
-config.RUNTIME.ircBridge = ircBridge;
-
-const checkins = new CheckInMap(client, conference);
-config.RUNTIME.checkins = checkins;
-
 let localpart;
 let displayName;
 let userId;
 
 (async function () {
+    const backend = await loadBackend();
+
+    const conference = new Conference(backend, config.conference.id, client);
+    config.RUNTIME.conference = conference;
+
+    const scoreboard = new Scoreboard(conference, client);
+
+    const scheduler = new Scheduler(client, conference, scoreboard);
+    config.RUNTIME.scheduler = scheduler;
+
+    let ircBridge: IRCBridge | null = null;
+    if (config.ircBridge != null) {
+        ircBridge = new IRCBridge(config.ircBridge, client);
+    }
+    config.RUNTIME.ircBridge = ircBridge;
+
+    const checkins = new CheckInMap(client, conference);
+    config.RUNTIME.checkins = checkins;
+
+
     // Quickly check connectivity before going much further
     userId = await client.getUserId();
     LogService.info("index", "Running as ", userId);
@@ -149,6 +155,17 @@ let userId;
         await ircBridge.setup();
     }
 })();
+
+async function loadBackend(): Promise<IScheduleBackend> {
+    switch (config.conference.schedule.backend) {
+        case "penta":
+            return await PentaBackend.new(config.conference.schedule);
+        case "json":
+            return await JsonScheduleBackend.new(config.conference.schedule);
+        default:
+            throw new Error(`Unknown scheduling backend '${config.conference.schedule.backend}'!`)
+    }
+}
 
 function registerCommands() {
     const commands: ICommand[] = [

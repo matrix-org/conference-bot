@@ -16,35 +16,12 @@ limitations under the License.
 
 import { ICommand } from "./ICommand";
 import { LogLevel, MatrixClient, MentionPill, RichReply } from "matrix-bot-sdk";
-import * as fetch from "node-fetch";
-import { PentabarfParser } from "../backends/PentabarfParser";
 import { Auditorium } from "../models/Auditorium";
-import { IAuditorium, IConference, IInterestRoom, ITalk } from "../models/schedule";
+import { ITalk } from "../models/schedule";
 import config from "../config";
 import { Conference } from "../Conference";
 import { logMessage } from "../LogProxy";
 import { editNotice } from "../utils";
-import { JsonScheduleLoader } from "../backends/JsonScheduleLoader";
-import { readFile } from "fs";
-
-/**
- * Reads a JSON file from disk.
- */
-function readJsonFileAsync(path: string): Promise<object> {
-    return new Promise((resolve, reject) => {
-        readFile(path, {}, (err, buf: string) => {
-            if (err) {
-                reject(err);
-            } else {
-                try {
-                    resolve(JSON.parse(buf));
-                } catch (err) {
-                    reject(err);
-                }
-            }
-        })
-    });
-}
 
 export class BuildCommand implements ICommand {
     public readonly prefixes = ["build", "b"];
@@ -54,30 +31,18 @@ export class BuildCommand implements ICommand {
 
         await client.sendReadReceipt(roomId, event['event_id']);
 
-        let parsed: {conference: IConference, auditoriums: IAuditorium[], interestRooms: IInterestRoom[]};
+        const backend = conference.backend;
 
-        // Load the schedule from a JSON file or a Pentabarf XML file, according to configuration.
-        if (config.conference.jsonDefinition !== undefined) {
-            const jsonDefinitionUrl = config.conference.jsonDefinition;
-            let jsonDesc: object;
-            if (jsonDefinitionUrl.startsWith("http")) {
-                // Fetch the JSON track over the network
-                jsonDesc = await fetch(jsonDefinitionUrl).then(r => r.json());
-            } else {
-                // Load the JSON from disk
-                jsonDesc = await readJsonFileAsync(jsonDefinitionUrl);
-            }
-
-            parsed = new JsonScheduleLoader(jsonDesc);
-        } else if (config.conference.pentabarfDefinition !== undefined) {
-            const xml = await fetch(config.conference.pentabarfDefinition).then(r => r.text());
-            parsed = new PentabarfParser(xml);
-        } else {
-            throw "No conference format in use (neither JSON nor Pentabarf in use!)";
+        try {
+            // Try to refresh the schedule first, to ensure we don't miss any updates.
+            await backend.refresh();
+        } catch (error) {
+            await client.sendNotice(roomId, `Failed to refresh schedule: ${error.toString()}`)
+            return;
         }
 
         if (!conference.isCreated) {
-            await conference.createDb(parsed.conference);
+            await conference.createDb(backend.conference);
         }
 
         const spacePill = await MentionPill.forRoom((await conference.getSpace()).roomId, client);
@@ -112,7 +77,7 @@ export class BuildCommand implements ICommand {
             const audId = args[1];
             const talkId = args[2];
 
-            const pentaAud = parsed.auditoriums.find(a => a.id === audId);
+            const pentaAud = backend.auditoriums.find(a => a.id === audId);
             if (!pentaAud) return await logMessage(LogLevel.ERROR, "BuildCommand", `Cannot find auditorium: ${audId}`);
 
             const allTalks: ITalk[] = [];
@@ -129,7 +94,7 @@ export class BuildCommand implements ICommand {
         } else if (args[0] === "interest") {
             const interestId = args[1];
 
-            const interestRoom = parsed.interestRooms.find(i => i.id === interestId);
+            const interestRoom = backend.interestRooms.find(i => i.id === interestId);
             if (interestRoom) {
                 await conference.createInterestRoom(interestRoom);
                 await client.sendNotice(roomId, "Interest room created");
@@ -147,31 +112,31 @@ export class BuildCommand implements ICommand {
             let auditoriumsCreated = 0;
             const statusEventId = await client.sendNotice(
                 roomId,
-                `0/${parsed.auditoriums.length} auditoriums have been created`,
+                `0/${backend.auditoriums.size} auditoriums have been created`,
             );
             if (args.includes("backstages")) {
                 // Create auditorium backstages
-                for (const auditorium of parsed.auditoriums) {
+                for (const auditorium of backend.auditoriums.values()) {
                     await conference.createAuditoriumBackstage(auditorium);
                     auditoriumsCreated++;
                     editNotice(
                         client,
                         roomId,
                         statusEventId,
-                        `${auditoriumsCreated}/${parsed.auditoriums.length} auditoriums have been created`,
+                        `${auditoriumsCreated}/${backend.auditoriums.size} auditoriums have been created`,
                     );
                 }
             } else {
                 // Create auditoriums
                 const talks: [ITalk, Auditorium][] = [];
-                for (const auditorium of parsed.auditoriums) {
+                for (const auditorium of backend.auditoriums.values()) {
                     const confAud = await conference.createAuditorium(auditorium);
                     auditoriumsCreated++;
                     editNotice(
                         client,
                         roomId,
                         statusEventId,
-                        `${auditoriumsCreated}/${parsed.auditoriums.length} auditoriums have been created`,
+                        `${auditoriumsCreated}/${backend.auditoriums.size} auditoriums have been created`,
                     );
 
                     Object.values(auditorium.talksByDate)
@@ -203,15 +168,15 @@ export class BuildCommand implements ICommand {
         if (!args.includes("nosi")) {
             // Create special interest rooms
             let specialInterestRoomsCreated = 0;
-            const statusEventId = await client.sendNotice(roomId, `0/${parsed.interestRooms.length} interest rooms have been created`);
-            for (const siRoom of parsed.interestRooms) {
+            const statusEventId = await client.sendNotice(roomId, `0/${backend.interestRooms.size} interest rooms have been created`);
+            for (const siRoom of backend.interestRooms.values()) {
                 await conference.createInterestRoom(siRoom);
                 specialInterestRoomsCreated++;
                 await editNotice(
                     client,
                     roomId,
                     statusEventId,
-                    `${specialInterestRoomsCreated}/${parsed.interestRooms.length} interest rooms have been created`,
+                    `${specialInterestRoomsCreated}/${backend.interestRooms.size} interest rooms have been created`,
                 );
             }
         } else {
