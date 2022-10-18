@@ -36,10 +36,6 @@ export class Talk extends MatrixRoom {
         return (await this.getDefinition()).id;
     }
 
-    public async getConferenceId(): Promise<string> {
-        return (await this.getDefinition()).conferenceId;
-    }
-
     public async getAuditoriumId(): Promise<string> {
         return (await this.getDefinition()).auditoriumId;
     }

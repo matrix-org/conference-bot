@@ -40,10 +40,6 @@ export class Auditorium extends MatrixRoom implements PhysicalRoom {
     public async getId(): Promise<string> {
         return (await this.getDefinition()).id;
     }
-
-    public async getConferenceId(): Promise<string> {
-        return (await this.getDefinition()).conferenceId;
-    }
 }
 
 // It's the same but different

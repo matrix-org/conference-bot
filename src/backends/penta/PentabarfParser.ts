@@ -161,7 +161,6 @@ export class PentabarfParser {
                     name: metadata.name,
                     kind: metadata.kind,
                     talks: new Map(),
-                    conferenceId: "",
                 };
                 const existingAuditorium = this.auditoriums.find(r => r.id === auditorium.id);
                 if (existingAuditorium) {
@@ -188,7 +187,6 @@ export class PentabarfParser {
                         track: pEvent.track,
                         speakers: [],
                         prerecorded: true,
-                        conferenceId: "",
                         auditoriumId: auditorium.id,
                         livestream_endTime: 0,
                         qa_startTime: 0,
