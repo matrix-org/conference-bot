@@ -86,13 +86,23 @@ export function makeChildRoom(roomId: string): IStateEvent<IChildRoom> {
     };
 }
 
-export const RS_STORED_SPACE = "org.matrix.confbot.space";
-export interface IStoredSpace {
+/**
+ * Associated space: a canonical definition of which space is 'associated' with this room.
+ *
+ * List of valid use cases:
+ * - In an auditorium room, points to the auditorium's space.
+ * - TODO more?
+ *
+ * Begrudgingly m.space.parent isn't very useful in these scenarios because the state key is the parent of the room
+ * and they're not easily canonical. (This can probably be worked around, but I can only rework so much at once!)
+ */
+export const RS_ASSOCIATED_SPACE = "org.matrix.confbot.space";
+export interface IAssociatedSpace {
     roomId: string;
 }
-export function makeStoredSpace(roomId: string): IStateEvent<IStoredSpace> {
+export function makeAssociatedSpace(roomId: string): IStateEvent<IAssociatedSpace> {
     return {
-        type: RS_STORED_SPACE,
+        type: RS_ASSOCIATED_SPACE,
         state_key: "",
         content: {roomId: roomId},
     };

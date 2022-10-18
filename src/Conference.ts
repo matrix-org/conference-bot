@@ -31,6 +31,7 @@ import {
 import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from "./models/schedule";
 import {
     IStoredSubspace,
+    makeAssociatedSpace,
     makeAuditoriumBackstageLocator,
     makeAuditoriumLocator,
     makeDbLocator,
@@ -38,7 +39,6 @@ import {
     makeParentRoom,
     makeRootSpaceLocator,
     makeStoredPersonOverride,
-    makeStoredSpace,
     makeTalkLocator,
     RS_3PID_PERSON_ID,
     RS_STORED_PERSON,
@@ -312,7 +312,6 @@ export class Conference {
                 name: `[DB] Conference ${conference.title}`,
                 initial_state: [
                     makeDbLocator(this.id),
-                    makeStoredSpace(space.roomId),
                 ],
             }));
 
@@ -492,7 +491,7 @@ export class Conference {
             initial_state: [
                 makeAuditoriumLocator(this.id, auditorium.id),
                 makeParentRoom(this.dbRoom.roomId),
-                makeStoredSpace(audSpace.roomId),
+                makeAssociatedSpace(audSpace.roomId),
             ],
             name: auditorium.name,
         }));
@@ -567,7 +566,7 @@ export class Conference {
         // Ensure that the room appears within the correct space.
         await auditorium.addDirectChild(roomId);
         const startTime = new Date(talk.startTime).toISOString();
-        await (await auditorium.getSpace()).addChildRoom(roomId, { order: `3-talk-${startTime}` });
+        await (await auditorium.getAssociatedSpace()).addChildRoom(roomId, { order: `3-talk-${startTime}` });
 
         return this.talks[talk.id];
     }
