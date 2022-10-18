@@ -23,14 +23,12 @@ export class PentaBackend implements IScheduleBackend {
             }
             auditoriums.set(auditorium.id, auditorium);
 
-            for (let talksOnDate of Object.values(auditorium.talksByDate)) {
-                for (let talk of talksOnDate) {
-                    if (talks.has(talk.id)) {
-                        const conflictingTalk = talks.get(talk.id);
-                        throw `Talk ID ${talk.id} is not unique — occupied by both «${talk.title}» and «${conflictingTalk.title}»!`;
-                    }
-                    talks.set(talk.id, talk);
+            for (let talk of auditorium.talks.values()) {
+                if (talks.has(talk.id)) {
+                    const conflictingTalk = talks.get(talk.id);
+                    throw `Talk ID ${talk.id} is not unique — occupied by both «${talk.title}» and «${conflictingTalk.title}»!`;
                 }
+                talks.set(talk.id, talk);
             }
         }
 

@@ -30,14 +30,12 @@ export class JsonScheduleLoader {
             }
             this.auditoriums.set(auditorium.id, auditorium);
 
-            for (let talksOnDate of Object.values(auditorium.talksByDate)) {
-                for (let talk of talksOnDate) {
-                    if (this.talks.has(talk.id)) {
-                        const conflictingTalk = this.talks.get(talk.id);
-                        throw `Talk ID ${talk.id} is not unique — occupied by both «${talk.title}» and «${conflictingTalk.title}»!`;
-                    }
-                    this.talks.set(talk.id, talk);
+            for (let talk of auditorium.talks.values()) {
+                if (this.talks.has(talk.id)) {
+                    const conflictingTalk = this.talks.get(talk.id);
+                    throw `Talk ID ${talk.id} is not unique — occupied by both «${talk.title}» and «${conflictingTalk.title}»!`;
                 }
+                this.talks.set(talk.id, talk);
             }
         }
 
@@ -87,25 +85,17 @@ export class JsonScheduleLoader {
     }
 
     private convertAuditorium(stream: JSONStream, conferenceId: string): IAuditorium {
-        const talksByDate: Record<number, ITalk[]> = Object.create(null);
-
         const auditoriumId = this.slugify(stream.stream_name);
 
-        const allTalksSortedByStart: ITalk[] = stream.talks.map(talk => this.convertTalk(talk, conferenceId, auditoriumId))
-            .sort((a, b) => a.startTime - b.startTime);
+        const talks: Map<TalkId, ITalk> = new Map();
 
-        if (allTalksSortedByStart.length > 0) {
-            const firstDate = allTalksSortedByStart[0].dateTs;
-            const MS_IN_DAY = 86400_000;
-
-            for (const talk of allTalksSortedByStart) {
-                const dayNumber = 1 + Math.floor((talk.dateTs - firstDate) / MS_IN_DAY);
-
-                if (! (dayNumber in talksByDate)) {
-                    talksByDate[dayNumber] = [];
-                }
-                talksByDate[dayNumber].push(talk);
+        for (let unconvTalk of stream.talks) {
+            const talk = this.convertTalk(unconvTalk, conferenceId, auditoriumId);
+            if (talks.has(talk.id)) {
+                const conflictingTalk = talks.get(talk.id);
+                throw `Talk ID ${talk.id} is not unique — occupied by both «${talk.title}» and «${conflictingTalk.title}»!`;
             }
+            talks.set(talk.id, talk);
         }
 
         return {
@@ -113,7 +103,7 @@ export class JsonScheduleLoader {
             slug: this.slugify(stream.stream_name),
             name: stream.stream_name,
             kind: RoomKind.Auditorium,
-            talksByDate
+            talks
         };
     }
 

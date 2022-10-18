@@ -77,12 +77,10 @@ export class BuildCommand implements ICommand {
             const audId = args[1];
             const talkId = args[2];
 
-            const pentaAud = backend.auditoriums.find(a => a.id === audId);
+            const pentaAud = backend.auditoriums.get(audId);
             if (!pentaAud) return await logMessage(LogLevel.ERROR, "BuildCommand", `Cannot find auditorium: ${audId}`);
 
-            const allTalks: ITalk[] = [];
-            Object.values(pentaAud.talksByDate).forEach(ea => allTalks.push(...ea));
-            const pentaTalk =  allTalks.find(t => t.id === talkId);
+            const pentaTalk = pentaAud.talks.get(talkId);
             if (!pentaTalk) return await logMessage(LogLevel.ERROR, "BuildCommand", `Cannot find talk in room: ${audId} ${talkId}`);
 
             await conference.createAuditoriumBackstage(pentaAud);
@@ -94,7 +92,7 @@ export class BuildCommand implements ICommand {
         } else if (args[0] === "interest") {
             const interestId = args[1];
 
-            const interestRoom = backend.interestRooms.find(i => i.id === interestId);
+            const interestRoom = backend.interestRooms.get(interestId);
             if (interestRoom) {
                 await conference.createInterestRoom(interestRoom);
                 await client.sendNotice(roomId, "Interest room created");
@@ -139,9 +137,9 @@ export class BuildCommand implements ICommand {
                         `${auditoriumsCreated}/${backend.auditoriums.size} auditoriums have been created`,
                     );
 
-                    Object.values(auditorium.talksByDate)
-                        .map(dayTalks => dayTalks.map(talk => [talk, confAud] as [ITalk, Auditorium]))
-                        .forEach(dayTalks => talks.push(...dayTalks));
+                    for (let talk of auditorium.talks.values()) {
+                        talks.push([talk, confAud]);
+                    }
                 }
 
                 if (!args.includes("notalks")) {

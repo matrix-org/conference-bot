@@ -160,7 +160,7 @@ export class PentabarfParser {
                     slug: metadata.name,
                     name: metadata.name,
                     kind: metadata.kind,
-                    talksByDate: {},
+                    talks: new Map(),
                 };
                 const existingAuditorium = this.auditoriums.find(r => r.id === auditorium.id);
                 if (existingAuditorium) {
@@ -199,8 +199,7 @@ export class PentabarfParser {
                         this.talks.push(talk);
                     }
 
-                    if (!auditorium.talksByDate[dateTs]) auditorium.talksByDate[dateTs] = [];
-                    if (!auditorium.talksByDate[dateTs].includes(talk)) auditorium.talksByDate[dateTs].push(talk);
+                    if (!auditorium.talks.has(talk.id)) auditorium.talks.set(talk.id, talk);
 
                     for (const pPerson of arrayLike(pEvent.persons?.person)) {
                         if (!pPerson) continue;
