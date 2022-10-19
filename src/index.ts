@@ -141,6 +141,13 @@ let userId;
         );
     }
 
+    if (backend.wasLoadedFromCache()) {
+        await client.sendHtmlText(config.managementRoom, "" +
+            "<h4>⚠ Cached schedule in use ⚠</h4>" +
+            "<p>@room ⚠ The bot failed to load the schedule properly and a cached copy is being used.</p>"
+        );
+    }
+
     // Load the previous room scoreboards. This has to happen before we start syncing, otherwise
     // new scoreboard changes will get lost. The `MatrixClient` resumes syncing from where it left
     // off, so events will only be missed if the bot dies while processing them.
