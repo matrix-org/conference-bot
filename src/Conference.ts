@@ -59,8 +59,8 @@ import { IScheduleBackend } from "./backends/IScheduleBackend";
 import { PentaBackend } from "./backends/penta/PentaBackend";
 
 export class Conference {
-    private rootSpace: Space;
-    private dbRoom: MatrixRoom;
+    private rootSpace: Space | null;
+    private dbRoom: MatrixRoom | null;
     // TODO This shouldn't be here.
     private pentaDb: PentaDb | null = null;
     private subspaces: {
@@ -142,6 +142,14 @@ export class Conference {
 
     public get isCreated(): boolean {
         return !!this.dbRoom && !!this.rootSpace;
+    }
+
+    public get hasDbRoom(): boolean {
+        return !!this.dbRoom;
+    }
+
+    public get hasRootSpace(): boolean {
+        return !!this.rootSpace;
     }
 
     public get storedTalks(): Talk[] {
@@ -327,7 +335,7 @@ export class Conference {
         return this.pentaDb;
     }
 
-    public async getSpace(): Promise<Space> {
+    public async getSpace(): Promise<Space | null> {
         return this.rootSpace;
     }
 

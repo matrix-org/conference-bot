@@ -59,6 +59,7 @@ import { IScheduleBackend } from "./backends/IScheduleBackend";
 import { PentaBackend } from "./backends/penta/PentaBackend";
 import { JsonScheduleBackend } from "./backends/json/JsonScheduleBackend";
 import { JoinCommand } from "./commands/JoinRoomCommand";
+import { StatusCommand } from "./commands/StatusCommand";
 
 config.RUNTIME = {
     client: null,
@@ -192,6 +193,7 @@ function registerCommands(conference: Conference, ircBridge: IRCBridge | null) {
         new AttendanceCommand(),
         new ScheduleCommand(),
         new FDMCommand(),
+        new StatusCommand(),
     ];
     if (ircBridge !== null) {
         commands.push(new IrcPlumbCommand(ircBridge));
