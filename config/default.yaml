@@ -261,20 +261,21 @@ conference:
     #  # The prefixes of rooms which belong in the subspace
     #  prefixes: ["S."]
 
-# Options related to the IRC bridge.
-ircBridge:
+# Options related to the IRC bridge. Set to null if you don't use an IRC bridge.
+ircBridge: null
+#ircBridge:
   # The nick to use when taking ownership of channels
-  botNick: 'confbot'
-  botPassword: 'a_secret_password'
+  #botNick: 'confbot'
+  #botPassword: 'a_secret_password'
 
   # The server name of the IRCd
-  serverName: 'localhost'
+  #serverName: 'localhost'
 
   # The port of the IRCd
-  port: 6667
+  #port: 6667
 
   # The userId of the irc bridge
-  botUserId: '@appservice-irc:example.com'
+  #botUserId: '@appservice-irc:example.com'
 
   # The allowed channel prefix of the bot
-  channelPrefix: '#conference-'
+  #channelPrefix: '#conference-'

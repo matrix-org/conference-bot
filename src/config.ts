@@ -97,7 +97,7 @@ interface IConfig {
             schedulePostBufferSeconds: number;
         };
     };
-    ircBridge: IRCBridgeOpts;
+    ircBridge: IRCBridgeOpts | null;
 
     RUNTIME: {
         client: MatrixClient;

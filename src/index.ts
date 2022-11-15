@@ -87,7 +87,10 @@ const scoreboard = new Scoreboard(conference, client);
 const scheduler = new Scheduler(client, conference, scoreboard);
 config.RUNTIME.scheduler = scheduler;
 
-const ircBridge = new IRCBridge(config.ircBridge, client);
+let ircBridge: IRCBridge | null = null;
+if (config.ircBridge != null) {
+    ircBridge = new IRCBridge(config.ircBridge, client);
+}
 config.RUNTIME.ircBridge = ircBridge;
 
 const checkins = new CheckInMap(client, conference);
@@ -140,7 +143,11 @@ let userId;
     await client.start();
 
     // Needs to happen after the sync loop has started
-    await ircBridge.setup();
+    if (ircBridge !== null) {
+        // Note that the IRC bridge will cause a crash if wrongly configured, so be cautious that it's not
+        // wrongly enabled in conferences without one.
+        await ircBridge.setup();
+    }
 })();
 
 function registerCommands() {
