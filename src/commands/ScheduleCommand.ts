@@ -36,7 +36,6 @@ export class ScheduleCommand implements ICommand {
                 if (!talkRoom) continue;
                 const taskStart = moment(getStartTime(task));
                 const formattedTimestamp = taskStart.format("YYYY-MM-DD HH:mm:ss [UTC]ZZ");
-                html += `<li>${formattedTimestamp}: <b>${task.type} on ${await talkRoom.getName()}</b> (<code>${task.id}</code>) ${taskStart.fromNow()}</li>`;
 
                 if (html.length > 20000) {
                     // chunk up the message so we don't fail to send one very large event.
@@ -44,6 +43,8 @@ export class ScheduleCommand implements ICommand {
                     await client.sendHtmlNotice(roomId, html);
                     html = "…<ul>";
                 }
+
+                html += `<li>${formattedTimestamp}: <b>${task.type} on ${await talkRoom.getName()}</b> (<code>${task.id}</code>) ${taskStart.fromNow()}</li>`;
             }
             html += "</ul>";
             await client.sendHtmlNotice(roomId, html);
