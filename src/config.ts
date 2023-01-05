@@ -61,20 +61,7 @@ interface IConfig {
             coordinators: string;
             specialInterest: string;
         };
-        prefixes: {
-            auditoriumRooms: string[];
-            interestRooms: string[];
-            aliases: string;
-            suffixes: {
-                [prefix: string]: string;
-            };
-            displayNameSuffixes: {
-                [prefix: string]: string;
-            };
-            nameOverrides: {
-                [auditoriumId: string]: string;
-            };
-        };
+        prefixes: IPrefixConfig;
         existingInterestRooms: {
             [id: string]: string;
         };
@@ -94,6 +81,21 @@ interface IConfig {
         scheduler: Scheduler;
         ircBridge: IRCBridge | null;
         checkins: CheckInMap;
+    };
+}
+
+export interface IPrefixConfig {
+    auditoriumRooms: string[];
+    interestRooms: string[];
+    aliases: string;
+    suffixes: {
+        [prefix: string]: string;
+    };
+    displayNameSuffixes: {
+        [prefix: string]: string;
+    };
+    nameOverrides: {
+        [auditoriumId: string]: string;
     };
 }
 

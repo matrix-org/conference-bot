@@ -18,7 +18,7 @@ import * as parser from 'fast-xml-parser';
 import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from "../../models/schedule";
 import * as moment from "moment";
 import { RoomKind } from "../../models/room_kinds";
-import config from "../../config";
+import { IPrefixConfig } from "../../config";
 
 function arrayLike<T>(val: T | T[]): T[] {
     if (Array.isArray(val)) return val;
@@ -30,15 +30,15 @@ function simpleTimeParse(str: string): { hours: number, minutes: number } {
     return {hours: Number(parts[0]), minutes: Number(parts[1])};
 }
 
-export function deprefix(id: string): {kind: RoomKind, name: string} {
-    const override = config.conference.prefixes.nameOverrides[id];
+export function deprefix(id: string, prefixConfig: IPrefixConfig): {kind: RoomKind, name: string} {
+    const override = prefixConfig.nameOverrides[id];
 
-    const auditoriumPrefix = config.conference.prefixes.auditoriumRooms.find(p => id.startsWith(p));
+    const auditoriumPrefix = prefixConfig.auditoriumRooms.find(p => id.startsWith(p));
     if (auditoriumPrefix) {
         return {kind: RoomKind.Auditorium, name: override || id.substring(auditoriumPrefix.length)};
     }
 
-    const interestPrefix = config.conference.prefixes.interestRooms.find(p => id.startsWith(p));
+    const interestPrefix = prefixConfig.interestRooms.find(p => id.startsWith(p));
     if (interestPrefix) {
         return {kind: RoomKind.SpecialInterest, name: override || id.substring(interestPrefix.length)};
     }
@@ -117,7 +117,7 @@ export class PentabarfParser {
     public readonly speakers: IPerson[];
     public readonly interestRooms: IInterestRoom[];
 
-    constructor(rawXml: string) {
+    constructor(rawXml: string, prefixConfig: IPrefixConfig) {
         this.parsed = parser.parse(rawXml, {
             attrNodeName: "attr",
             textNodeName: "#text",
@@ -141,7 +141,7 @@ export class PentabarfParser {
             for (const pRoom of arrayLike(day.room)) {
                 if (!pRoom) continue;
 
-                const metadata = deprefix(pRoom.attr?.["@_name"] || "org.matrix.confbot.unknown");
+                const metadata = deprefix(pRoom.attr?.["@_name"] || "org.matrix.confbot.unknown", prefixConfig);
                 if (metadata.kind === RoomKind.SpecialInterest) {
                     let spiRoom: IInterestRoom = {
                         id: pRoom.attr?.["@_name"],
