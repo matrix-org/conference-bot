@@ -35,8 +35,10 @@ test('parsing pentabarf XML: overview', () => {
 
     expect(p.interestRooms).toMatchSnapshot("interestRooms");
 
+    // NOTE Speakers don't have contact information: that's filled in by the PentaDb in the PentaBackend afterwards.
     expect(p.speakers).toMatchSnapshot("speakers");
 
-    // TODO qa_startTime and livestream_endTime of 0 seem suspicious.
+    // NOTE I don't like that qa_startTime and livestream_endTime are 0 — they are updated in the PentaBackend
+    //      using the PentaDb afterwards.
     expect(p.talks).toMatchSnapshot("talks");
 });
