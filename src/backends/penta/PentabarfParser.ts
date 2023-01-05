@@ -169,6 +169,8 @@ export class PentabarfParser {
                     this.auditoriums.push(auditorium);
                 }
 
+                const qaEnabled = prefixConfig.qaAuditoriumRooms.find(p => auditorium.name.startsWith(p)) !== undefined;
+
                 for (const pEvent of arrayLike(pRoom.event)) {
                     if (!pEvent) continue;
 
@@ -189,7 +191,8 @@ export class PentabarfParser {
                         prerecorded: true,
                         auditoriumId: auditorium.id,
                         livestream_endTime: 0,
-                        qa_startTime: 0,
+                        // 0 is populated later by consulting the PentaDb.
+                        qa_startTime: qaEnabled ? 0 : null,
                     };
                     const existingTalk = this.talks.find(e => e.id === talk.id);
                     if (existingTalk) {
