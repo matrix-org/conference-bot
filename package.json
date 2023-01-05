@@ -15,7 +15,8 @@
     "build:jsonschema": "json2ts -i src/backends/json/jsonschemas/ -o src/backends/json/jsontypes/",
     "build:ts": "tsc",
     "build:web": "webpack",
-    "run:merge-roles": "yarn build && node lib/scripts/merge-roles.js"
+    "run:merge-roles": "yarn build && node lib/scripts/merge-roles.js",
+    "test": "jest"
   },
   "dependencies": {
     "await-lock": "^2.1.0",
