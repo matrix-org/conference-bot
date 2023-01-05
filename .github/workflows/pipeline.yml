@@ -1,0 +1,14 @@
+name: Linting and Tests
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  run-unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: mskelton/setup-yarn@c34a9f0a8ec681943a2348edab381a9cc02fa3f4 # "v1.3.0"
+      - run: yarn test
