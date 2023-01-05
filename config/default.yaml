@@ -236,6 +236,10 @@ conference:
     # trimmed when naming the room (unless an override is present).
     auditoriumRooms: ["D."]
 
+    # Prefixes for the auditorium rooms that have Q&A sessions.
+    # Rooms outside of these prefixes will not have Q&A sessions.
+    qaAuditoriumRooms: ["D."]
+
     # The prefixes for the rooms listed in the pentabarf definition which
     # describe the rooms that are 'special interest' rooms. The prefixes will
     # be trimmed when naming the room (unless an override is present).

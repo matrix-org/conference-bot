@@ -11,6 +11,10 @@ const prefixConfig: IPrefixConfig = {
 
     auditoriumRooms: [
         "A.",
+        "AQ.",
+    ],
+    qaAuditoriumRooms: [
+        "AQ.",
     ],
     interestRooms: [
         "X."
