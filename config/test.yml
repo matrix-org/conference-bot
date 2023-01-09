@@ -1,2 +1,5 @@
-# We don't set any config for tests currently, but node-config complains if we don't have this file.
+# node-config complains if we don't have this file.
+# but we also need to stub a bit of config that is unfortunately used globally and in a static context
 
+conference:
+  schedule: {}
