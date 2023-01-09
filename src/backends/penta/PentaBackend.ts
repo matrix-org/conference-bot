@@ -11,6 +11,14 @@ export class PentaBackend implements IScheduleBackend {
         this.updateFromParser(parser);
     }
 
+    /**
+     * We need an async version of the constructor.
+     * Must be called right after construction.
+     */
+    async init() {
+        await this.hydrateFromDatabase();
+    }
+
     private updateFromParser(parser: PentabarfParser): void {
         const conference = parser.conference;
         const talks = new Map();
@@ -45,6 +53,25 @@ export class PentaBackend implements IScheduleBackend {
         this.interestRooms = interestRooms;
     }
 
+    private async hydrateFromDatabase(): Promise<void> {
+        for (let talk of this.talks.values()) {
+            this.hydrateTalk(talk);
+        }
+
+        // TODO do we need to hydrate any other objects?
+    }
+
+    private async hydrateTalk(talk: ITalk): Promise<void> {
+        const dbTalk = await this.db.getTalk(talk.id);
+        if (dbTalk === null) return;
+
+        if (talk.qa_startTime !== null) {
+            // hydrate Q&A time if enabled
+            talk.qa_startTime = dbTalk.qa_start_datetime;
+        }
+        talk.livestream_endTime = dbTalk.livestream_end_datetime;
+    }
+
     wasLoadedFromCache(): boolean {
         // Penta backend doesn't support using a cache.
         return false;
@@ -55,7 +82,9 @@ export class PentaBackend implements IScheduleBackend {
         const parsed = new PentabarfParser(xml, config.conference.prefixes);
         const db = new PentaDb(cfg.database);
         await db.connect();
-        return new PentaBackend(cfg, parsed, db);
+        const backend = new PentaBackend(cfg, parsed, db);
+        await backend.init();
+        return backend;
     }
 
     refresh(): Promise<void> {
