@@ -169,7 +169,7 @@ export class PentabarfParser {
                     this.auditoriums.push(auditorium);
                 }
 
-                const qaEnabled = prefixConfig.qaAuditoriumRooms.find(p => auditorium.name.startsWith(p)) !== undefined;
+                const qaEnabled = prefixConfig.qaAuditoriumRooms.find(p => auditorium.id.startsWith(p)) !== undefined;
 
                 for (const pEvent of arrayLike(pRoom.event)) {
                     if (!pEvent) continue;
