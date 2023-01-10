@@ -392,12 +392,17 @@ export class Conference {
                 isPublic: true,
                 localpart: "space-" + config.conference.prefixes.aliases + aliasLocalpart,
                 name: name,
+                invites: [config.moderatorUserId],
             });
             this.subspaces[subspaceId] = subspace;
 
             await this.client.sendStateEvent(this.dbRoom.roomId, RS_STORED_SUBSPACE, subspaceId, {
                 roomId: subspace.roomId,
             } as IStoredSubspace);
+
+            // Grants PL100 to the moderator in the subspace.
+            // We can't do this directly with `createSpace` unfortunately, as we could for plain rooms.
+            await this.client.setUserPowerLevel(config.moderatorUserId, subspace.roomId, 100);
         } else {
             subspace = this.subspaces[subspaceId];
         }
