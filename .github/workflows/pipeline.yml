@@ -12,3 +12,12 @@ jobs:
       - uses: actions/checkout@v2
       - uses: mskelton/setup-yarn@c34a9f0a8ec681943a2348edab381a9cc02fa3f4 # "v1.3.0"
       - run: yarn test
+
+  build:
+    name: Build JSONSchema and TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: mskelton/setup-yarn@c34a9f0a8ec681943a2348edab381a9cc02fa3f4 # "v1.3.0"
+      # TODO build:web fails currently, but it'd be good to make that work when possible and then add it here.
+      - run: yarn build:jsonschema && yarn build:ts
