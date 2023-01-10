@@ -3,6 +3,7 @@ import { test, expect, jest } from "@jest/globals";
 import { PentabarfParser } from "../../../backends/penta/PentabarfParser";
 import { IPentaDbConfig, IPentaScheduleBackendConfig, IPrefixConfig } from "../../../config";
 import { PentaBackend } from "../../../backends/penta/PentaBackend";
+import { Role } from "../../../models/schedule";
 
 const fs = require("fs");
 const path = require("path");
@@ -51,7 +52,16 @@ test("talks should be rehydrated from the database", async () => {
             qa_start_datetime: 305,
             start_datetime: 350,
             conference_room: "abc",
-        })
+        }),
+        findPeopleWithId: jest.fn(PentaDb.prototype.findPeopleWithId).mockResolvedValue([
+            {
+                id: "AAA",
+                matrix_id: "@someone:example.org",
+                email: "someone@example.org",
+                name: "Someone Someoneus",
+                role: Role.Speaker
+            }
+        ]),
     } as any as PentaDb;
 
     const b = new PentaBackend(backendConfig, parser, fakeDb);
@@ -62,4 +72,6 @@ test("talks should be rehydrated from the database", async () => {
 
     expect(talk.qa_startTime).toEqual(305);
     expect(talk.livestream_endTime).toEqual(3560);
+    expect(talk.speakers[0].email).toEqual("someone@example.org");
+    expect(talk.speakers[0].matrix_id).toEqual("@someone:example.org");
 });

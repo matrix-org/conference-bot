@@ -1,5 +1,5 @@
 import config, { IPentaScheduleBackendConfig } from "../../config";
-import { IConference, ITalk, IAuditorium, IInterestRoom } from "../../models/schedule";
+import { IConference, ITalk, IAuditorium, IInterestRoom, IPerson } from "../../models/schedule";
 import { AuditoriumId, InterestId, IScheduleBackend, TalkId } from "../IScheduleBackend";
 import { PentaDb } from "./db/PentaDb";
 import { PentabarfParser } from "./PentabarfParser";
@@ -56,6 +56,10 @@ export class PentaBackend implements IScheduleBackend {
     private async hydrateFromDatabase(): Promise<void> {
         for (let talk of this.talks.values()) {
             this.hydrateTalk(talk);
+
+            for (let person of talk.speakers) {
+                this.hydratePerson(person);
+            }
         }
 
         // TODO do we need to hydrate any other objects?
@@ -70,6 +74,19 @@ export class PentaBackend implements IScheduleBackend {
             talk.qa_startTime = dbTalk.qa_start_datetime;
         }
         talk.livestream_endTime = dbTalk.livestream_end_datetime;
+    }
+
+    private async hydratePerson(person: IPerson): Promise<void> {
+        const dbPeople = await this.db.findPeopleWithId(person.id);
+        if (dbPeople.length == 0) return;
+
+        if (dbPeople.length > 1) {
+            throw new Error(`Person ID '${person.id}' has ${dbPeople.length} different people associated with it!`);
+        }
+
+        const dbPerson = dbPeople[0];
+        person.matrix_id = dbPerson.matrix_id;
+        person.email = dbPerson.email;
     }
 
     wasLoadedFromCache(): boolean {
