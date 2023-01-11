@@ -124,7 +124,14 @@ conference:
   # The URL to the XML which is updated with conference information.
   # This is read and parsed by the bot during the early stages of
   # setting up the conference.
+  # Should be commented out if a JSON schedule is in use.
   pentabarfDefinition: "https://fosdem.org/2021/schedule/xml"
+
+  # Local path or https URL to a JSON conference schedule.
+  # See src/backends/jsonschemas/JsonSchedule.schema.json for the JSON schema
+  # of the JSON schedule format.
+  # Should be commented out if a Pentabarf schedule is in use.
+  #jsonDefinition: "path/to/local/file"
 
   # The timezone that the the bot's database is operating off of.
   timezone: "Europe/Brussels"
@@ -142,83 +149,85 @@ conference:
 
   # Connection information to get data about the conference during the conference.
   # This can be readonly. Currently the bot only supports postgresql.
-  database:
-    host: "localhost"
-    port: 5432
-    username: "db_username"
-    password: "db_password"
-    database: "your_db"
-    sslmode: "require"
+  # Should be specified as null if not using Pentabarf.
+  database: null
+  #database:
+    #host: "localhost"
+    #port: 5432
+    #username: "db_username"
+    #password: "db_password"
+    #database: "your_db"
+    #sslmode: "require"
 
-    # The table/view for the bot to access for information about people involved in the conference.
-    # Must at least have the following columns:
-    #  event_id         - TEXT(like) - The penta ID for the talk (event) associated with
-    #                                  the person, if relevant. Null if a coordinator.
-    #  person_id        - TEXT(like) - The penta ID for the person.
-    #  event_role       - TEXT(like) - One of [speaker, coordinator, host]. See roles later on.
-    #  name             - TEXT(like) - The full name, or otherwise useful name, for the person.
-    #  email            - TEXT(like) - The preferred email address for the person.
-    #  matrix_id        - TEXT(like) - If known, the Matrix User ID for the person, otherwise null.
-    #  conference_room  - TEXT(like) - The relevant room. This should match the event_id or be
-    #                                  the room where coordinators are assigned.
-    #
-    # People may be assigned multiple roles with multiple rows.
-    #
-    # Roles:
-    #  speaker      - A speaker for event_id. This person will get moderator in their talk's
-    #                 room, and invited to the auditorium backstage room. They will be required
-    #                 to check in before their talk starts.
-    #
-    #  host         - Someone who is moderating the talk itself in collaboration with the speakers
-    #                 for the event_id. One host must check in before the talk starts, otherwise
-    #                 the issue will be raised to the management room and coordinators will be
-    #                 asked to take over. Hosts will get moderator in their talk's room, and be
-    #                 invited to the public auditorium room, backstage room, and talk room.
-    #
-    #  coordinator  - These are typically people responsible for scheduling the auditorium's
-    #                 talks. They'll get moderator in the auditorium room, backstage room, and all
-    #                 talk rooms for their auditorium, though will only be invited to the auditorium
-    #                 and backstage room (and the talk rooms on-demand if needed to fill in for a
-    #                 missing host).
-    #
-    # The bot will ignore unknown events, rooms, and roles.
-    #
-    # CAUTION: Although the bot uses parameterized queries, it is unable to use the table name as
-    # a parameter. As such, this particular config value is vulnerable to SQL injection. Seeing as
-    # how you (the bot's admin) are the one entering it: don't do that to yourself.
-    tblPeople: "view_matrix_bot_export_people"
+    ## The table/view for the bot to access for information about people involved in the conference.
+    ## Must at least have the following columns:
+    ##  event_id         - TEXT(like) - The penta ID for the talk (event) associated with
+    ##                                  the person, if relevant. Null if a coordinator.
+    ##  person_id        - TEXT(like) - The penta ID for the person.
+    ##  event_role       - TEXT(like) - One of [speaker, coordinator, host]. See roles later on.
+    ##  name             - TEXT(like) - The full name, or otherwise useful name, for the person.
+    ##  email            - TEXT(like) - The preferred email address for the person.
+    ##  matrix_id        - TEXT(like) - If known, the Matrix User ID for the person, otherwise null.
+    ##  conference_room  - TEXT(like) - The relevant room. This should match the event_id or be
+    ##                                  the room where coordinators are assigned.
+    ##
+    ## People may be assigned multiple roles with multiple rows.
+    ##
+    ## Roles:
+    ##  speaker      - A speaker for event_id. This person will get moderator in their talk's
+    ##                 room, and invited to the auditorium backstage room. They will be required
+    ##                 to check in before their talk starts.
+    ##
+    ##  host         - Someone who is moderating the talk itself in collaboration with the speakers
+    ##                 for the event_id. One host must check in before the talk starts, otherwise
+    ##                 the issue will be raised to the management room and coordinators will be
+    ##                 asked to take over. Hosts will get moderator in their talk's room, and be
+    ##                 invited to the public auditorium room, backstage room, and talk room.
+    ##
+    ##  coordinator  - These are typically people responsible for scheduling the auditorium's
+    ##                 talks. They'll get moderator in the auditorium room, backstage room, and all
+    ##                 talk rooms for their auditorium, though will only be invited to the auditorium
+    ##                 and backstage room (and the talk rooms on-demand if needed to fill in for a
+    ##                 missing host).
+    ##
+    ## The bot will ignore unknown events, rooms, and roles.
+    ##
+    ## CAUTION: Although the bot uses parameterized queries, it is unable to use the table name as
+    ## a parameter. As such, this particular config value is vulnerable to SQL injection. Seeing as
+    ## how you (the bot's admin) are the one entering it: don't do that to yourself.
+    #tblPeople: "view_matrix_bot_export_people"
 
-    # The table/view for the bot to access for information about the conference schedule.
-    # Must at least have the following columns:
-    #  event_id            - TEXT(like) - The penta ID for the talk (event).
-    #  conference_room     - TEXT(like) - The relevant room. This should match the event_id.
-    #  start_datetime      - TIMESTAMP WITHOUT TIME ZONE - The start time of the talk. The timezone
-    #                        is determined by the bot using the timezone elsewhere in this config.
-    #  duration            - INTERVAL   - How long the talk is meant to last (start to end).
-    #  presentation_length - INTERVAL   - The portion of `duration` where the speaker is presenting.
-    #                                     The remainder is assumed to be Q&A.
-    #  prerecorded         - BOOLEAN    - True if the presentation is prerecorded. When false, the
-    #                                     bot will assume that presentation_length is zero and switch
-    #                                     directly into "hallway" mode at start_datetime.
-    #
-    # The bot will ignore unknown talks. Any if the start_datetime is NULL then the bot will ignore
-    # that record. If the INTERVAL fields are NULL, the bot will assume zero.
-    #
-    # Note: the bot is capable of running both tblSchedule and tblPeople off the same table/view.
-    # It will use DISTINCT where it needs to in order to get accurate information.
-    #
-    # CAUTION: Although the bot uses parameterized queries, it is unable to use the table name as
-    # a parameter. As such, this particular config value is vulnerable to SQL injection. Seeing as
-    # how you (the bot's admin) are the one entering it: don't do that to yourself.
-    tblSchedule: "view_matrix_bot_export_schedule"
+    ## The table/view for the bot to access for information about the conference schedule.
+    ## Must at least have the following columns:
+    ##  event_id            - TEXT(like) - The penta ID for the talk (event).
+    ##  conference_room     - TEXT(like) - The relevant room. This should match the event_id.
+    ##  start_datetime      - TIMESTAMP WITHOUT TIME ZONE - The start time of the talk. The timezone
+    ##                        is determined by the bot using the timezone elsewhere in this config.
+    ##  duration            - INTERVAL   - How long the talk is meant to last (start to end).
+    ##  presentation_length - INTERVAL   - The portion of `duration` where the speaker is presenting.
+    ##                                     The remainder is assumed to be Q&A.
+    ##  prerecorded         - BOOLEAN    - True if the presentation is prerecorded. When false, the
+    ##                                     bot will assume that presentation_length is zero and switch
+    ##                                     directly into "hallway" mode at start_datetime.
+    ##
+    ## The bot will ignore unknown talks. Any if the start_datetime is NULL then the bot will ignore
+    ## that record. If the INTERVAL fields are NULL, the bot will assume zero.
+    ##
+    ## Note: the bot is capable of running both tblSchedule and tblPeople off the same table/view.
+    ## It will use DISTINCT where it needs to in order to get accurate information.
+    ##
+    ## CAUTION: Although the bot uses parameterized queries, it is unable to use the table name as
+    ## a parameter. As such, this particular config value is vulnerable to SQL injection. Seeing as
+    ## how you (the bot's admin) are the one entering it: don't do that to yourself.
+    #tblSchedule: "view_matrix_bot_export_schedule"
 
-    # The duration in seconds added to the `presentation_length` to account for preroll material
-    # such as sponsor segments. If this is built into the table already then set this to zero.
-    schedulePreBufferSeconds: 30
+    ## The duration in seconds added to the `presentation_length` to account for preroll material
+    ## such as sponsor segments. If this is built into the table already then set this to zero.
+    #schedulePreBufferSeconds: 30
 
-    # The duration in seconds added to the talk `duration` to account for postroll material
-    # such as sponsor segments. If this is built into the table already then set this to zero.
-    schedulePostBufferSeconds: 30
+    ## The duration in seconds added to the talk `duration` to account for postroll material
+    ## such as sponsor segments. If this is built into the table already then set this to zero.
+    #schedulePostBufferSeconds: 30
 
   # Various prefixes used by the bot when parsing information.
   prefixes:

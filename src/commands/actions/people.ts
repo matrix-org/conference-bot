@@ -75,7 +75,10 @@ export async function doAuditoriumResolveAction(
                 p => allPossiblePeople.find(b => p.id === b.person.id)
             );
             if (resolvedTalkPeople.some(p => !p)) {
-                throw new Error("Failed to resolve all targets for talk");
+                const unresolveable = talkPeople.filter(
+                    p => allPossiblePeople.find(b => p.id === b.person.id) === undefined
+                )
+                throw new Error("Failed to resolve all targets for talk: " + JSON.stringify(unresolveable));
             }
 
             await action(client, talk.roomId, resolvedTalkPeople);
