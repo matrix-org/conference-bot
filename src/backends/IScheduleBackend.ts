@@ -20,6 +20,14 @@ export interface IScheduleBackend {
     refresh(): Promise<void>;
 
     /**
+     * Returns true iff the current schedule was loaded from cache, rather than from the intended source.
+     * This happens if there was a problem loading the schedule from the intended source for some reason.
+     * The intention of exposing this information is that it allows us to send a notice into the
+     * management room, so that the admin knows what's going on.
+     */
+    wasLoadedFromCache(): boolean;
+
+    /**
      * Raw view of the conference.
      * Prefer to use the `talks`, `auditoriums` and `interestRooms` properties instead of the conference.
      */

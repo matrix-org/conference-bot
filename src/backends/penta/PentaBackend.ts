@@ -45,6 +45,11 @@ export class PentaBackend implements IScheduleBackend {
         this.interestRooms = interestRooms;
     }
 
+    wasLoadedFromCache(): boolean {
+        // Penta backend doesn't support using a cache.
+        return false;
+    }
+
     static async new(cfg: IPentaScheduleBackendConfig): Promise<PentaBackend> {
         const xml = await fetch(cfg.scheduleDefinition).then(r => r.text());
         const parsed = new PentabarfParser(xml);
