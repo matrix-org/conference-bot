@@ -52,7 +52,8 @@ interface IConfig {
     conference: {
         id: string;
         name: string;
-        pentabarfDefinition: string;
+        pentabarfDefinition: string | undefined;
+        jsonDefinition: string | undefined,
         timezone: string;
         lookaheadMinutes: number;
         supportRooms: {
