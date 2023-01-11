@@ -187,7 +187,6 @@ export class PentabarfParser {
                         track: pEvent.track,
                         speakers: [],
                         prerecorded: true,
-                        conferenceId: "",
                         auditoriumId: auditorium.id,
                         livestream_endTime: 0,
                         qa_startTime: 0,

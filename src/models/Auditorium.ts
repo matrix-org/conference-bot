@@ -15,28 +15,18 @@ limitations under the License.
 */
 
 import { MatrixClient } from "matrix-bot-sdk";
-import { IStoredAuditorium, RS_STORED_AUDITORIUM } from "./room_state";
 import { Conference } from "../Conference";
 import { MatrixRoom } from "./MatrixRoom";
-import { RSC_AUDITORIUM_ID } from "./room_kinds";
 import { PhysicalRoom } from "./PhysicalRoom";
+import { IAuditorium } from "./schedule";
 
 export class Auditorium extends MatrixRoom implements PhysicalRoom {
-    private storedAud: IStoredAuditorium;
-
-    constructor(roomId: string, client: MatrixClient, conference: Conference) {
+    constructor(roomId: string, private readonly definition: IAuditorium, client: MatrixClient, conference: Conference) {
         super(roomId, client, conference);
     }
 
-    public async getDefinition(): Promise<IStoredAuditorium> {
-        if (this.storedAud) {
-            return this.storedAud;
-        }
-
-        const createEvent = await this.client.getRoomStateEvent(this.roomId, "m.room.create", "");
-        const audId = createEvent[RSC_AUDITORIUM_ID];
-        this.storedAud = await this.client.getRoomStateEvent(this.roomId, RS_STORED_AUDITORIUM, audId);
-        return this.storedAud;
+    public async getDefinition(): Promise<IAuditorium> {
+        return this.definition;
     }
 
     public async getName(): Promise<string> {
@@ -50,15 +40,11 @@ export class Auditorium extends MatrixRoom implements PhysicalRoom {
     public async getId(): Promise<string> {
         return (await this.getDefinition()).id;
     }
-
-    public async getConferenceId(): Promise<string> {
-        return (await this.getDefinition()).conferenceId;
-    }
 }
 
 // It's the same but different
 export class AuditoriumBackstage extends Auditorium {
-    constructor(roomId: string, client: MatrixClient, conference: Conference) {
-        super(roomId, client, conference);
+    constructor(roomId: string, definition: IAuditorium, client: MatrixClient, conference: Conference) {
+        super(roomId, definition, client, conference);
     }
 }

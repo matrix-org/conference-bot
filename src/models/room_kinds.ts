@@ -14,14 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import {
-    RS_CHILD_ROOM,
-    RS_PARENT_ROOM,
-    RS_STORED_CONFERENCE,
-    RS_STORED_PERSON,
-    RS_STORED_AUDITORIUM,
-    RS_STORED_TALK
-} from "./room_state";
 import config from "../config";
 
 export const KickPowerLevel = 50;
@@ -44,14 +36,8 @@ export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = {
         "m.room.name": 100,
         "m.room.power_levels": 100,
         "m.room.topic": 100,
-        [RS_STORED_CONFERENCE]: 100,
-        [RS_STORED_PERSON]: 100,
-        [RS_STORED_AUDITORIUM]: 100,
-        [RS_STORED_TALK]: 100,
-        [RS_PARENT_ROOM]: 100,
-        [RS_CHILD_ROOM]: 100,
-        "org.matrix.msc1772.room.parent": 100,
-        "org.matrix.msc1772.space.child": 100,
+        "m.space.parent": 100,
+        "m.space.child": 100,
     },
     users: {
         [config.moderatorUserId]: 100,
@@ -64,25 +50,33 @@ export const PRIVATE_ROOM_POWER_LEVELS_TEMPLATE = {
     invite: 0,
 };
 
-export const RSC_ROOM_KIND_FLAG = "org.matrix.confbot.kind";
+/**
+ * Key in a RS_LOCATOR event that identifies what kind of room it is.
+ * Not namespaced because the event type is already privately namespaced for the bot.
+ */
+export const RSC_ROOM_KIND_FLAG = "kind";
 export enum RoomKind {
-    Conference = "conference",
+    /**
+     * The value is a misnomer: 'conference' is the kind of the conference's *database* room.
+     * This is *not* the public space for the conference.
+     */
+    ConferenceDb = "conference",
+    ConferenceSpace = "conference_space", // TODO
     Auditorium = "auditorium",
     AuditoriumBackstage = "auditorium_backstage",
     Talk = "talk",
     SpecialInterest = "other",
 }
-export const ALL_USEFUL_ROOM_KINDS = [
-    RoomKind.Auditorium,
-    RoomKind.AuditoriumBackstage,
-    RoomKind.Talk,
-    RoomKind.SpecialInterest,
-];
 
-export const RSC_CONFERENCE_ID = "org.matrix.confbot.conference";
-export const RSC_AUDITORIUM_ID = "org.matrix.confbot.auditorium";
-export const RSC_TALK_ID = "org.matrix.confbot.talk";
-export const RSC_SPECIAL_INTEREST_ID = "org.matrix.confbot.interest";
+/**
+ * Type of state event used to identify rooms that the bot has created.
+ */
+export const RS_LOCATOR = "org.matrix.confbot.locator";
+
+export const RSC_CONFERENCE_ID = "conferenceId";
+export const RSC_AUDITORIUM_ID = "auditoriumId";
+export const RSC_TALK_ID = "talkId";
+export const RSC_SPECIAL_INTEREST_ID = "interestId";
 
 export const CONFERENCE_ROOM_CREATION_TEMPLATE = {
     preset: 'private_chat',
@@ -92,7 +86,7 @@ export const CONFERENCE_ROOM_CREATION_TEMPLATE = {
         {type: "m.room.history_visibility", state_key: "", content: {history_visibility: "shared"}},
     ],
     creation_content: {
-        [RSC_ROOM_KIND_FLAG]: RoomKind.Conference,
+        [RSC_ROOM_KIND_FLAG]: RoomKind.ConferenceDb,
     },
 };
 

@@ -20,12 +20,11 @@ export class JsonScheduleLoader {
         // TODO: Validate and give errors. Assuming it's correct is a bit cheeky.
         const jsonSchedule = jsonDesc as JSONSchedule;
 
-        this.conferenceId = ""; // TODO What's this?
         this.auditoriums = new Map();
         this.talks = new Map();
 
         for (let aud of jsonSchedule.streams) {
-            const auditorium = this.convertAuditorium(aud, this.conferenceId);
+            const auditorium = this.convertAuditorium(aud);
             if (this.auditoriums.has(auditorium.id)) {
                 throw `Conflict in auditorium ID «${auditorium.id}»!`;
             }
@@ -60,7 +59,7 @@ export class JsonScheduleLoader {
         };
     }
 
-    private convertTalk(talk: JSONTalk, conferenceId: string, auditoriumId: string): ITalk {
+    private convertTalk(talk: JSONTalk, auditoriumId: string): ITalk {
         const startMoment = moment.utc(talk.start, moment.ISO_8601, true);
         const endMoment = moment.utc(talk.end, moment.ISO_8601, true);
 
@@ -70,7 +69,6 @@ export class JsonScheduleLoader {
             subtitle: talk.description, // TODO is this valid?
             slug: this.slugify(talk.title),
 
-            conferenceId,
             auditoriumId,
             prerecorded: true, // TODO
             qa_startTime: null, // TODO
@@ -85,13 +83,13 @@ export class JsonScheduleLoader {
         };
     }
 
-    private convertAuditorium(stream: JSONStream, conferenceId: string): IAuditorium {
+    private convertAuditorium(stream: JSONStream): IAuditorium {
         const auditoriumId = this.slugify(stream.stream_name);
 
         const talks: Map<TalkId, ITalk> = new Map();
 
         for (let unconvTalk of stream.talks) {
-            const talk = this.convertTalk(unconvTalk, conferenceId, auditoriumId);
+            const talk = this.convertTalk(unconvTalk, auditoriumId);
             if (talks.has(talk.id)) {
                 const conflictingTalk = talks.get(talk.id);
                 throw `Talk ID ${talk.id} is not unique — occupied by both «${talk.title}» and «${conflictingTalk.title}»!`;

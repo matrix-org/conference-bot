@@ -51,10 +51,6 @@ export interface ITalk {
     speakers: IPerson[];
     prerecorded: boolean;
     /**
-     * ID of the conference that this talk belongs to.
-     */
-    conferenceId: string;
-    /**
      * ID of the auditorium that this talk belongs to.
      */
     auditoriumId: string;

@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { LogService, MatrixClient, Space } from "matrix-bot-sdk";
-import { makeChildRoom, RS_STORED_SPACE } from "./room_state";
+import { RS_ASSOCIATED_SPACE } from "./room_state";
 import { Conference } from "../Conference";
 
 export class MatrixRoom {
@@ -25,16 +25,11 @@ export class MatrixRoom {
     constructor(public readonly roomId: string, protected client: MatrixClient, protected conference: Conference) {
     }
 
-    public async addDirectChild(roomId: string) {
-        const state = makeChildRoom(roomId);
-        await this.client.sendStateEvent(this.roomId, state.type, state.state_key, state.content);
-    }
-
-    public async getSpace(): Promise<Space> {
+    public async getAssociatedSpace(): Promise<Space> {
         if (this.space) {
             return this.space;
         }
-        const spaceState = await this.client.getRoomStateEvent(this.roomId, RS_STORED_SPACE, "");
+        const spaceState = await this.client.getRoomStateEvent(this.roomId, RS_ASSOCIATED_SPACE, "");
         this.space = await this.client.getSpace(spaceState.roomId);
         return this.space;
     }

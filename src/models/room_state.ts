@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { IConference, ITalk, IAuditorium, IInterestRoom, IPerson } from "./schedule";
-import { objectFastClone, objectFastCloneWithout } from "../utils";
-import { Space } from "matrix-bot-sdk";
+import { AuditoriumId, InterestId, TalkId } from "../backends/IScheduleBackend";
+import { RoomKind, RSC_ROOM_KIND_FLAG, RS_LOCATOR } from "./room_kinds";
+import { IPerson } from "./schedule";
 
 export interface IStateEvent<T> {
     type: string;
@@ -43,18 +43,18 @@ export interface IStoredSubspace {
 
 export const RS_3PID_PERSON_ID = "org.matrix.confbot.person.v2";
 
-export const RS_STORED_TALK = "org.matrix.confbot.talk";
-
-export function makeStoredTalk(talk: ITalk): IStateEvent<ITalk> {
-    return {
-        type: RS_STORED_TALK,
-        state_key: talk.id,
-        content: talk,
-    };
-}
-
 export const RS_STORED_PERSON = "org.matrix.confbot.person.v2";
-export function makeStoredPerson(person: IPerson): IStateEvent<IPerson> {
+/**
+ * This allows us to create a state event, to be stored in the Database room,
+ * which represents an override of a person from their underlying representation in the schedule.
+ *
+ * This is used when a person accepts an e-mail invite and therefore we learn of their
+ * Matrix ID, despite them not having one in the schedule.
+ *
+ * Note that the returned object contains private information and as such must not be
+ * stored in any public rooms.
+ */
+export function makeStoredPersonOverride(person: IPerson): IStateEvent<IPerson> {
     return {
         type: RS_STORED_PERSON,
         state_key: person.id.toString(),
@@ -62,99 +62,119 @@ export function makeStoredPerson(person: IPerson): IStateEvent<IPerson> {
     };
 }
 
-export const RS_STORED_AUDITORIUM = "org.matrix.confbot.auditorium";
-export interface IStoredAuditorium extends Omit<IAuditorium, "talksByDate"> {
+/**
+ * Associated space: a canonical definition of which space is 'associated' with this room.
+ *
+ * List of valid use cases:
+ * - In an auditorium room, points to the auditorium's space.
+ * - TODO more?
+ *
+ * Begrudgingly m.space.parent isn't very useful in these scenarios because the state key is the parent of the room
+ * and they're not easily canonical. (This can probably be worked around, but I can only rework so much at once!)
+ */
+export const RS_ASSOCIATED_SPACE = "org.matrix.confbot.space";
+export interface IAssociatedSpace {
+    roomId: string;
+}
+export function makeAssociatedSpace(roomId: string): IStateEvent<IAssociatedSpace> {
+    return {
+        type: RS_ASSOCIATED_SPACE,
+        state_key: "",
+        content: {roomId: roomId},
+    };
+}
+
+/**
+ * See RS_LOCATOR.
+ */
+export type ILocator = IConferenceLocator | ITalkLocator | IAuditoriumLocator | IInterestLocator
+
+export interface IConferenceLocator {
+    [RSC_ROOM_KIND_FLAG]: RoomKind.ConferenceDb | RoomKind.ConferenceSpace;
     conferenceId: string;
 }
-export function makeStoredAuditorium(confId: string, auditorium: IAuditorium): IStateEvent<IStoredAuditorium> {
-    return {
-        type: RS_STORED_AUDITORIUM,
-        state_key: auditorium.id,
-        content: {
-            ...objectFastCloneWithout(auditorium, ['talksByDate']),
-            conferenceId: confId,
-        } as IStoredAuditorium,
-    };
-}
-
-export const RS_STORED_CONFERENCE = "org.matrix.confbot.conference";
-export interface IStoredConference extends Omit<IConference, "auditoriums"> {
+export interface ITalkLocator {
+    [RSC_ROOM_KIND_FLAG]: RoomKind.Talk;
     conferenceId: string;
+    talkId: TalkId;
 }
-export function makeStoredConference(confId: string, conference: IConference): IStateEvent<IStoredConference> {
+export interface IAuditoriumLocator {
+    [RSC_ROOM_KIND_FLAG]: RoomKind.Auditorium | RoomKind.AuditoriumBackstage;
+    conferenceId: string;
+    auditoriumId: AuditoriumId;
+}
+export interface IInterestLocator {
+    [RSC_ROOM_KIND_FLAG]: RoomKind.SpecialInterest;
+    conferenceId: string;
+    interestId: InterestId;
+}
+
+export function makeRootSpaceLocator(conferenceId: string): IStateEvent<IConferenceLocator> {
     return {
-        type: RS_STORED_CONFERENCE,
+        type: RS_LOCATOR,
         state_key: "",
         content: {
-            ...objectFastCloneWithout(conference, ['auditoriums']),
-            conferenceId: confId,
-        } as IStoredConference,
-    };
-}
-
-export const RS_PARENT_ROOM = "org.matrix.confbot.parent";
-export interface IParentRoom {
-    roomId: string;
-}
-export function makeParentRoom(roomId: string): IStateEvent<IParentRoom> {
-    return {
-        type: RS_PARENT_ROOM,
-        state_key: "",
-        content: {roomId: roomId},
-    };
-}
-
-export const RS_CHILD_ROOM = "org.matrix.confbot.child";
-export interface IChildRoom {
-    roomId: string;
-}
-export function makeChildRoom(roomId: string): IStateEvent<IChildRoom> {
-    return {
-        type: RS_CHILD_ROOM,
-        state_key: roomId,
-        content: {roomId: roomId},
-    };
-}
-
-export const RS_STORED_SPACE = "org.matrix.confbot.space";
-export interface IStoredSpace {
-    roomId: string;
-}
-export function makeStoredSpace(roomId: string): IStateEvent<IStoredSpace> {
-    return {
-        type: RS_STORED_SPACE,
-        state_key: "",
-        content: {roomId: roomId},
-    };
-}
-
-export const RS_STORED_ROLE = "org.matrix.confbot.role";
-export interface IStoredRole {
-    name: string;
-    spaceRoomId: string;
-}
-export function makeStoredRole(name: string, space: Space): IStateEvent<IStoredRole> {
-    return {
-        type: RS_STORED_ROLE,
-        state_key: name,
-        content: {
-            name: name,
-            spaceRoomId: space.roomId,
+            [RSC_ROOM_KIND_FLAG]: RoomKind.ConferenceSpace,
+            conferenceId,
         },
     };
 }
 
-export const RS_STORED_INTEREST_ROOM = "org.matrix.confbot.interest_room";
-export interface IStoredInterestRoom extends IInterestRoom {
-    conferenceId: string;
-}
-export function makeStoredInterestRoom(confId: string, interestRoom: IInterestRoom): IStateEvent<IStoredInterestRoom> {
+export function makeDbLocator(conferenceId: string): IStateEvent<IConferenceLocator> {
     return {
-        type: RS_STORED_INTEREST_ROOM,
-        state_key: interestRoom.id,
+        type: RS_LOCATOR,
+        state_key: "",
         content: {
-            ...objectFastClone(interestRoom),
-            conferenceId: confId,
-        } as IStoredInterestRoom,
+            [RSC_ROOM_KIND_FLAG]: RoomKind.ConferenceDb,
+            conferenceId,
+        },
+    };
+}
+
+export function makeTalkLocator(conferenceId: string, talkId: TalkId): IStateEvent<ITalkLocator> {
+    return {
+        type: RS_LOCATOR,
+        state_key: "",
+        content: {
+            [RSC_ROOM_KIND_FLAG]: RoomKind.Talk,
+            conferenceId,
+            talkId,
+        },
+    };
+}
+
+export function makeAuditoriumLocator(conferenceId: string, auditoriumId: AuditoriumId): IStateEvent<IAuditoriumLocator> {
+    return {
+        type: RS_LOCATOR,
+        state_key: "",
+        content: {
+            [RSC_ROOM_KIND_FLAG]: RoomKind.Auditorium,
+            conferenceId,
+            auditoriumId,
+        },
+    };
+}
+
+export function makeAuditoriumBackstageLocator(conferenceId: string, auditoriumId: AuditoriumId): IStateEvent<IAuditoriumLocator> {
+    return {
+        type: RS_LOCATOR,
+        state_key: "",
+        content: {
+            [RSC_ROOM_KIND_FLAG]: RoomKind.AuditoriumBackstage,
+            conferenceId,
+            auditoriumId,
+        },
+    };
+}
+
+export function makeInterestLocator(conferenceId: string, interestId: InterestId): IStateEvent<IInterestLocator> {
+    return {
+        type: RS_LOCATOR,
+        state_key: "",
+        content: {
+            [RSC_ROOM_KIND_FLAG]: RoomKind.SpecialInterest,
+            conferenceId,
+            interestId,
+        },
     };
 }

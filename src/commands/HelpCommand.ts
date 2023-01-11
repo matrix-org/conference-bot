@@ -24,6 +24,7 @@ export class HelpCommand implements ICommand {
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
         const htmlHelp = "" +
             "<h1>Conference bot help</h1>" +
+            "Hint: For all commands, instead of !conference you can also use a tab-completed mention pill of the bot's name!\n" +
             "<h4>General:</h4>" +
             "<pre><code>" +
             "!conference help                                          - This menu.\n" +
@@ -58,6 +59,7 @@ export class HelpCommand implements ICommand {
             "<pre><code>" +
             "!conference inviteme &lt;room&gt;         - Asks the bot to invite you to the given room.\n" +
             "!conference inviteto &lt;room&gt; &lt;user&gt;  - Asks the bot to invite the given user to the given room.\n" +
+            "!conference join &lt;room&gt;             - Makes the bot join the given room.\n"
             "!conference copymods &lt;from&gt; &lt;to&gt;    - Copies the moderators from one room to another.\n" +
             "!conference widgets &lt;aud&gt;           - Creates all widgets for the auditorium and its talks.\n" +
             "</code></pre>" +

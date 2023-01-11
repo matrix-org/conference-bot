@@ -58,6 +58,7 @@ import { FDMCommand } from "./commands/FDMCommand";
 import { IScheduleBackend } from "./backends/IScheduleBackend";
 import { PentaBackend } from "./backends/penta/PentaBackend";
 import { JsonScheduleBackend } from "./backends/json/JsonScheduleBackend";
+import { JoinCommand } from "./commands/JoinRoomCommand";
 
 config.RUNTIME = {
     client: null,
@@ -176,6 +177,7 @@ function registerCommands(conference: Conference, ircBridge: IRCBridge | null) {
         new DevCommand(),
         new PermissionsCommand(),
         new InviteMeCommand(),
+        new JoinCommand(),
         new WidgetsCommand(),
         new RunCommand(),
         new StopCommand(),
@@ -231,7 +233,7 @@ function registerCommands(conference: Conference, ircBridge: IRCBridge | null) {
             }
         } catch (e) {
             LogService.error("index", "Error processing command: ", e);
-            return await client.replyNotice(roomId, event, `There was an error processing your command: ${e.message}`);
+            return await client.replyNotice(roomId, event, `There was an error processing your command: ${e?.message}`);
         }
 
         return await client.replyNotice(roomId, event, `Unknown command. Try ${prefixUsed.trim()} help`);
