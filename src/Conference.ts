@@ -223,7 +223,10 @@ export class Conference {
                                 }
                                 break;
                             case RoomKind.SpecialInterest:
-                                this.interestRooms[locatorEvent[RSC_SPECIAL_INTEREST_ID]] = new InterestRoom(roomId, this.client, this, locatorEvent[RSC_SPECIAL_INTEREST_ID]);
+                                const interestId = locatorEvent[RSC_SPECIAL_INTEREST_ID];
+                                if (this.backend.interestRooms.has(interestId)) {
+                                    this.interestRooms[interestId] = new InterestRoom(roomId, this.client, this, interestId);
+                                }
                                 break;
                             default:
                                 break;
