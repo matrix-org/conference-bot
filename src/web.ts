@@ -23,7 +23,7 @@ import { sha256 } from "./utils";
 import * as dns from "dns";
 import { Scoreboard } from "./Scoreboard";
 import { LiveWidget } from "./models/LiveWidget";
-import { IDbTalk } from "./backends/db/DbTalk";
+import { IDbTalk } from "./backends/penta/db/DbTalk";
 
 export function renderAuditoriumWidget(req: Request, res: Response) {
     const audId = req.query?.['auditoriumId'] as string;

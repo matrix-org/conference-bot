@@ -52,8 +52,8 @@ interface IConfig {
     conference: {
         id: string;
         name: string;
-        pentabarfDefinition: string | undefined;
-        jsonDefinition: string | undefined,
+
+        schedule: ScheduleBackendConfig;
         timezone: string;
         lookaheadMinutes: number;
         supportRooms: {
@@ -85,7 +85,6 @@ interface IConfig {
                 prefixes: string[];
             };
         };
-        database: IPentaDbConfig | null;
     };
     ircBridge: IRCBridgeOpts | null;
 
@@ -97,6 +96,30 @@ interface IConfig {
         checkins: CheckInMap;
     };
 }
+
+export interface IJsonScheduleBackendConfig {
+    backend: "json";
+    /**
+     * Path or HTTP(S) URL to schedule.
+     */
+    scheduleDefinition: string;
+
+    /**
+     * Slightly awful, but this works around some type errors in places that don't get hit if you're using a JSON schedule.
+     */
+    database: undefined;
+}
+
+export interface IPentaScheduleBackendConfig {
+    backend: "penta";
+    /**
+     * HTTP(S) URL to schedule.
+     */
+    scheduleDefinition: string;
+    database: IPentaDbConfig;
+}
+
+export type ScheduleBackendConfig = IJsonScheduleBackendConfig | IPentaScheduleBackendConfig;
 
 export interface IPentaDbConfig {
     host: string;

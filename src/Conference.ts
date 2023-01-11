@@ -48,14 +48,17 @@ import { MatrixRoom } from "./models/MatrixRoom";
 import { Auditorium, AuditoriumBackstage } from "./models/Auditorium";
 import { Talk } from "./models/Talk";
 import { ResolvedPersonIdentifier, resolveIdentifiers } from "./invites";
-import { PentaDb } from "./backends/db/PentaDb";
+import { PentaDb } from "./backends/penta/db/PentaDb";
 import { PermissionsCommand } from "./commands/PermissionsCommand";
 import { InterestRoom } from "./models/InterestRoom";
 import { IStateEvent } from "./models/room_state";
 import { logMessage } from "./LogProxy";
+import { IScheduleBackend } from "./backends/IScheduleBackend";
+import { PentaBackend } from "./backends/penta/PentaBackend";
 
 export class Conference {
     private dbRoom: MatrixRoom;
+    // TODO This shouldn't be here.
     private pentaDb: PentaDb | null = null;
     private subspaces: {
         [subspaceId: string]: Space
@@ -76,7 +79,7 @@ export class Conference {
         [personId: string]: IPerson;
     } = {};
 
-    constructor(public readonly id: string, public readonly client: MatrixClient) {
+    constructor(public readonly backend: IScheduleBackend, public readonly id: string, public readonly client: MatrixClient) {
         this.client.on("room.event", async (roomId: string, event) => {
             if (event['type'] === 'm.room.member' && event['content']?.['third_party_invite']) {
                 const emailInviteToken = event['content']['third_party_invite']['signed']?.['token'];
@@ -166,8 +169,9 @@ export class Conference {
     public async construct() {
         this.reset();
 
-        if (config.conference.database !== null) {
-            this.pentaDb = new PentaDb(config.conference.database);
+        if (this.backend instanceof PentaBackend) {
+            // TODO this is not nice.
+            this.pentaDb = this.backend.db;
         }
 
         // Locate all the rooms for the conference

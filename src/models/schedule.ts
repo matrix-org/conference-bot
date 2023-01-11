@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { TalkId } from "../backends/IScheduleBackend";
 import { RoomKind } from "./room_kinds";
 
 export enum Role {
@@ -67,9 +68,7 @@ export interface IAuditorium {
     slug: string;
     name: string;
     kind: RoomKind;
-    talksByDate: {
-        [day: number]: ITalk[]; // ms timestamp
-    };
+    talks: Map<TalkId, ITalk>;
 }
 
 export interface IConference {

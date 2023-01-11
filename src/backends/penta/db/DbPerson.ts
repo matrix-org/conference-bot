@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { IPerson, Role } from "../../models/schedule";
+import { IPerson, Role } from "../../../models/schedule";
 
 export interface IDbPerson {
     event_id: string; // penta talk ID
