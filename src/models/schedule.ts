@@ -16,25 +16,55 @@ limitations under the License.
 
 import { RoomKind } from "./room_kinds";
 
+export enum Role {
+    Speaker = "speaker",
+    Host = "host",
+    Coordinator = "coordinator",
+}
+
 export interface IPerson {
     id: string;
     name: string;
+    role: Role;
+    matrix_id: string;
+    email: string;
 }
 
 export interface ITalk {
     id: string;
+    /**
+     * Timestamp, in milliseconds, corresponding to the start of the day.
+     */
     dateTs: number; // ms
     startTime: number; // ms
     endTime: number; // ms
+    /**
+     * Start time of Q&A as a unix timestamp in ms, or null if Q&A is disabled for this talk.
+     */
+    qa_startTime: number | null;
+    livestream_endTime: number;
     slug: string;
     title: string;
     subtitle: string;
     track: string;
     speakers: IPerson[];
+    prerecorded: boolean;
+    /**
+     * ID of the conference that this talk belongs to.
+     */
+    conferenceId: string;
+    /**
+     * ID of the auditorium that this talk belongs to.
+     */
+    auditoriumId: string;
 }
 
 export interface IAuditorium {
     id: string;
+    /**
+     * Identifier safe for use in room aliases.
+     */
+    slug: string;
     name: string;
     kind: RoomKind;
     talksByDate: {

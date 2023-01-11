@@ -19,7 +19,6 @@ import { MatrixClient, MembershipEvent } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { LiveWidget } from "../models/LiveWidget";
 import { invitePersonToRoom, ResolvedPersonIdentifier } from "../invites";
-import { Role } from "../db/DbPerson";
 
 export class CopyModeratorsCommand implements ICommand {
     public readonly prefixes = ["copymods", "copymoderators", "copy_mods", "copy_moderators"];

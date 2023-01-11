@@ -23,7 +23,7 @@ import { sha256 } from "./utils";
 import * as dns from "dns";
 import { Scoreboard } from "./Scoreboard";
 import { LiveWidget } from "./models/LiveWidget";
-import { IDbTalk } from "./db/DbTalk";
+import { IDbTalk } from "./backends/db/DbTalk";
 
 export function renderAuditoriumWidget(req: Request, res: Response) {
     const audId = req.query?.['auditoriumId'] as string;
@@ -64,8 +64,11 @@ async function getDbTalk(talkId: string): Promise<IDbTalk | null> {
     const now = Date.now();
     if (!(talkId in dbTalksCache) ||
         now - dbTalksCache[talkId].cachedAt > TALK_CACHE_DURATION) {
+        const db = await config.RUNTIME.conference.getPentaDb();
+        if (db === null) return null;
+
         dbTalksCache[talkId] = {
-            talk: config.RUNTIME.conference.getDbTalk(talkId),
+            talk: db.getTalk(talkId),
             cachedAt: now,
         };
     }

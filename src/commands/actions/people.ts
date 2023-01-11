@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MatrixClient } from "matrix-bot-sdk";
+import { LogService, MatrixClient } from "matrix-bot-sdk";
 import { ResolvedPersonIdentifier, resolveIdentifiers } from "../../invites";
 import { Auditorium } from "../../models/Auditorium";
 import { Conference } from "../../Conference";
@@ -39,8 +39,11 @@ export async function doAuditoriumResolveAction(
     const backstagePeople = isInvite
         ? await conference.getInviteTargetsForAuditorium(aud, true)
         : await conference.getModeratorsForAuditorium(aud);
+    LogService.info("backstagePeople", `${backstagePeople}`);
     const resolvedBackstagePeople = await resolveIdentifiers(backstagePeople);
     const backstage = conference.getAuditoriumBackstage(await aud.getId());
+
+    LogService.info("resolvedBackstagePeople", `${resolvedBackstagePeople}`);
 
     const allPossiblePeople = isInvite
         ? resolvedBackstagePeople
@@ -54,7 +57,7 @@ export async function doAuditoriumResolveAction(
     const audPeople = isInvite
         ? await conference.getInviteTargetsForAuditorium(realAud)
         : await conference.getModeratorsForAuditorium(realAud);
-    const resolvedAudPeople = audPeople.map(p => allPossiblePeople.find(b => p.person_id === b.person.person_id));
+    const resolvedAudPeople = audPeople.map(p => allPossiblePeople.find(b => p.id === b.person.id));
     if (resolvedAudPeople.some(p => !p)) throw new Error("Failed to resolve all targets for auditorium");
 
     await action(client, realAud.roomId, resolvedAudPeople);
@@ -69,7 +72,7 @@ export async function doAuditoriumResolveAction(
                 ? await conference.getInviteTargetsForTalk(talk)
                 : await conference.getModeratorsForTalk(talk);
             const resolvedTalkPeople = talkPeople.map(
-                p => allPossiblePeople.find(b => p.person_id === b.person.person_id)
+                p => allPossiblePeople.find(b => p.id === b.person.id)
             );
             if (resolvedTalkPeople.some(p => !p)) {
                 throw new Error("Failed to resolve all targets for talk");

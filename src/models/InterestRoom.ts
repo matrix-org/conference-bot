@@ -17,7 +17,7 @@ limitations under the License.
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { MatrixRoom } from "./MatrixRoom";
-import { deprefix } from "../parsers/PentabarfParser";
+import { deprefix } from "../backends/PentabarfParser";
 import { PhysicalRoom } from "./PhysicalRoom";
 
 /**

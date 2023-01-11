@@ -14,30 +14,33 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MatrixClient } from "matrix-bot-sdk";
-import { IStoredPerson, IStoredTalk, RS_STORED_PERSON, RS_STORED_TALK } from "./room_state";
+import { LogService, MatrixClient } from "matrix-bot-sdk";
+import { RS_STORED_PERSON, RS_STORED_TALK } from "./room_state";
 import { Conference } from "../Conference";
 import { MatrixRoom } from "./MatrixRoom";
 import { RSC_AUDITORIUM_ID, RSC_TALK_ID } from "./room_kinds";
+import { IPerson, ITalk } from "./schedule";
 
 export class Talk extends MatrixRoom {
-    private storedTalk: IStoredTalk;
-    private auditoriumId: string;
-    private people: IStoredPerson[];
+    private storedTalk: ITalk;
+    private people: IPerson[] | null = null;
 
     constructor(roomId: string, client: MatrixClient, conference: Conference) {
         super(roomId, client, conference);
     }
 
-    public async getDefinition(): Promise<IStoredTalk> {
+    public async getDefinition(): Promise<ITalk> {
         if (this.storedTalk) {
             return this.storedTalk;
         }
 
         const createEvent = await this.client.getRoomStateEvent(this.roomId, "m.room.create", "");
         const talkId = createEvent[RSC_TALK_ID];
-        this.auditoriumId = createEvent[RSC_AUDITORIUM_ID];
+        const auditoriumId = createEvent[RSC_AUDITORIUM_ID];
         this.storedTalk = await this.client.getRoomStateEvent(this.roomId, RS_STORED_TALK, talkId);
+        if (auditoriumId != this.storedTalk.auditoriumId) {
+            LogService.error("Talk", `In talk id=${talkId} auditoriumId from room state (${auditoriumId}) != ITalk.auditoriumId! (${this.storedTalk.auditoriumId})`)
+        }
         return this.storedTalk;
     }
 
@@ -54,12 +57,11 @@ export class Talk extends MatrixRoom {
     }
 
     public async getAuditoriumId(): Promise<string> {
-        await this.getDefinition(); // grabs ID
-        return this.auditoriumId;
+        return (await this.getDefinition()).auditoriumId;
     }
 
-    public async getSpeakers(): Promise<IStoredPerson[]> {
-        if (this.people) {
+    public async getSpeakers(): Promise<IPerson[]> {
+        if (this.people !== null) {
             return this.people;
         }
         const state = await this.client.getRoomState(this.roomId);

@@ -15,10 +15,36 @@ limitations under the License.
 */
 
 import * as parser from 'fast-xml-parser';
-import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk } from "../models/schedule";
+import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from "../models/schedule";
 import * as moment from "moment";
 import { RoomKind } from "../models/room_kinds";
 import config from "../config";
+
+function arrayLike<T>(val: T | T[]): T[] {
+    if (Array.isArray(val)) return val;
+    return [val];
+}
+
+function simpleTimeParse(str: string): { hours: number, minutes: number } {
+    const parts = str.split(':');
+    return {hours: Number(parts[0]), minutes: Number(parts[1])};
+}
+
+export function deprefix(id: string): {kind: RoomKind, name: string} {
+    const override = config.conference.prefixes.nameOverrides[id];
+
+    const auditoriumPrefix = config.conference.prefixes.auditoriumRooms.find(p => id.startsWith(p));
+    if (auditoriumPrefix) {
+        return {kind: RoomKind.Auditorium, name: override || id.substring(auditoriumPrefix.length)};
+    }
+
+    const interestPrefix = config.conference.prefixes.interestRooms.find(p => id.startsWith(p));
+    if (interestPrefix) {
+        return {kind: RoomKind.SpecialInterest, name: override || id.substring(interestPrefix.length)};
+    }
+
+    return {kind: RoomKind.SpecialInterest, name: override || id};
+}
 
 export interface IPentabarfEvent {
     attr: {
@@ -82,34 +108,8 @@ export interface IPentabarfSchedule {
     };
 }
 
-function arrayLike<T>(val: T | T[]): T[] {
-    if (Array.isArray(val)) return val;
-    return [val];
-}
-
-function simpleTimeParse(str: string): { hours: number, minutes: number } {
-    const parts = str.split(':');
-    return {hours: Number(parts[0]), minutes: Number(parts[1])};
-}
-
-export function deprefix(id: string): {kind: RoomKind, name: string} {
-    const override = config.conference.prefixes.nameOverrides[id];
-
-    const auditoriumPrefix = config.conference.prefixes.auditoriumRooms.find(p => id.startsWith(p));
-    if (auditoriumPrefix) {
-        return {kind: RoomKind.Auditorium, name: override || id.substring(auditoriumPrefix.length)};
-    }
-
-    const interestPrefix = config.conference.prefixes.interestRooms.find(p => id.startsWith(p));
-    if (interestPrefix) {
-        return {kind: RoomKind.SpecialInterest, name: override || id.substring(interestPrefix.length)};
-    }
-
-    return {kind: RoomKind.SpecialInterest, name: override || id};
-}
-
 export class PentabarfParser {
-    public readonly parsed: IPentabarfSchedule;
+    private readonly parsed: IPentabarfSchedule;
 
     public readonly conference: IConference;
     public readonly auditoriums: IAuditorium[];
@@ -157,6 +157,7 @@ export class PentabarfParser {
                 if (metadata.kind !== RoomKind.Auditorium) continue;
                 let auditorium: IAuditorium = {
                     id: pRoom.attr?.["@_name"],
+                    slug: metadata.name,
                     name: metadata.name,
                     kind: metadata.kind,
                     talksByDate: {},
@@ -185,6 +186,11 @@ export class PentabarfParser {
                         subtitle: pEvent.subtitle,
                         track: pEvent.track,
                         speakers: [],
+                        prerecorded: true,
+                        conferenceId: "",
+                        auditoriumId: auditorium.id,
+                        livestream_endTime: 0,
+                        qa_startTime: 0,
                     };
                     const existingTalk = this.talks.find(e => e.id === talk.id);
                     if (existingTalk) {
@@ -202,6 +208,9 @@ export class PentabarfParser {
                         let person: IPerson = {
                             id: pPerson.attr?.["@_id"],
                             name: pPerson["#text"],
+                            email: "",
+                            matrix_id: "",
+                            role: Role.Speaker,
                         };
                         const existingPerson = this.speakers.find(s => s.id === person.id);
                         if (existingPerson) {

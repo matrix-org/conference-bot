@@ -17,8 +17,8 @@ limitations under the License.
 import { IdentityClient, LogLevel } from "matrix-bot-sdk";
 import config from "./config";
 import { RS_3PID_PERSON_ID } from "./models/room_state";
-import { IDbPerson } from "./db/DbPerson";
 import { logMessage } from "./LogProxy";
+import { IPerson } from "./models/schedule";
 
 let idClient: IdentityClient;
 
@@ -27,7 +27,7 @@ const MAX_EMAILS_PER_BATCH = 1000;
 export interface ResolvedPersonIdentifier {
     mxid?: string;
     emails?: string[];
-    person: IDbPerson;
+    person: IPerson;
 }
 
 async function ensureIdentityClient() {
@@ -38,7 +38,7 @@ async function ensureIdentityClient() {
     }
 }
 
-async function resolveBatch(batch: IDbPerson[]): Promise<ResolvedPersonIdentifier[]> {
+async function resolveBatch(batch: IPerson[]): Promise<ResolvedPersonIdentifier[]> {
     if (batch.length <= 0) return [];
     const results = await idClient.lookup(batch.map(p => ({address: p.email, kind: "email"})));
     const resolved: ResolvedPersonIdentifier[] = [];
@@ -54,12 +54,12 @@ async function resolveBatch(batch: IDbPerson[]): Promise<ResolvedPersonIdentifie
     return resolved;
 }
 
-export async function resolveIdentifiers(people: IDbPerson[]): Promise<ResolvedPersonIdentifier[]> {
+export async function resolveIdentifiers(people: IPerson[]): Promise<ResolvedPersonIdentifier[]> {
     await ensureIdentityClient();
 
     const resolved: ResolvedPersonIdentifier[] = [];
 
-    const pendingLookups: IDbPerson[] = [];
+    const pendingLookups: IPerson[] = [];
 
     const doResolve = async () => {
         const results = await resolveBatch(pendingLookups);
@@ -72,7 +72,7 @@ export async function resolveIdentifiers(people: IDbPerson[]): Promise<ResolvedP
             continue;
         }
         if (!person.email) {
-            await logMessage(LogLevel.WARN, "invites", `No email or Matrix ID for person ${person.person_id} (${person.event_role}) in ${person.conference_room} - ${person.name}`);
+            await logMessage(LogLevel.WARN, "invites", `No email or Matrix ID for person ${person.id} (${person.role}) - ${person.name}`);
             continue;
         }
 
@@ -101,7 +101,7 @@ export async function invitePersonToRoom(resolvedPerson: ResolvedPersonIdentifie
             key_validity_url: `${idClient.serverUrl}/_matrix/identity/v2/pubkey/ephemeral/isvalid`,
             public_key: idInvite.public_key,
             public_keys: idInvite.public_keys,
-            [RS_3PID_PERSON_ID]: resolvedPerson.person.person_id,
+            [RS_3PID_PERSON_ID]: resolvedPerson.person.id,
         };
         const stateKey = idInvite.token; // not included in the content
         await config.RUNTIME.client.sendStateEvent(roomId, "m.room.third_party_invite", stateKey, content);
