@@ -69,8 +69,9 @@ export class BuildCommand implements ICommand {
             roomId,
             `0/${subspacesConfig.length} subspaces have been created`,
         );
-        try {
-            for (const [subspaceId, subspaceConfig] of subspacesConfig) {
+
+        for (const [subspaceId, subspaceConfig] of subspacesConfig) {
+            try {
                 await conference.createSubspace(
                     subspaceId, subspaceConfig.displayName, subspaceConfig.alias
                 );
@@ -81,11 +82,12 @@ export class BuildCommand implements ICommand {
                     statusEventId,
                     `${subspacesCreated}/${subspacesConfig.length} subspaces have been created`,
                 );
+            } catch (error) {
+                LogService.error("BuildCommand", JSON.stringify(error));
+                await client.sendNotice(roomId, `Failed to build subspace '${subspaceId}': ${error.toString()}`)
             }
-        } catch (error) {
-            LogService.error("BuildCommand", JSON.stringify(error));
-            await client.sendNotice(roomId, `Failed to build subspaces: ${error.toString()}`)
         }
+
 
         if (args[0] === "talk") {
             const audId = args[1];
