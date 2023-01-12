@@ -201,7 +201,11 @@ export class PentabarfParser {
                         this.talks.push(talk);
                     }
 
-                    if (!auditorium.talks.has(talk.id)) auditorium.talks.set(talk.id, talk);
+                    if (auditorium.talks.has(talk.id)) {
+                        throw new Error(`Auditorium ${auditorium.id}: Talk ${talk.id}: this talk already exists and is defined a second time.`);
+                    } else {
+                        auditorium.talks.set(talk.id, talk);
+                    }
 
                     for (const pPerson of arrayLike(pEvent.persons?.person)) {
                         if (!pPerson) continue;
