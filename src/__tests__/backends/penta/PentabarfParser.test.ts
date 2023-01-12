@@ -46,3 +46,12 @@ test('parsing pentabarf XML: overview', () => {
     //      using the PentaDb afterwards.
     expect(p.talks).toMatchSnapshot("talks");
 });
+
+
+test('duplicate events lead to errors', () => {
+    const xml = fs.readFileSync(path.join(__dirname, "pentabarf03_duplicate_talk.xml"), 'utf8');
+
+    expect(() => new PentabarfParser(xml, prefixConfig)).toThrow(
+        "Auditorium A.01 (Someroom): Talk E001: this talk already exists and is defined a second time."
+    );
+});
