@@ -1,4 +1,4 @@
-import { readFile, writeFile, rename } from "fs";
+import { rename } from "fs";
 import config, { IJsonScheduleBackendConfig } from "../../config";
 import { IConference, ITalk, IAuditorium, IInterestRoom } from "../../models/schedule";
 import { AuditoriumId, InterestId, IScheduleBackend, TalkId } from "../IScheduleBackend";
@@ -6,44 +6,7 @@ import { JsonScheduleLoader } from "./JsonScheduleLoader";
 import * as fetch from "node-fetch";
 import * as path from "path";
 import { LogService } from "matrix-bot-sdk";
-
-/**
- * Reads a JSON file from disk.
- */
- function readJsonFileAsync(path: string): Promise<object> {
-    return new Promise((resolve, reject) => {
-        readFile(path, {encoding: 'utf-8'}, (err, buf: string) => {
-            if (err) {
-                reject(err);
-            } else {
-                try {
-                    resolve(JSON.parse(buf));
-                } catch (err) {
-                    reject(err);
-                }
-            }
-        })
-    });
-}
-
-/**
- * Writes a JSON file to disk.
- */
-function writeJsonFileAsync(path: string, data: object): Promise<void> {
-    return new Promise((resolve, reject) => {
-        writeFile(path, JSON.stringify(data), (err) => {
-            if (err) {
-                reject(err);
-            } else {
-                try {
-                    resolve();
-                } catch (err) {
-                    reject(err);
-                }
-            }
-        })
-    });
-}
+import { readJsonFileAsync, writeJsonFileAsync } from "../../utils";
 
 export class JsonScheduleBackend implements IScheduleBackend {
     constructor(private loader: JsonScheduleLoader, private cfg: IJsonScheduleBackendConfig, private wasFromCache: boolean) {

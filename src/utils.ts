@@ -29,6 +29,7 @@ import { logMessage } from "./LogProxy";
 import * as htmlEscape from "escape-html";
 import * as crypto from "crypto";
 import config from "./config";
+import { readFile, writeFile } from "fs";
 
 export async function replaceRoomIdsWithPills(client: MatrixClient, text: string, roomIds: string[] | string, msgtype: MessageType = "m.text"): Promise<TextualMessageEventContent> {
     if (!Array.isArray(roomIds)) roomIds = [roomIds];
@@ -197,4 +198,43 @@ export function makeDisplayName(name: string, identifier: string): string {
     return applySuffixRules(
         name, identifier, config.conference.prefixes.displayNameSuffixes
     );
+}
+
+
+/**
+ * Reads a JSON file from disk.
+ */
+export function readJsonFileAsync(path: string): Promise<object> {
+    return new Promise((resolve, reject) => {
+        readFile(path, {encoding: 'utf-8'}, (err, buf: string) => {
+            if (err) {
+                reject(err);
+            } else {
+                try {
+                    resolve(JSON.parse(buf));
+                } catch (err) {
+                    reject(err);
+                }
+            }
+        })
+    });
+}
+
+/**
+ * Writes a JSON file to disk.
+ */
+export function writeJsonFileAsync(path: string, data: object): Promise<void> {
+    return new Promise((resolve, reject) => {
+        writeFile(path, JSON.stringify(data), (err) => {
+            if (err) {
+                reject(err);
+            } else {
+                try {
+                    resolve();
+                } catch (err) {
+                    reject(err);
+                }
+            }
+        })
+    });
 }
