@@ -1,4 +1,4 @@
-import { IPentaScheduleBackendConfig } from "../../config";
+import config, { IPentaScheduleBackendConfig } from "../../config";
 import { IConference, ITalk, IAuditorium, IInterestRoom } from "../../models/schedule";
 import { AuditoriumId, InterestId, IScheduleBackend, TalkId } from "../IScheduleBackend";
 import { PentaDb } from "./db/PentaDb";
@@ -52,7 +52,7 @@ export class PentaBackend implements IScheduleBackend {
 
     static async new(cfg: IPentaScheduleBackendConfig): Promise<PentaBackend> {
         const xml = await fetch(cfg.scheduleDefinition).then(r => r.text());
-        const parsed = new PentabarfParser(xml);
+        const parsed = new PentabarfParser(xml, config.conference.prefixes);
         const db = new PentaDb(cfg.database);
         await db.connect();
         return new PentaBackend(cfg, parsed, db);

@@ -19,6 +19,7 @@ import { Conference } from "../Conference";
 import { MatrixRoom } from "./MatrixRoom";
 import { deprefix } from "../backends/penta/PentabarfParser";
 import { PhysicalRoom } from "./PhysicalRoom";
+import config from "../config";
 
 /**
  * Represents an interest room.
@@ -34,7 +35,7 @@ export class InterestRoom extends MatrixRoom implements PhysicalRoom {
         super(roomId, client, conference);
 
         this.id = id;
-        this.name = deprefix(id).name;
+        this.name = deprefix(id, config.conference.prefixes).name;
     }
 
     public async getName(): Promise<string> {

@@ -1,0 +1,2 @@
+# We don't set any config for tests currently, but node-config complains if we don't have this file.
+
