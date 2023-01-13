@@ -33,7 +33,7 @@ export class IrcPlumbCommand implements ICommand {
         for (const auditorium of conference.storedAuditoriums) {
             const channelName = await this.ircBridge.deriveChannelName(auditorium);
             try {
-                await this.ircBridge.plumbChannelToRoom(channelName, auditorium.roomId);
+                await this.plumbOne(client, channelName, auditorium.roomId);
                 // Wait before plumbing the next one so as to not overwhelm the poor bridge.
                 await new Promise(r => setTimeout(r, PLUMB_WAIT_MS));
             } catch (ex) {
@@ -44,13 +44,37 @@ export class IrcPlumbCommand implements ICommand {
         for (const interest of conference.storedInterestRooms) {
             const channelName = await this.ircBridge.deriveChannelNameSI(interest);
             try {
-                await this.ircBridge.plumbChannelToRoom(channelName, interest.roomId);
+                await this.plumbOne(client, channelName, interest.roomId);
                 // Wait before plumbing the next one so as to not overwhelm the poor bridge.
                 await new Promise(r => setTimeout(r, PLUMB_WAIT_MS));
             } catch (ex) {
                 await logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel ${channelName} to ${interest.roomId}`);
                 LogService.warn("IrcPlumbCommand", `Could not plumb channel ${channelName} to ${interest.roomId}:`, ex);
             }
+        }
+    }
+
+    /**
+     * - Plumbs a single Matrix room into IRC.
+     * - Promotes the Application Service user to the kick power level.
+     *
+     * @param resolvedRoomId: Room ID of the Matrix room
+     * @param channel: IRC channel name
+     */
+    private async plumbOne(client: MatrixClient, resolvedRoomId: string, channel: string): Promise<void> {
+        try {
+            await this.ircBridge.plumbChannelToRoom(channel, resolvedRoomId);
+        } catch (ex) {
+            LogService.warn("IrcPlumbCommand", ex);
+            return await logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel to room ${resolvedRoomId}`);
+        }
+
+        try {
+            // The bridge needs the ability to kick KLINED users.
+            await client.setUserPowerLevel(this.ircBridge.botUserId, resolvedRoomId, KickPowerLevel);
+        } catch (ex) {
+            LogService.warn("IrcPlumbCommand", ex);
+            return await logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel to room ${resolvedRoomId}: could not set AS power level`);
         }
     }
 
@@ -80,19 +104,9 @@ export class IrcPlumbCommand implements ICommand {
         } catch (ex) {
             return client.sendNotice(roomId, "Could not join that room, is the bot invited?");
         }
-        try {
-            await this.ircBridge.plumbChannelToRoom(channel, resolvedRoomId);
-        } catch (ex) {
-            LogService.warn("IrcPlumbCommand", ex);
-            return await logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel to room`);
-        }
-        // The bridge needs the ability to kick KLINED users.
-        try {
-            await client.setUserPowerLevel(this.ircBridge.botUserId, resolvedRoomId, KickPowerLevel);
-        } catch (ex) {
-            LogService.warn("IrcPlumbCommand", ex);
-            return await logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel to room`);
-        }
+
+        await this.plumbOne(client, resolvedRoomId, channel);
+
         return client.sendNotice(roomId, "Plumbed channel");
     }
 }
