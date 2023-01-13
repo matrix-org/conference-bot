@@ -3,7 +3,7 @@ import { LogService } from "matrix-bot-sdk";
 import { config } from "process";
 import { RoomKind } from "../models/room_kinds";
 import { IConference, ITalk, IAuditorium, IInterestRoom } from "../models/schedule";
-import { readJsonFileAsync, writeJsonFileAsync } from "../utils";
+import { jsonReplacerMapToObject, readJsonFileAsync, writeJsonFileAsync } from "../utils";
 import { IScheduleBackend, TalkId } from "./IScheduleBackend";
 
 
@@ -93,7 +93,7 @@ export class CachingBackend implements IScheduleBackend {
     private async saveCacheToDisk(): Promise<void> {
         // Save a cached copy.
         // Do it atomically so that there's very little chance of anything going wrong: write to a file first, then move into place.
-        await writeJsonFileAsync(this.cachePath + '.part', { conference: this.conference });
+        await writeJsonFileAsync(this.cachePath + '.part', { conference: this.conference }, jsonReplacerMapToObject);
         rename(this.cachePath + '.part', this.cachePath, (err) => {
             if (err) {
                 LogService.error("CachingBackend", `Failed to move cached copy of schedule: ${err}`)

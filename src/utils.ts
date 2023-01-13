@@ -222,10 +222,12 @@ export function readJsonFileAsync(path: string): Promise<object> {
 
 /**
  * Writes a JSON file to disk.
+ *
+ * @param replacer: If specified, a function that is passed to JSON.stringify to replace unknown objects.
  */
-export function writeJsonFileAsync(path: string, data: object): Promise<void> {
+export function writeJsonFileAsync(path: string, data: object, replacer: any | undefined = undefined): Promise<void> {
     return new Promise((resolve, reject) => {
-        writeFile(path, JSON.stringify(data), (err) => {
+        writeFile(path, JSON.stringify(data, replacer), (err) => {
             if (err) {
                 reject(err);
             } else {
@@ -237,4 +239,11 @@ export function writeJsonFileAsync(path: string, data: object): Promise<void> {
             }
         })
     });
+}
+
+export function jsonReplacerMapToObject(_key: any, input: any): any {
+    if (input instanceof Map) {
+        return Object.fromEntries(input);
+    }
+    return input;
 }
