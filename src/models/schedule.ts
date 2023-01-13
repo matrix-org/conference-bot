@@ -27,7 +27,15 @@ export interface IPerson {
     id: string;
     name: string;
     role: Role;
+
+    /**
+     * Matrix ID of the person or empty string if unknown.
+     */
     matrix_id: string;
+
+    /**
+     * E-mail address of the person or empty string if unknown.
+     */
     email: string;
 }
 

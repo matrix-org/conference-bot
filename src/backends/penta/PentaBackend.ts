@@ -1,5 +1,5 @@
 import config, { IPentaScheduleBackendConfig } from "../../config";
-import { IConference, ITalk, IAuditorium, IInterestRoom } from "../../models/schedule";
+import { IConference, ITalk, IAuditorium, IInterestRoom, IPerson } from "../../models/schedule";
 import { AuditoriumId, InterestId, IScheduleBackend, TalkId } from "../IScheduleBackend";
 import { PentaDb } from "./db/PentaDb";
 import { PentabarfParser } from "./PentabarfParser";
@@ -9,6 +9,14 @@ import * as fetch from "node-fetch";
 export class PentaBackend implements IScheduleBackend {
     constructor(private cfg: IPentaScheduleBackendConfig, parser: PentabarfParser, public db: PentaDb) {
         this.updateFromParser(parser);
+    }
+
+    /**
+     * We need an async version of the constructor.
+     * Must be called right after construction.
+     */
+    async init() {
+        await this.hydrateFromDatabase();
     }
 
     private updateFromParser(parser: PentabarfParser): void {
@@ -45,6 +53,42 @@ export class PentaBackend implements IScheduleBackend {
         this.interestRooms = interestRooms;
     }
 
+    private async hydrateFromDatabase(): Promise<void> {
+        for (let talk of this.talks.values()) {
+            this.hydrateTalk(talk);
+
+            for (let person of talk.speakers) {
+                this.hydratePerson(person);
+            }
+        }
+
+        // TODO do we need to hydrate any other objects?
+    }
+
+    private async hydrateTalk(talk: ITalk): Promise<void> {
+        const dbTalk = await this.db.getTalk(talk.id);
+        if (dbTalk === null) return;
+
+        if (talk.qa_startTime !== null) {
+            // hydrate Q&A time if enabled
+            talk.qa_startTime = dbTalk.qa_start_datetime;
+        }
+        talk.livestream_endTime = dbTalk.livestream_end_datetime;
+    }
+
+    private async hydratePerson(person: IPerson): Promise<void> {
+        const dbPeople = await this.db.findPeopleWithId(person.id);
+        if (dbPeople.length == 0) return;
+
+        if (dbPeople.length > 1) {
+            throw new Error(`Person ID '${person.id}' has ${dbPeople.length} different people associated with it!`);
+        }
+
+        const dbPerson = dbPeople[0];
+        person.matrix_id = dbPerson.matrix_id;
+        person.email = dbPerson.email;
+    }
+
     wasLoadedFromCache(): boolean {
         // Penta backend doesn't support using a cache.
         return false;
@@ -55,7 +99,9 @@ export class PentaBackend implements IScheduleBackend {
         const parsed = new PentabarfParser(xml, config.conference.prefixes);
         const db = new PentaDb(cfg.database);
         await db.connect();
-        return new PentaBackend(cfg, parsed, db);
+        const backend = new PentaBackend(cfg, parsed, db);
+        await backend.init();
+        return backend;
     }
 
     refresh(): Promise<void> {

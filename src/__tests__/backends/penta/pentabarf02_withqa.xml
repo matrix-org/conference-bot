@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schedule>
+  <conference>
+    <title>Testcon01</title>
+    <subtitle/>
+  </conference>
+  <day index="1" date="2023-02-04">
+    <room name="A.01 (Someroom)">
+      <event id="E001">
+        <start>09:00</start>
+        <duration>00:15</duration>
+        <room>A.01 (Someroom)</room>
+        <slug>testcon_opening_remarks</slug>
+        <title>Testcon01: Opening Remarks</title>
+        <subtitle/>
+        <track>Track01</track>
+        <type>devroom</type>
+        <language/>
+        <abstract>
+          &lt;p&gt;Opening remarks&lt;/p&gt;
+        </abstract>
+        <description></description>
+        <persons>
+          <person id="9012">John Teststone</person>
+          <person id="90367">Evå 完牲 Exampleson</person> <!-- seemed wise to test some Unicode -->
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+          <link href="https://example.org">Submit feedback</link>
+        </links>
+      </event>
+    </room>
+    <room name="AQ.02 (Questionroom)">
+      <event id="E002">
+        <start>09:00</start>
+        <duration>00:15</duration>
+        <room>AQ.02 (Questionroom)</room>
+        <slug>testcon_questions</slug>
+        <title>Testcon01: live questions</title>
+        <subtitle/>
+        <track>Track02</track>
+        <type>devroom</type>
+        <abstract>
+          &lt;p&gt;Questions for all!&lt;/p&gt;
+        </abstract>
+        <persons>
+          <person id="6526">Ilian Interlocutor</person>
+        </persons>
+      </event>
+    </room>
+  </day>
+</schedule>
