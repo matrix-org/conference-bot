@@ -95,7 +95,12 @@ export class PentaBackend implements IScheduleBackend {
     }
 
     static async new(cfg: IPentaScheduleBackendConfig): Promise<PentaBackend> {
-        const xml = await fetch(cfg.scheduleDefinition).then(r => r.text());
+        const xml = await fetch(cfg.scheduleDefinition).then(async r => {
+            if (! r.ok) {
+                throw new Error("Penta XML fetch not OK: " + r.status + "; " + await r.text())
+            }
+            return await r.text();
+        });
         const parsed = new PentabarfParser(xml, config.conference.prefixes);
         const db = new PentaDb(cfg.database);
         await db.connect();
