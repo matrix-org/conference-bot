@@ -19,6 +19,7 @@ import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from ".
 import * as moment from "moment";
 import { RoomKind } from "../../models/room_kinds";
 import { IPrefixConfig } from "../../config";
+import { LogService } from 'matrix-bot-sdk';
 
 function arrayLike<T>(val: T | T[]): T[] {
     if (Array.isArray(val)) return val;
@@ -43,7 +44,8 @@ export function deprefix(id: string, prefixConfig: IPrefixConfig): {kind: RoomKi
         return {kind: RoomKind.SpecialInterest, name: override || id.substring(interestPrefix.length)};
     }
 
-    return {kind: RoomKind.SpecialInterest, name: override || id};
+    // Rooms in the schedule not matching a prefix should not be treated as special interests.
+    return null;
 }
 
 export interface IPentabarfEvent {
@@ -142,6 +144,11 @@ export class PentabarfParser {
                 if (!pRoom) continue;
 
                 const metadata = deprefix(pRoom.attr?.["@_name"] || "org.matrix.confbot.unknown", prefixConfig);
+                if (metadata === null) {
+                    LogService.info("PentabarfParser", "Ignoring unrecognised room name from schedule: ", pRoom.attr?.["@_name"]);
+                    continue;
+                }
+
                 if (metadata.kind === RoomKind.SpecialInterest) {
                     let spiRoom: IInterestRoom = {
                         id: pRoom.attr?.["@_name"],
