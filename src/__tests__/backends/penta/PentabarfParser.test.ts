@@ -55,3 +55,12 @@ test('duplicate events lead to errors', () => {
         "Auditorium A.01 (Someroom): Talk E001: this talk already exists and is defined a second time."
     );
 });
+
+test("unrecognised prefixes don't create rooms", () => {
+    const xml = fs.readFileSync(path.join(__dirname, "pentabarf04_unrecognised_prefix.xml"), 'utf8');
+    const p = new PentabarfParser(xml, prefixConfig);
+
+    expect(p.auditoriums.length).toEqual(0);
+    expect(p.talks.length).toEqual(0);
+    expect(p.interestRooms.length).toEqual(0);
+});
