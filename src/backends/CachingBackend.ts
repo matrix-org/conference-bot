@@ -93,12 +93,7 @@ export class CachingBackend implements IScheduleBackend {
     private async saveCacheToDisk(): Promise<void> {
         // Save a cached copy.
         // Do it atomically so that there's very little chance of anything going wrong: write to a file first, then move into place.
-        await writeJsonFileAsync(this.cachePath + '.part', { conference: this.conference }, jsonReplacerMapToObject);
-        rename(this.cachePath + '.part', this.cachePath, (err) => {
-            if (err) {
-                LogService.error("CachingBackend", `Failed to move cached copy of schedule: ${err}`)
-            }
-        });
+        await writeJsonFileAsync(this.cachePath, { conference: this.conference }, jsonReplacerMapToObject);
     }
 
     private async loadFromCache(): Promise<void> {

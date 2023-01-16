@@ -33,14 +33,7 @@ export class JsonScheduleBackend implements IScheduleBackend {
             }
 
             // Save a cached copy.
-            // Do it atomically so that there's very little chance of anything going wrong: write to a file first, then move into place.
-            await writeJsonFileAsync(cachedSchedulePath + '.part', jsonDesc);
-            rename(cachedSchedulePath + '.part', cachedSchedulePath, (err) => {
-                if (err) {
-                    LogService.error("JsonScheduleBackend", `Failed to save cached copy of schedule: ${err}`)
-                }
-            });
-
+            await writeJsonFileAsync(cachedSchedulePath, jsonDesc);
         } catch (e) {
             // Fallback to cache — only if allowed
             if (! allowUseCache) throw e;
