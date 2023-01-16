@@ -500,6 +500,13 @@ export class Conference {
                 isPublic: true,
                 name: makeDisplayName(auditorium.name, auditorium.id),
             });
+            // Ensure that the space can be viewed by guest users.
+            await this.client.sendStateEvent(
+                audSpace.roomId,
+                "m.room.guest_access",
+                "",
+                {guest_access:"can_join"},
+            );
         } catch (e) {
             await logMessage(LogLevel.ERROR, "utils", `Can't create space #${spaceName}: ${e}!`);
             throw e;
