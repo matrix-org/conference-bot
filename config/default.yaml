@@ -240,6 +240,10 @@ conference:
     # Rooms outside of these prefixes will not have Q&A sessions.
     qaAuditoriumRooms: ["D."]
 
+    # Prefixes for the auditorium rooms that are virtual representations of events taking place in a physical venue.
+    # These auditoriums will not have individual rooms for talks.
+    physicalAuditoriumRooms: ["P."]
+
     # The prefixes for the rooms listed in the pentabarf definition which
     # describe the rooms that are 'special interest' rooms. The prefixes will
     # be trimmed when naming the room (unless an override is present).
