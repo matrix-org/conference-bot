@@ -102,7 +102,9 @@ export class JsonScheduleLoader {
             slug: this.slugify(stream.stream_name),
             name: stream.stream_name,
             kind: RoomKind.Auditorium,
-            talks
+            talks,
+            // TODO Support physical auditoriums in the JSON schedule backend
+            isPhysical: false,
         };
     }
 

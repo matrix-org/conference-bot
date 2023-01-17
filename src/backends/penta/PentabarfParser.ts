@@ -162,12 +162,14 @@ export class PentabarfParser {
                     continue;
                 }
                 if (metadata.kind !== RoomKind.Auditorium) continue;
+                const isPhysical = prefixConfig.physicalAuditoriumRooms.find(p => auditorium.id.startsWith(p)) !== undefined;
                 let auditorium: IAuditorium = {
                     id: pRoom.attr?.["@_name"],
                     slug: metadata.name,
                     name: metadata.name,
                     kind: metadata.kind,
                     talks: new Map(),
+                    isPhysical: isPhysical
                 };
                 const existingAuditorium = this.auditoriums.find(r => r.id === auditorium.id);
                 if (existingAuditorium) {
