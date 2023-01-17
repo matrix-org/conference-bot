@@ -96,6 +96,11 @@ export class BuildCommand implements ICommand {
             const pentaAud = backend.auditoriums.get(audId);
             if (!pentaAud) return await logMessage(LogLevel.ERROR, "BuildCommand", `Cannot find auditorium: ${audId}`);
 
+            if (pentaAud.isPhysical) {
+                // Physical auditoriums don't have any talk rooms
+                return await logMessage(LogLevel.ERROR, "BuildCommand", `Auditorium '${audId}' is physical and does not have talk rooms.`);
+            }
+
             const pentaTalk = pentaAud.talks.get(talkId);
             if (!pentaTalk) return await logMessage(LogLevel.ERROR, "BuildCommand", `Cannot find talk in room: ${audId} ${talkId}`);
 
@@ -162,8 +167,11 @@ export class BuildCommand implements ICommand {
                             `${auditoriumsCreated}/${backend.auditoriums.size} auditoriums have been created`,
                         );
 
-                        for (let talk of auditorium.talks.values()) {
-                            talks.push([talk, confAud]);
+                        if (! auditorium.isPhysical) {
+                            // Physical auditoriums don't have any talk rooms
+                            for (let talk of auditorium.talks.values()) {
+                                talks.push([talk, confAud]);
+                            }
                         }
                     } catch (e) {
                         throw {
