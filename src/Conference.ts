@@ -152,6 +152,11 @@ export class Conference {
         return !!this.rootSpace;
     }
 
+    /**
+     * Returns all detected talk rooms for this conference.
+     * (Note that since physical auditoriums don't have any talk rooms, there won't be any results for talks
+     * in physical auditoriums here.)
+     */
     public get storedTalks(): Talk[] {
         return Object.values(this.talks);
     }
