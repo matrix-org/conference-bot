@@ -29,7 +29,7 @@ export class CopyModeratorsCommand implements ICommand {
         }
         const fromRoomId = await client.resolveRoom(args[0]);
         const toRoomId = await client.resolveRoom(args[1]);
-        const fromPl = await client.getRoomStateEvent(fromRoomId, "m.room.power_levels", "");
+        const fromPl: {"users"?: Record<string, any>} = await client.getRoomStateEvent(fromRoomId, "m.room.power_levels", "");
         let toPl = await client.getRoomStateEvent(toRoomId, "m.room.power_levels", "");
 
         if (!toPl) toPl = {};

@@ -32,7 +32,7 @@ export class JsonScheduleLoader {
 
             for (let talk of auditorium.talks.values()) {
                 if (this.talks.has(talk.id)) {
-                    const conflictingTalk = this.talks.get(talk.id);
+                    const conflictingTalk = this.talks.get(talk.id)!;
                     throw `Talk ID ${talk.id} is not unique — occupied by both «${talk.title}» and «${conflictingTalk.title}»!`;
                 }
                 this.talks.set(talk.id, talk);
@@ -91,7 +91,7 @@ export class JsonScheduleLoader {
         for (let unconvTalk of stream.talks) {
             const talk = this.convertTalk(unconvTalk, auditoriumId);
             if (talks.has(talk.id)) {
-                const conflictingTalk = talks.get(talk.id);
+                const conflictingTalk = talks.get(talk.id)!;
                 throw `Talk ID ${talk.id} is not unique — occupied by both «${talk.title}» and «${conflictingTalk.title}»!`;
             }
             talks.set(talk.id, talk);

@@ -60,7 +60,7 @@ export async function doAuditoriumResolveAction(
     const resolvedAudPeople = audPeople.map(p => allPossiblePeople.find(b => p.id === b.person.id));
     if (resolvedAudPeople.some(p => !p)) throw new Error("Failed to resolve all targets for auditorium");
 
-    await action(client, realAud.roomId, resolvedAudPeople);
+    await action(client, realAud.roomId, resolvedAudPeople as ResolvedPersonIdentifier[]);
 
     if (!skipTalks) {
         const talks = await asyncFilter(
@@ -81,7 +81,7 @@ export async function doAuditoriumResolveAction(
                 throw new Error("Failed to resolve all targets for talk: " + JSON.stringify(unresolveable));
             }
 
-            await action(client, talk.roomId, resolvedTalkPeople);
+            await action(client, talk.roomId, resolvedTalkPeople as ResolvedPersonIdentifier[]);
         }
     }
 }

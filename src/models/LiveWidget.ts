@@ -168,7 +168,7 @@ export class LiveWidget {
         };
     }
 
-    public static layoutForTalk(qa: IStateEvent<IWidget>, scoreboard: IStateEvent<IWidget>): IStateEvent<ILayout> {
+    public static layoutForTalk(qa: IStateEvent<IWidget>, scoreboard: IStateEvent<IWidget> | null): IStateEvent<ILayout> {
         const val: IStateEvent<ILayout> = {
             type: "io.element.widgets.layout",
             state_key: "",

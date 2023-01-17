@@ -38,7 +38,7 @@ export class InviteMeCommand implements ICommand {
             if (!groups.has(groupName)) {
                 groups.set(groupName, new Set());
             }
-            groups.get(groupName).add(roomId);
+            groups.get(groupName)!.add(roomId);
         }
 
         for (const aud of conference.storedAuditoriums) {
@@ -98,10 +98,10 @@ export class InviteMeCommand implements ICommand {
         const userId = args[1] || event['sender'];
 
         if (roomGroups.has(args[0])) {
-            const group = roomGroups.get(args[0]);
+            const group = roomGroups.get(args[0])!;
             await client.unstableApis.addReactionToEvent(roomId, event['event_id'], 'Joining ' + group.size);
 
-            for (const roomId of roomGroups.get(args[0])) {
+            for (const roomId of group) {
                 try {
                     await this.inviteTo(client, userId, roomId);
                 } catch (e) {

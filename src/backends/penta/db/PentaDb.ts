@@ -175,7 +175,7 @@ export class PentaDb {
                 }
             } catch (e) {
                 LogService.warn("PentaDb", "Invalid user ID: " + userId, e);
-                r.matrix_id = null; // force clear
+                r.matrix_id = ""; // force clear
             }
             return r;
         });

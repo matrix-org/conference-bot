@@ -45,7 +45,7 @@ export class AttendanceCommand implements ICommand {
         }
 
         let html = "<ul>";
-        const append = async (invitePeople: IPerson[], bsPeople: IPerson[], name: string, roomId: string, bsRoomId: string, withHtml: boolean) => {
+        const append = async (invitePeople: IPerson[], bsPeople: IPerson[] | null, name: string, roomId: string, bsRoomId: string | null, withHtml: boolean) => {
             const inviteTargets = await resolveIdentifiers(invitePeople);
 
             const joinedMembers = await client.getJoinedRoomMembers(roomId);
@@ -63,6 +63,9 @@ export class AttendanceCommand implements ICommand {
             if (withHtml) html += `<li><b>${name}</b> ${htmlNum(acceptedPct)} have joined, ${htmlNum(emailPct, true)} have emails waiting`;
 
             if (bsRoomId) {
+                if (!bsPeople) {
+                    throw new Error("bsRoomId set but bsPeople isn't!");
+                }
                 const bsInviteTargets = await resolveIdentifiers(bsPeople);
                 const bsJoinedMembers = await client.getJoinedRoomMembers(bsRoomId);
                 const bsEmailInvites = bsInviteTargets.filter(i => !i.mxid).length;
@@ -80,14 +83,14 @@ export class AttendanceCommand implements ICommand {
             if (withHtml) html += "</li>";
         };
         for (const auditorium of conference.storedAuditoriums) {
-            const doAppend = targetAudId && (targetAudId === "all" || targetAudId === await auditorium.getId());
+            const doAppend = !!targetAudId && (targetAudId === "all" || targetAudId === await auditorium.getId());
             const bs = conference.getAuditoriumBackstage(await auditorium.getId());
             const inviteTargets = await conference.getInviteTargetsForAuditorium(auditorium);
             const bsInviteTargets = await conference.getInviteTargetsForAuditorium(auditorium, true);
             await append(inviteTargets, bsInviteTargets, await auditorium.getId(), auditorium.roomId, bs.roomId, doAppend);
         }
         for (const spiRoom of conference.storedInterestRooms) {
-            const doAppend = targetAudId && (targetAudId === "all" || targetAudId === await spiRoom.getId());
+            const doAppend = !!targetAudId && (targetAudId === "all" || targetAudId === await spiRoom.getId());
             const inviteTargets = await conference.getInviteTargetsForInterest(spiRoom);
             await append(inviteTargets, null, await spiRoom.getId(), spiRoom.roomId, null, doAppend);
         }

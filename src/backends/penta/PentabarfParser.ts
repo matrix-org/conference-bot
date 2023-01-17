@@ -31,7 +31,7 @@ function simpleTimeParse(str: string): { hours: number, minutes: number } {
     return {hours: Number(parts[0]), minutes: Number(parts[1])};
 }
 
-export function deprefix(id: string, prefixConfig: IPrefixConfig): {kind: RoomKind, name: string} {
+export function deprefix(id: string, prefixConfig: IPrefixConfig): {kind: RoomKind, name: string} | null {
     const override = prefixConfig.nameOverrides[id];
 
     const auditoriumPrefix = prefixConfig.auditoriumRooms.find(p => id.startsWith(p));

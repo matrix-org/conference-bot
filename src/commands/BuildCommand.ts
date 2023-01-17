@@ -54,7 +54,7 @@ export class BuildCommand implements ICommand {
             await conference.createDb(backend.conference);
         }
 
-        const spacePill = await MentionPill.forRoom((await conference.getSpace()).roomId, client);
+        const spacePill = await MentionPill.forRoom((await conference.getSpace())!.roomId, client);
         const messagePrefix = "Conference prepared! Making rooms for later use (this will take a while)...";
         const reply = RichReply.createFor(roomId, event,
             messagePrefix + "\n\nYour conference's space is at " + spacePill.text,

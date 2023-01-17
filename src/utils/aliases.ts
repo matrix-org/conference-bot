@@ -20,7 +20,7 @@ import config from "../config";
 import { applySuffixRules } from "../utils";
 
 export interface ICanonicalAliasContent {
-    alias: string;
+    alias: string | null;
     alt_aliases: string[];
 }
 

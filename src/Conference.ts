@@ -220,19 +220,19 @@ export class Conference {
                             case RoomKind.Auditorium:
                                 const auditoriumId = locatorEvent[RSC_AUDITORIUM_ID];
                                 if (this.backend.auditoriums.has(auditoriumId)) {
-                                    this.auditoriums[auditoriumId] = new Auditorium(roomId, this.backend.auditoriums.get(auditoriumId), this.client, this);
+                                    this.auditoriums[auditoriumId] = new Auditorium(roomId, this.backend.auditoriums.get(auditoriumId)!, this.client, this);
                                 }
                                 break;
                             case RoomKind.AuditoriumBackstage:
                                 const auditoriumBsId = locatorEvent[RSC_AUDITORIUM_ID];
                                 if (this.backend.auditoriums.has(auditoriumBsId)) {
-                                    this.auditoriumBackstages[auditoriumBsId] = new AuditoriumBackstage(roomId, this.backend.auditoriums.get(auditoriumBsId), this.client, this);
+                                    this.auditoriumBackstages[auditoriumBsId] = new AuditoriumBackstage(roomId, this.backend.auditoriums.get(auditoriumBsId)!, this.client, this);
                                 }
                                 break;
                             case RoomKind.Talk:
                                 const talkId = locatorEvent[RSC_TALK_ID];
                                 if (this.backend.talks.has(talkId)) {
-                                    this.talks[talkId] = new Talk(roomId, this.backend.talks.get(talkId), this.client, this);
+                                    this.talks[talkId] = new Talk(roomId, this.backend.talks.get(talkId)!, this.client, this);
                                 }
                                 break;
                             case RoomKind.SpecialInterest:
@@ -353,6 +353,12 @@ export class Conference {
             config.conference.supportRooms.specialInterest,
             config.conference.supportRooms.coordinators,
         ];
+
+        const rootSpace = await this.getSpace();
+        if (!rootSpace) {
+            throw new Error("Can't create support rooms: No root space");
+        }
+
         for (const alias of roomAliases) {
             // Skip aliases that aren't configured.
             if (alias == null) continue;
@@ -368,7 +374,7 @@ export class Conference {
                             invite: [config.moderatorUserId],
                         }),
                     );
-                    (await this.getSpace()).addChildRoom(roomId);
+                    await rootSpace.addChildRoom(roomId);
                 } catch (e) {
                     throw {
                         message: `Error whilst creating ${alias}: ${JSON.stringify(e?.body)}. Tried to create the room because failed to resolve it: ${JSON.stringify(e1?.body)}`,
@@ -391,6 +397,14 @@ export class Conference {
     public async createSubspace(
         subspaceId: string, name: string, aliasLocalpart: string
     ): Promise<Space> {
+        const rootSpace = await this.getSpace();
+        if (!rootSpace) {
+            throw new Error("Can't create subspace: No root space");
+        }
+        if (!this.dbRoom) {
+            throw new Error("createSubspace: No DB room!");
+        }
+
         let subspace: Space;
         if (!this.subspaces[subspaceId]) {
             subspace = await this.client.createSpace({
@@ -413,7 +427,7 @@ export class Conference {
         }
 
         // Ensure that the subspace appears within the conference space.
-        await (await this.getSpace()).addChildSpace(subspace);
+        await rootSpace.addChildSpace(subspace);
 
         // Ensure that the subspace can be viewed by guest users.
         await this.client.sendStateEvent(
@@ -568,6 +582,12 @@ export class Conference {
 
     public async createTalk(talk: ITalk, auditorium: Auditorium): Promise<MatrixRoom> {
         let roomId: string;
+
+        const auditoriumSpace = await auditorium.getAssociatedSpace();
+        if (!auditoriumSpace) {
+            throw new Error(`Can't create talk ${talk.id} in ${talk.auditoriumId}: No auditorium container space`);
+        }
+
         if (!this.talks[talk.id]) {
             roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(TALK_CREATION_TEMPLATE, {
                 name: talk.title,
@@ -596,12 +616,16 @@ export class Conference {
 
         // Ensure that the room appears within the correct space.
         const startTime = new Date(talk.startTime).toISOString();
-        await (await auditorium.getAssociatedSpace()).addChildRoom(roomId, { order: `3-talk-${startTime}` });
+        await auditoriumSpace.addChildRoom(roomId, { order: `3-talk-${startTime}` });
 
         return this.talks[talk.id];
     }
 
     public async createUpdatePerson(person: IPerson): Promise<IPerson> {
+        if (!this.dbRoom) {
+            throw new Error("createUpdatePerson: No DB room!");
+        }
+
         const storedPerson = makeStoredPersonOverride(person);
         await this.client.sendStateEvent(this.dbRoom.roomId, storedPerson.type, storedPerson.state_key, storedPerson.content);
         this.people[storedPerson.content.id] = storedPerson.content;
@@ -616,6 +640,11 @@ export class Conference {
     public async getDesiredParentSpace(
         auditoriumOrInterestRoom: IAuditorium | IInterestRoom
     ): Promise<Space> {
+        const rootSpace = await this.getSpace();
+        if (!rootSpace) {
+            throw new Error(`Can't decide on parent space for ${auditoriumOrInterestRoom.kind}:${auditoriumOrInterestRoom.id}: No root space`);
+        }
+
         const id = auditoriumOrInterestRoom.id;
 
         for (const [subspaceId, subspaceConfig] of Object.entries(config.conference.subspaces)) {
@@ -631,7 +660,7 @@ export class Conference {
         }
 
         // Default to the top-level conference space.
-        return await this.getSpace();
+        return rootSpace;
     }
 
     public getPerson(personId: string): IPerson {
@@ -640,7 +669,7 @@ export class Conference {
 
     public async getPeopleForAuditorium(auditorium: Auditorium): Promise<IPerson[]> {
         const audit = await auditorium.getDefinition();
-        const people = [];
+        const people: IPerson[] = [];
         for (const t of Object.values(this.talks)) {
             const talk = await t.getDefinition();
             if (talk.auditoriumId == audit.id) {
@@ -740,7 +769,7 @@ export class Conference {
     }
 
     public async ensurePermissionsFor(people: ResolvedPersonIdentifier[], roomId: string): Promise<void> {
-        const mxids = people.filter(t => !!t.mxid).map(r => r.mxid);
+        const mxids = people.filter(t => !!t.mxid).map(r => r.mxid!);
 
         // Now for the fun part: updating the power levels. We expect there to be sensible content
         // already, so we just need to update the people map. We need to not forget ourselves otherwise
