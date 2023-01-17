@@ -731,7 +731,7 @@ export class Conference {
         return this.auditoriumBackstages[audId];
     }
 
-    public getTalk(talkId: string): Talk {
+    public getTalk(talkId: string): Talk | undefined {
         return this.talks[talkId];
     }
 
