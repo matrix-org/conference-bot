@@ -20,7 +20,7 @@ limitations under the License.
 
 import { LogLevel, LogService, MatrixClient, SimpleFsStorageProvider, UserID } from "matrix-bot-sdk";
 import * as path from "path";
-import config from "./config";
+import config, { IPentaScheduleBackendConfig } from "./config";
 import { ICommand } from "./commands/ICommand";
 import { HelpCommand } from "./commands/HelpCommand";
 import { BuildCommand } from "./commands/BuildCommand";
@@ -60,6 +60,7 @@ import { PentaBackend } from "./backends/penta/PentaBackend";
 import { JsonScheduleBackend } from "./backends/json/JsonScheduleBackend";
 import { JoinCommand } from "./commands/JoinRoomCommand";
 import { StatusCommand } from "./commands/StatusCommand";
+import { CachingBackend } from "./backends/CachingBackend";
 
 config.RUNTIME = {
     client: null,
@@ -168,7 +169,8 @@ let userId;
 async function loadBackend(): Promise<IScheduleBackend> {
     switch (config.conference.schedule.backend) {
         case "penta":
-            return await PentaBackend.new(config.conference.schedule);
+            const pentaCfg: IPentaScheduleBackendConfig = config.conference.schedule;
+            return await CachingBackend.new(() => PentaBackend.new(pentaCfg), path.join(config.dataPath, "penta_cache.json"));
         case "json":
             return await JsonScheduleBackend.new(config.conference.schedule);
         default:

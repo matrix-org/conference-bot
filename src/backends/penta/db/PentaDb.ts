@@ -61,6 +61,12 @@ export class PentaDb {
         this.isConnected = false;
     }
 
+    /**
+     * Gets a person by ID. Can returns multiple results because a person with the same ID may be defined multiple times
+     * acting in different capacities, e.g. speaker of one talk, coordinator of another.
+     * TODO Normalise this and ensure that a person is only defined once, with the roles split out from the definition of a person.
+     *      see: https://github.com/matrix-org/conference-bot/issues/151
+     */
     public async findPeopleWithId(personId: string): Promise<IPerson[]> {
         const numericPersonId = Number(personId);
         if (Number.isSafeInteger(numericPersonId)) {

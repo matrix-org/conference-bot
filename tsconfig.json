@@ -4,7 +4,7 @@
     "emitDecoratorMetadata": true,
     "module": "commonjs",
     "moduleResolution": "node",
-    "target": "es2015",
+    "target": "es2019",
     "noImplicitAny": false,
     "sourceMap": true,
     "outDir": "./lib",

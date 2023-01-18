@@ -29,6 +29,7 @@ import { logMessage } from "./LogProxy";
 import * as htmlEscape from "escape-html";
 import * as crypto from "crypto";
 import config from "./config";
+import { readFile, writeFile, rename } from "fs";
 
 export async function replaceRoomIdsWithPills(client: MatrixClient, text: string, roomIds: string[] | string, msgtype: MessageType = "m.text"): Promise<TextualMessageEventContent> {
     if (!Array.isArray(roomIds)) roomIds = [roomIds];
@@ -197,4 +198,63 @@ export function makeDisplayName(name: string, identifier: string): string {
     return applySuffixRules(
         name, identifier, config.conference.prefixes.displayNameSuffixes
     );
+}
+
+
+/**
+ * Reads a JSON file from disk.
+ */
+export function readJsonFileAsync(path: string): Promise<object> {
+    return new Promise((resolve, reject) => {
+        readFile(path, {encoding: 'utf-8'}, (err, buf: string) => {
+            if (err) {
+                reject(err);
+            } else {
+                try {
+                    resolve(JSON.parse(buf));
+                } catch (err) {
+                    reject(err);
+                }
+            }
+        })
+    });
+}
+
+/**
+ * Writes a JSON file to disk, atomically.
+ *
+ * @param replacer: If specified, a function that is passed to JSON.stringify to replace unknown objects.
+ */
+export async function writeJsonFileAsync(path: string, data: object, replacer: any | undefined = undefined): Promise<void> {
+    const tempPath = path + ".part"
+    // First write to the temporary file
+    await new Promise<void>((resolve, reject) => {
+        writeFile(tempPath, JSON.stringify(data, replacer), (err) => {
+            if (err) {
+                reject(err);
+            } else {
+                try {
+                    resolve();
+                } catch (err) {
+                    reject(err);
+                }
+            }
+        })
+    });
+
+    // Then atomically rename the file into place.
+    await new Promise<void>((resolve, reject) => rename(tempPath, path, (err) => {
+        if (err) {
+            reject(err);
+        } else {
+            resolve();
+        }
+    }));
+}
+
+export function jsonReplacerMapToObject(_key: any, input: any): any {
+    if (input instanceof Map) {
+        return Object.fromEntries(input);
+    }
+    return input;
 }

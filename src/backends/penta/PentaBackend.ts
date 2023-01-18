@@ -4,6 +4,7 @@ import { AuditoriumId, InterestId, IScheduleBackend, TalkId } from "../ISchedule
 import { PentaDb } from "./db/PentaDb";
 import { PentabarfParser } from "./PentabarfParser";
 import * as fetch from "node-fetch";
+import { LogService } from "matrix-bot-sdk";
 
 
 export class PentaBackend implements IScheduleBackend {
@@ -80,10 +81,10 @@ export class PentaBackend implements IScheduleBackend {
         const dbPeople = await this.db.findPeopleWithId(person.id);
         if (dbPeople.length == 0) return;
 
-        if (dbPeople.length > 1) {
-            throw new Error(`Person ID '${person.id}' has ${dbPeople.length} different people associated with it!`);
-        }
-
+        // Multiple people may be returned by this query.
+        // See https://github.com/matrix-org/conference-bot/issues/151
+        // In the future, would be nice to throw an exception:
+        // `Person ID '${person.id}' has ${dbPeople.length} different people associated with it!`
         const dbPerson = dbPeople[0];
         person.matrix_id = dbPerson.matrix_id;
         person.email = dbPerson.email;
@@ -95,7 +96,12 @@ export class PentaBackend implements IScheduleBackend {
     }
 
     static async new(cfg: IPentaScheduleBackendConfig): Promise<PentaBackend> {
-        const xml = await fetch(cfg.scheduleDefinition).then(r => r.text());
+        const xml = await fetch(cfg.scheduleDefinition).then(async r => {
+            if (! r.ok) {
+                throw new Error("Penta XML fetch not OK: " + r.status + "; " + await r.text())
+            }
+            return await r.text();
+        });
         const parsed = new PentabarfParser(xml, config.conference.prefixes);
         const db = new PentaDb(cfg.database);
         await db.connect();
