@@ -44,7 +44,7 @@ import {
     RS_STORED_SUBSPACE,
 } from "./models/room_state";
 import { makeDisplayName, objectFastClone, safeCreateRoom } from "./utils";
-import { assignAliasVariations, makeLocalpart } from "./utils/aliases";
+import { addAndDeleteManagedAliases, assignAliasVariations, calculateAliasVariations, makeLocalpart } from "./utils/aliases";
 import config from "./config";
 import { MatrixRoom } from "./models/MatrixRoom";
 import { Auditorium, AuditoriumBackstage } from "./models/Auditorium";
@@ -600,8 +600,6 @@ export class Conference {
                     makeTalkLocator(this.id, talk.id),
                 ],
             }));
-            await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + (await auditorium.getSlug()) + '-' + talk.slug);
-            await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + 'talk-' + talk.id);
             this.talks[talk.id] = new Talk(roomId, talk, this.client, this);
         } else {
             roomId = this.talks[talk.id].roomId;
@@ -609,6 +607,14 @@ export class Conference {
             // Ensure that the room has the correct name.
             await this.client.sendStateEvent(roomId, "m.room.name", "", {name: talk.title});
         }
+
+        // Calculate all the aliases the room should have, then update the list of bot-assigned aliases to match
+        const aliasesToAssign = new Set<string>();
+        calculateAliasVariations(config.conference.prefixes.aliases + (await auditorium.getSlug()) + '-' + talk.slug)
+            .forEach(aliasesToAssign.add);
+        calculateAliasVariations(config.conference.prefixes.aliases + 'talk-' + talk.id)
+            .forEach(aliasesToAssign.add);
+        await addAndDeleteManagedAliases(this.client, roomId, aliasesToAssign);
 
         // TODO: Send widgets after creation
         // const widget = await LiveWidget.forTalk(this.talks[talk.id], this.client);
