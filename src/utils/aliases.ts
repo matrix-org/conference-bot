@@ -65,9 +65,25 @@ export function makeLocalpart(localpart: string, identifier?: string): string {
 }
 
 export async function assignAliasVariations(client: MatrixClient, roomId: string, localpart: string, identifier?: string): Promise<void> {
-    localpart = makeLocalpart(localpart, identifier);
-    const localparts = new Set([localpart, localpart.toLowerCase(), localpart.toUpperCase()]);
+    const localparts = calculateAliasVariations(localpart, identifier);
     for (const lp of localparts) {
         await safeAssignAlias(client, roomId, lp);
     }
+}
+
+/**
+ * Given the desired localpart of a room alias, generates variations of that room alias.
+ *
+ * Currently, this includes:
+ * - the localpart itself
+ * - lowercase
+ * - uppercase
+ *
+ * @param localpart desired localpart of a room
+ * @param identifier optionally, an identifier for evaluating suffix rules; see `applySuffixRules`.
+ * @returns set of variations
+ */
+export function calculateAliasVariations(localpart: string, identifier?: string): Set<string> {
+    localpart = makeLocalpart(localpart, identifier);
+    return new Set([localpart, localpart.toLowerCase(), localpart.toUpperCase()]);
 }
