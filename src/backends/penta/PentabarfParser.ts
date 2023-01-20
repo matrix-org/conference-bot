@@ -20,6 +20,7 @@ import * as moment from "moment";
 import { RoomKind } from "../../models/room_kinds";
 import { IPrefixConfig } from "../../config";
 import { LogService } from 'matrix-bot-sdk';
+import { slugify } from '../../utils/aliases';
 
 function arrayLike<T>(val: T | T[]): T[] {
     if (Array.isArray(val)) return val;
@@ -166,7 +167,7 @@ export class PentabarfParser {
                 const isPhysical = prefixConfig.physicalAuditoriumRooms.find(p => audId.startsWith(p)) !== undefined;
                 let auditorium: IAuditorium = {
                     id: audId,
-                    slug: metadata.name,
+                    slug: slugify(metadata.name),
                     name: metadata.name,
                     kind: metadata.kind,
                     talks: new Map(),
