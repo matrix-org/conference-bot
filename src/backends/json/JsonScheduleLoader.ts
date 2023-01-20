@@ -3,6 +3,7 @@ import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from ".
 import { JSONSchedule, JSONSpeaker, JSONStream, JSONTalk } from "./jsontypes/JsonSchedule.schema";
 import * as moment from "moment";
 import { AuditoriumId, InterestId, TalkId } from "../IScheduleBackend";
+import { slugify } from "../../utils/aliases";
 
 /**
  * Loader and holder for JSON schedules.
@@ -51,7 +52,7 @@ export class JsonScheduleLoader {
 
     private convertSpeaker(speaker: JSONSpeaker): IPerson {
         return {
-            id: this.slugify(speaker.display_name),
+            id: slugify(speaker.display_name),
             name: speaker.display_name,
             matrix_id: speaker.matrix_id,
             email: speaker.email,
@@ -67,7 +68,7 @@ export class JsonScheduleLoader {
             id: talk.id.toString(), // TODO We have numbers on the rhs and a string on the lhs.
             title: talk.title,
             subtitle: talk.description, // TODO is this valid?
-            slug: this.slugify(talk.title),
+            slug: slugify(talk.title),
 
             auditoriumId,
             prerecorded: true, // TODO
@@ -84,7 +85,7 @@ export class JsonScheduleLoader {
     }
 
     private convertAuditorium(stream: JSONStream): IAuditorium {
-        const auditoriumId = this.slugify(stream.stream_name);
+        const auditoriumId = slugify(stream.stream_name);
 
         const talks: Map<TalkId, ITalk> = new Map();
 
@@ -99,20 +100,12 @@ export class JsonScheduleLoader {
 
         return {
             id: auditoriumId,
-            slug: this.slugify(stream.stream_name),
+            slug: slugify(stream.stream_name),
             name: stream.stream_name,
             kind: RoomKind.Auditorium,
             talks,
             // TODO Support physical auditoriums in the JSON schedule backend
             isPhysical: false,
         };
-    }
-
-    /**
-     * Convert a string to something that is usable as a slug / ID.
-     * The result only contains the characters in [a-z0-9-_].
-     */
-    private slugify(input: string): string {
-        return input.toLowerCase().replace(/[^0-9a-z-_]+/g, "_");
     }
 }
