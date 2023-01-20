@@ -18,6 +18,7 @@ import { LogLevel, LogService, MatrixClient, UserID } from "matrix-bot-sdk";
 import { logMessage } from "../LogProxy";
 import config from "../config";
 import { applySuffixRules } from "../utils";
+import { setDifference } from "./sets";
 
 export interface ICanonicalAliasContent {
     alias: string | null;
@@ -65,9 +66,86 @@ export function makeLocalpart(localpart: string, identifier?: string): string {
 }
 
 export async function assignAliasVariations(client: MatrixClient, roomId: string, localpart: string, identifier?: string): Promise<void> {
-    localpart = makeLocalpart(localpart, identifier);
-    const localparts = new Set([localpart, localpart.toLowerCase(), localpart.toUpperCase()]);
+    const localparts = calculateAliasVariations(localpart, identifier);
     for (const lp of localparts) {
         await safeAssignAlias(client, roomId, lp);
+    }
+}
+
+/**
+ * Given the desired localpart of a room alias, generates variations of that room alias.
+ *
+ * Currently, this includes:
+ * - the localpart itself
+ * - lowercase
+ * - uppercase
+ *
+ * @param localpart desired localpart of a room
+ * @param identifier optionally, an identifier for evaluating suffix rules; see `applySuffixRules`.
+ * @returns set of variations
+ */
+export function calculateAliasVariations(localpart: string, identifier?: string): Set<string> {
+    localpart = makeLocalpart(localpart, identifier);
+    return new Set([localpart, localpart.toLowerCase(), localpart.toUpperCase()]);
+}
+
+/**
+ * Given a room alias, returns only the localpart.
+ */
+function stripAliasToLocalpart(alias: string): string {
+    if (! alias.startsWith("#")) {
+        throw new Error(`Alias does not start with '#': '${alias}; can't strip to localpart.`);
+    }
+    const colonPos = alias.indexOf(":");
+    if (colonPos === -1) {
+        throw new Error(`Alias does not contain ':': '${alias}; can't strip to localpart.`);
+    }
+    return alias.substring(1, colonPos);
+}
+
+/**
+ * A type of state event, with state keys being localparts of room aliases.
+ *
+ * Any room alias present as a state key in this state event type is taken to be **managed** by the bot,
+ * which means the bot is allowed to remove it later on.
+ */
+const STATE_EVENT_MANAGED_ALIAS: string = "org.matrix.confbot.managed_alias";
+
+async function listManagedAliasLocalpartsInRoom(client: MatrixClient, roomId: string): Promise<Set<string>> {
+    const localAliases = client.doRequest("GET", "/_matrix/client/v3/rooms/" + encodeURIComponent(roomId) + "/aliases");
+    const aliases: string[] = localAliases["aliases"];
+
+    const presentLocalparts: Set<string> = new Set();
+
+    for (const localpart of aliases.map(stripAliasToLocalpart)) {
+        const event = await client.getRoomStateEvent(roomId, STATE_EVENT_MANAGED_ALIAS, localpart);
+        if (event !== null && event.managed === true) {
+            // This is a managed state event.
+            presentLocalparts.add(localpart);
+        }
+    }
+
+    return presentLocalparts;
+}
+
+export async function addAndDeleteManagedAliases(client: MatrixClient, roomId: string, desiredLocalparts: Set<string>): Promise<void> {
+    const presentLocalparts: Set<string> = await listManagedAliasLocalpartsInRoom(client, roomId);
+
+    const localpartsToBeAdded = setDifference(desiredLocalparts, presentLocalparts);
+    const localpartsToBeRemoved = setDifference(presentLocalparts, desiredLocalparts);
+
+    for (const localpart of localpartsToBeAdded) {
+        // Create the state event marking the alias as managed first: this ensures we are allowed to remove it later on,
+        // even if we don't succeed in creating the alias the first time around.
+        await client.sendStateEvent(roomId, STATE_EVENT_MANAGED_ALIAS, localpart, {"managed": true});
+        await safeAssignAlias(client, roomId, localpart);
+    }
+
+    for (const localpart of localpartsToBeRemoved) {
+        // Delete the alias first of all; this ensures we don't lose 'management' status over the alias
+        // if we fail to delete it.
+        // But it does mean that we might have an orphaned 'managed alias' marker if we fail to remove the state event later...
+        await client.deleteRoomAlias(`#${localpart}:${new UserID(await client.getUserId()).domain}`);
+        await client.sendStateEvent(roomId, STATE_EVENT_MANAGED_ALIAS, localpart, {"managed": false, "notes": "deleted"});
     }
 }
