@@ -152,8 +152,8 @@ export async function addAndDeleteManagedAliases(client: MatrixClient, roomId: s
 
 /**
  * Convert a string to something that is usable as a slug / ID.
- * The result only contains the characters in [a-z0-9-_].
+ * The result only contains the characters in [a-z0-9-_.].
  */
 export function slugify(input: string): string {
-    return input.toLowerCase().replace(/[^0-9a-z-_]+/g, "_");
+    return input.toLowerCase().replace(/[^0-9a-z-_.]+/g, "_");
 }
