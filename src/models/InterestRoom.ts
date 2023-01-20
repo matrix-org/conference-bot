@@ -17,7 +17,7 @@ limitations under the License.
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { MatrixRoom } from "./MatrixRoom";
-import { deprefix } from "../backends/penta/PentabarfParser";
+import { decodePrefix } from "../backends/penta/PentabarfParser";
 import { PhysicalRoom } from "./PhysicalRoom";
 import config from "../config";
 
@@ -35,7 +35,7 @@ export class InterestRoom extends MatrixRoom implements PhysicalRoom {
         super(roomId, client, conference);
 
         this.id = id;
-        this.name = deprefix(id, config.conference.prefixes)!.name;
+        this.name = decodePrefix(id, config.conference.prefixes)!.name;
     }
 
     public async getName(): Promise<string> {

@@ -37,7 +37,7 @@ function simpleTimeParse(str: string): { hours: number, minutes: number } {
  * decodes that to figure out what type of event-room it is
  * and also returns the unprefixed version.
  */
-export function deprefix(id: string, prefixConfig: IPrefixConfig): {kind: RoomKind, name: string} | null {
+export function decodePrefix(id: string, prefixConfig: IPrefixConfig): {kind: RoomKind, name: string} | null {
     const override = prefixConfig.nameOverrides[id];
 
     const auditoriumPrefix = prefixConfig.auditoriumRooms.find(p => id.startsWith(p));
@@ -153,7 +153,7 @@ export class PentabarfParser {
             for (const pRoom of arrayLike(day.room)) {
                 if (!pRoom) continue;
 
-                const metadata = deprefix(pRoom.attr?.["@_name"] || "org.matrix.confbot.unknown", prefixConfig);
+                const metadata = decodePrefix(pRoom.attr?.["@_name"] || "org.matrix.confbot.unknown", prefixConfig);
                 if (metadata === null) {
                     LogService.info("PentabarfParser", "Ignoring unrecognised room name from schedule: ", pRoom.attr?.["@_name"]);
                     continue;
