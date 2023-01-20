@@ -162,9 +162,10 @@ export class PentabarfParser {
                     continue;
                 }
                 if (metadata.kind !== RoomKind.Auditorium) continue;
-                const isPhysical = prefixConfig.physicalAuditoriumRooms.find(p => auditorium.id.startsWith(p)) !== undefined;
+                const audId = pRoom.attr?.["@_name"];
+                const isPhysical = prefixConfig.physicalAuditoriumRooms.find(p => audId.startsWith(p)) !== undefined;
                 let auditorium: IAuditorium = {
-                    id: pRoom.attr?.["@_name"],
+                    id: audId,
                     slug: metadata.name,
                     name: metadata.name,
                     kind: metadata.kind,
