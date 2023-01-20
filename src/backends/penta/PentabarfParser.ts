@@ -32,6 +32,11 @@ function simpleTimeParse(str: string): { hours: number, minutes: number } {
     return {hours: Number(parts[0]), minutes: Number(parts[1])};
 }
 
+/**
+ * Given a event-room ID (not a Matrix ID; a room from the Pentabarf XML),
+ * decodes that to figure out what type of event-room it is
+ * and also returns the unprefixed version.
+ */
 export function deprefix(id: string, prefixConfig: IPrefixConfig): {kind: RoomKind, name: string} | null {
     const override = prefixConfig.nameOverrides[id];
 
