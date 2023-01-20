@@ -93,6 +93,10 @@ export async function invitePersonToRoom(resolvedPerson: ResolvedPersonIdentifie
 
     await ensureIdentityClient();
 
+    if (!resolvedPerson.emails) {
+        throw new Error(`No e-mail addresses for resolved person ${resolvedPerson.person.id}.`);
+    }
+
     for (const email of resolvedPerson.emails) {
         const idInvite = await idClient.makeEmailInvite(email, roomId);
         const content = {

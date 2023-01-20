@@ -28,6 +28,7 @@ interface IRawCacheAuditorium {
     kind: RoomKind;
     // This is a Map<> in the real type.
     talks: Record<TalkId, ITalk>;
+    isPhysical: boolean;
 }
 
 /**
@@ -105,7 +106,8 @@ export class CachingBackend implements IScheduleBackend {
                 kind: raw.kind,
                 name: raw.name,
                 slug: raw.slug,
-                talks: new Map(Object.entries(raw.talks))
+                talks: new Map(Object.entries(raw.talks)),
+                isPhysical: raw.isPhysical
             };
         }
 

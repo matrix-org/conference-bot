@@ -73,6 +73,10 @@ export interface IAuditorium {
     name: string;
     kind: RoomKind;
     talks: Map<TalkId, ITalk>;
+    /**
+     * If true, this auditorium is just a virtual representation of a real-world physical auditorium.
+     */
+    isPhysical: boolean;
 }
 
 export interface IConference {

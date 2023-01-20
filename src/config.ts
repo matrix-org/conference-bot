@@ -87,6 +87,7 @@ interface IConfig {
 export interface IPrefixConfig {
     auditoriumRooms: string[];
     qaAuditoriumRooms: string[];
+    physicalAuditoriumRooms: string[];
     interestRooms: string[];
     aliases: string;
     suffixes: {

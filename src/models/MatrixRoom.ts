@@ -34,7 +34,7 @@ export class MatrixRoom {
         return this.space;
     }
 
-    public async getCanonicalAlias(): Promise<string> {
+    public async getCanonicalAlias(): Promise<string | null> {
         if (this.canonicalAlias) {
             return this.canonicalAlias;
         }

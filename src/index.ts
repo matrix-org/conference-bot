@@ -63,11 +63,12 @@ import { StatusCommand } from "./commands/StatusCommand";
 import { CachingBackend } from "./backends/CachingBackend";
 
 config.RUNTIME = {
-    client: null,
-    conference: null,
-    scheduler: null,
+    // TODO `null!` is ... nasty.
+    client: null!,
+    conference: null!,
+    scheduler: null!,
     ircBridge: null,
-    checkins: null,
+    checkins: null!,
 };
 
 process.on('SIGINT', () => {

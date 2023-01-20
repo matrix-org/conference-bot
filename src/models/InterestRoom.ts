@@ -35,7 +35,7 @@ export class InterestRoom extends MatrixRoom implements PhysicalRoom {
         super(roomId, client, conference);
 
         this.id = id;
-        this.name = deprefix(id, config.conference.prefixes).name;
+        this.name = deprefix(id, config.conference.prefixes)!.name;
     }
 
     public async getName(): Promise<string> {

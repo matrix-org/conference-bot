@@ -6,6 +6,9 @@
     "moduleResolution": "node",
     "target": "es2019",
     "noImplicitAny": false,
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "useUnknownInCatchVariables": false,
     "sourceMap": true,
     "outDir": "./lib",
     "types": [

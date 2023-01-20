@@ -57,13 +57,13 @@ export async function replaceRoomIdsWithPills(client: MatrixClient, text: string
         }
         const regexRoomId = new RegExp(escapeRegex(roomId), "g");
         content.body = content.body.replace(regexRoomId, alias);
-        content.formatted_body = content.formatted_body.replace(regexRoomId, `<a href="${Permalinks.forRoom(alias, viaServers)}">${alias}</a>`);
+        content.formatted_body = content.formatted_body!.replace(regexRoomId, `<a href="${Permalinks.forRoom(alias, viaServers)}">${alias}</a>`);
     }
 
     return content;
 }
 
-export function objectFastCloneWithout<T>(obj: T, keys: (keyof T)[]): T | Partial<T> {
+export function objectFastCloneWithout<T extends object>(obj: T, keys: (keyof T)[]): T | Partial<T> {
     const repl = <T>{};
     for (const key of <(keyof T)[]>Object.keys(obj)) {
         if (keys.includes(key)) continue;
@@ -72,7 +72,7 @@ export function objectFastCloneWithout<T>(obj: T, keys: (keyof T)[]): T | Partia
     return repl;
 }
 
-export function objectFastClone<T>(obj: T): T {
+export function objectFastClone<T extends object>(obj: T): T {
     const repl = <T>{};
     for (const key of <(keyof T)[]>Object.keys(obj)) {
         repl[key] = obj[key];
@@ -117,7 +117,7 @@ export interface IEncrypted {
     content: string;
 }
 
-export async function asyncFind<T>(a: T[], fn: (i: T) => Promise<boolean>): Promise<T> {
+export async function asyncFind<T>(a: T[], fn: (i: T) => Promise<boolean>): Promise<T | null> {
     for (const i of a) {
         if (await fn(i)) {
             return i;

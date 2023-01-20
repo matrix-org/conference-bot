@@ -10,7 +10,7 @@ const path = require("path");
 
 const prefixConfig: IPrefixConfig = {
     // Unused here.
-    aliases: "", displayNameSuffixes: {}, suffixes: {},
+    aliases: "", displayNameSuffixes: {}, suffixes: {}, physicalAuditoriumRooms: [],
 
     auditoriumRooms: [
         "A.",
@@ -67,7 +67,7 @@ test("talks should be rehydrated from the database", async () => {
     const b = new PentaBackend(backendConfig, parser, fakeDb);
     await b.init();
 
-    const talk = b.talks.get("E002")
+    const talk = b.talks.get("E002")!;
     expect(talk).toBeDefined();
 
     expect(talk.qa_startTime).toEqual(305);
