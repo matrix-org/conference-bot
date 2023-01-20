@@ -42,6 +42,10 @@ export function deprefix(id: string, prefixConfig: IPrefixConfig): {kind: RoomKi
 
     const auditoriumPrefix = prefixConfig.auditoriumRooms.find(p => id.startsWith(p));
     if (auditoriumPrefix) {
+        if (prefixConfig.physicalAuditoriumRooms.find(p => id.startsWith(p))) {
+            // For physical auditoriums: don't strip the prefix. For e.g. K.1.102 the `K` is a building name and is important!
+            return {kind: RoomKind.Auditorium, name: override || id};
+        }
         return {kind: RoomKind.Auditorium, name: override || id.substring(auditoriumPrefix.length)};
     }
 
