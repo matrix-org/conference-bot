@@ -22,22 +22,22 @@ import { controlsEl, makeLivestream, muteButton, pause, play, videoEl } from "./
 import { addlQuery, isWidget, widgetId } from "./widgets";
 import { formatDuration, getAttr } from "./common";
 
-const messagesEl = document.getElementById("messages");
-const jitsiContainer = document.getElementById("jitsiContainer");
-const jitsiUnderlay = document.getElementById("jitsiUnderlay");
-const liveBanner = document.getElementById("liveBanner");
-const liveBannerShortText = document.getElementById("liveBannerShortText");
-const liveBannerLongText = document.getElementById("liveBannerLongText");
-const joinButton = document.getElementById('joinButton');
+const messagesEl = document.getElementById("messages")!;
+const jitsiContainer = document.getElementById("jitsiContainer")!;
+const jitsiUnderlay = document.getElementById("jitsiUnderlay")!;
+const liveBanner = document.getElementById("liveBanner")!;
+const liveBannerShortText = document.getElementById("liveBannerShortText")!;
+const liveBannerLongText = document.getElementById("liveBannerLongText")!;
+const joinButton = document.getElementById('joinButton')!;
 
 const livestreamStartTime = getAttr('org.matrix.confbot.livestream_start_time') ?
-    parseInt(getAttr('org.matrix.confbot.livestream_start_time')) :
+    parseInt(getAttr('org.matrix.confbot.livestream_start_time')!) :
     null;
 const livestreamEndTime = getAttr('org.matrix.confbot.livestream_end_time') ?
-    parseInt(getAttr('org.matrix.confbot.livestream_end_time')) :
+    parseInt(getAttr('org.matrix.confbot.livestream_end_time')!) :
     null;
 
-let widgetApi: WidgetApi = null;
+let widgetApi: WidgetApi | null = null;
 
 // Start widget API as early as possible
 if (widgetId) {
@@ -46,7 +46,7 @@ if (widgetId) {
         widgetApi.requestCapabilities(VideoConferenceCapabilities);
         widgetApi.start();
         await new Promise<void>(resolve => {
-            widgetApi.once("ready", () => resolve());
+            widgetApi!.once("ready", () => resolve());
         });
         await widgetApi.setAlwaysOnScreen(false);
     })();

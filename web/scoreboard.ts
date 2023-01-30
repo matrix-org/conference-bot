@@ -19,7 +19,7 @@ import { MatrixCapabilities, WidgetApi } from "matrix-widget-api";
 import { widgetId } from "./widgets";
 import { formatDuration, getAttr } from "./common";
 
-const upvoteEl = document.getElementById("upvoted");
+const upvoteEl = document.getElementById("upvoted")!;
 
 interface Scoreboard {
     qaStartTime: number | null;
@@ -35,7 +35,7 @@ interface RoomMessage {
     senderAvatarHttpUrl?: string;
 }
 
-let widgetApi: WidgetApi = null;
+let widgetApi: WidgetApi | null = null;
 
 // Start widget API as early as possible
 if (widgetId) {
@@ -44,12 +44,12 @@ if (widgetId) {
         widgetApi.requestCapability(MatrixCapabilities.MSC2931Navigate);
         widgetApi.start();
         await new Promise<void>(resolve => {
-            widgetApi.once("ready", () => resolve());
+            widgetApi!.once("ready", () => resolve());
         });
     })();
 }
 
-const forRoomId = getAttr('org.matrix.confbot.room_id');
+const forRoomId = getAttr('org.matrix.confbot.room_id')!;
 
 function innerText(tag: string, clazz: string, text: string): [string, string[]] {
     const id = Date.now() + '-' + (Math.random() * Number.MAX_SAFE_INTEGER) + '-text';
@@ -68,11 +68,11 @@ function render(scoreboard: Scoreboard) {
         clearInterval(bannerUpdateTimer);
         bannerUpdateTimer = null;
     }
+    const banner = document.getElementById('scoreboardQABanner')!;
     if (scoreboard.qaStartTime !== null) {
         // Show the countdown banner
         function renderBannerText(qaStartTime: number) {
             const timeUntilStart = qaStartTime - Date.now();
-            const banner = document.getElementById('scoreboardQABanner');
             if (timeUntilStart < 0) {
                 banner.innerText = "Q&A has started";
             } else {
@@ -84,10 +84,10 @@ function render(scoreboard: Scoreboard) {
         }
         bannerUpdateTimer = window.setInterval(renderBannerText, 100, scoreboard.qaStartTime);
         renderBannerText(scoreboard.qaStartTime);
-        document.getElementById('scoreboardQABanner').style.display = 'block';
+        banner.style.display = 'block';
     } else {
         // Hide the countdown banner
-        document.getElementById('scoreboardQABanner').style.display = 'none';
+        banner.style.display = 'none';
     }
 
     let html = "";
@@ -124,7 +124,7 @@ function render(scoreboard: Scoreboard) {
     }
     upvoteEl.innerHTML = html;
     for (const innerText of innerTexts) {
-        document.getElementById(innerText[0]).innerText = innerText[1];
+        document.getElementById(innerText[0])!.innerText = innerText[1];
     }
 }
 
@@ -140,7 +140,7 @@ function intercept(ev) {
 
     ev.preventDefault();
     ev.stopPropagation();
-    widgetApi.navigateTo(ev.target.href);
+    widgetApi!.navigateTo(ev.target.href);
 }
 (<any>window).intercept = intercept;
 
