@@ -65,8 +65,13 @@ export function makeLocalpart(localpart: string, identifier?: string): string {
     return applySuffixRules(localpart, identifier, config.conference.prefixes.suffixes);
 }
 
-export async function assignAliasVariations(client: MatrixClient, roomId: string, localpart: string, identifier?: string): Promise<void> {
-    const localparts = calculateAliasVariations(localpart, identifier);
+export async function assignAliasVariations(client: MatrixClient, roomId: string, origLocalparts: string[], identifier?: string): Promise<void> {
+    const localparts = new Set<string>();
+    for (const origLocalpart of origLocalparts) {
+        for (const localpart of calculateAliasVariations(origLocalpart, identifier)) {
+            localparts.add(localpart);
+        }
+    }
     for (const lp of localparts) {
         await safeAssignAlias(client, roomId, lp);
     }
