@@ -157,3 +157,23 @@ export async function addAndDeleteManagedAliases(client: MatrixClient, roomId: s
 export function slugify(input: string): string {
     return input.toLowerCase().replace(/[^0-9a-z-_.]+/g, "_");
 }
+
+/**
+ * Given an unprefixed alias name and the configured list of alias prefixes, returns a list of all prefixed aliases.
+ * @param name Unprefixed alias name.
+ * @param prefixes List of (or single) string prefix(es). Likely to be taken from `IPrefixConfig.aliases`.
+ * @returns
+ */
+export function applyAllAliasPrefixes(name: string, prefixes: string | string[]): string[] {
+    if (typeof(prefixes) === "string") {
+        // For legacy config compatibility, accept a single string in place of an array of strings:
+        return [prefixes + name];
+    }
+
+    if (prefixes.length === 0) {
+        // It seems undesirable to lose all aliases for a room, so assume this should have been 'no prefix' rather than 'no aliases'.
+        return [name];
+    }
+
+    return prefixes.map(prefix => prefix + name);
+}
