@@ -20,6 +20,7 @@ import * as moment from "moment";
 import { RoomKind } from "../../models/room_kinds";
 import { IPrefixConfig } from "../../config";
 import { LogService } from 'matrix-bot-sdk';
+import { slugify } from '../../utils/aliases';
 
 function arrayLike<T>(val: T | T[]): T[] {
     if (Array.isArray(val)) return val;
@@ -31,11 +32,20 @@ function simpleTimeParse(str: string): { hours: number, minutes: number } {
     return {hours: Number(parts[0]), minutes: Number(parts[1])};
 }
 
-export function deprefix(id: string, prefixConfig: IPrefixConfig): {kind: RoomKind, name: string} | null {
+/**
+ * Given a event-room ID (not a Matrix ID; a room from the Pentabarf XML),
+ * decodes that to figure out what type of event-room it is
+ * and also returns the unprefixed version.
+ */
+export function decodePrefix(id: string, prefixConfig: IPrefixConfig): {kind: RoomKind, name: string} | null {
     const override = prefixConfig.nameOverrides[id];
 
     const auditoriumPrefix = prefixConfig.auditoriumRooms.find(p => id.startsWith(p));
     if (auditoriumPrefix) {
+        if (prefixConfig.physicalAuditoriumRooms.find(p => id.startsWith(p))) {
+            // For physical auditoriums: don't strip the prefix. For e.g. K.1.102 the `K` is a building name and is important!
+            return {kind: RoomKind.Auditorium, name: override || id};
+        }
         return {kind: RoomKind.Auditorium, name: override || id.substring(auditoriumPrefix.length)};
     }
 
@@ -143,7 +153,7 @@ export class PentabarfParser {
             for (const pRoom of arrayLike(day.room)) {
                 if (!pRoom) continue;
 
-                const metadata = deprefix(pRoom.attr?.["@_name"] || "org.matrix.confbot.unknown", prefixConfig);
+                const metadata = decodePrefix(pRoom.attr?.["@_name"] || "org.matrix.confbot.unknown", prefixConfig);
                 if (metadata === null) {
                     LogService.info("PentabarfParser", "Ignoring unrecognised room name from schedule: ", pRoom.attr?.["@_name"]);
                     continue;
@@ -162,10 +172,11 @@ export class PentabarfParser {
                     continue;
                 }
                 if (metadata.kind !== RoomKind.Auditorium) continue;
-                const isPhysical = prefixConfig.physicalAuditoriumRooms.find(p => auditorium.id.startsWith(p)) !== undefined;
+                const audId = pRoom.attr?.["@_name"];
+                const isPhysical = prefixConfig.physicalAuditoriumRooms.find(p => audId.startsWith(p)) !== undefined;
                 let auditorium: IAuditorium = {
-                    id: pRoom.attr?.["@_name"],
-                    slug: metadata.name,
+                    id: audId,
+                    slug: slugify(metadata.name),
                     name: metadata.name,
                     kind: metadata.kind,
                     talks: new Map(),

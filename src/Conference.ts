@@ -57,6 +57,7 @@ import { IStateEvent } from "./models/room_state";
 import { logMessage } from "./LogProxy";
 import { IScheduleBackend } from "./backends/IScheduleBackend";
 import { PentaBackend } from "./backends/penta/PentaBackend";
+import { setUnion } from "./utils/sets";
 
 export class Conference {
     private rootSpace: Space | null;
@@ -609,11 +610,10 @@ export class Conference {
         }
 
         // Calculate all the aliases the room should have, then update the list of bot-assigned aliases to match
-        const aliasesToAssign = new Set<string>();
-        calculateAliasVariations(config.conference.prefixes.aliases + (await auditorium.getSlug()) + '-' + talk.slug)
-            .forEach(aliasesToAssign.add);
-        calculateAliasVariations(config.conference.prefixes.aliases + 'talk-' + talk.id)
-            .forEach(aliasesToAssign.add);
+        const aliasesToAssign = setUnion(
+            calculateAliasVariations(config.conference.prefixes.aliases + (await auditorium.getSlug()) + '-' + talk.slug),
+            calculateAliasVariations(config.conference.prefixes.aliases + 'talk-' + talk.id)
+        );
         await addAndDeleteManagedAliases(this.client, roomId, aliasesToAssign);
 
         // TODO: Send widgets after creation

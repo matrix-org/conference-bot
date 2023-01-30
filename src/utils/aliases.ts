@@ -112,7 +112,7 @@ function stripAliasToLocalpart(alias: string): string {
 const STATE_EVENT_MANAGED_ALIAS: string = "org.matrix.confbot.managed_alias";
 
 async function listManagedAliasLocalpartsInRoom(client: MatrixClient, roomId: string): Promise<Set<string>> {
-    const localAliases = client.doRequest("GET", "/_matrix/client/v3/rooms/" + encodeURIComponent(roomId) + "/aliases");
+    const localAliases = await client.doRequest("GET", "/_matrix/client/v3/rooms/" + encodeURIComponent(roomId) + "/aliases");
     const aliases: string[] = localAliases["aliases"];
 
     const presentLocalparts: Set<string> = new Set();
@@ -148,4 +148,12 @@ export async function addAndDeleteManagedAliases(client: MatrixClient, roomId: s
         await client.deleteRoomAlias(`#${localpart}:${new UserID(await client.getUserId()).domain}`);
         await client.sendStateEvent(roomId, STATE_EVENT_MANAGED_ALIAS, localpart, {"managed": false, "notes": "deleted"});
     }
+}
+
+/**
+ * Convert a string to something that is usable as a slug / ID.
+ * The result only contains the characters in [a-z0-9-_.].
+ */
+export function slugify(input: string): string {
+    return input.toLowerCase().replace(/[^0-9a-z-_.]+/g, "_");
 }

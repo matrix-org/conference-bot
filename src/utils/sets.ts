@@ -11,3 +11,14 @@ export function setDifference<T>(left: Set<T>, right: Set<T>): Set<T> {
     }
     return result;
 }
+
+/**
+ * Computes the set union: the set with elements from both sets.
+ */
+export function setUnion<T>(left: Set<T>, right: Set<T>): Set<T> {
+    const result = new Set(left);
+    for (const ele of right) {
+        result.add(ele);
+    }
+    return result;
+}
