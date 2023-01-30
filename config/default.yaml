@@ -255,8 +255,11 @@ conference:
     nameOverrides:
       #"D.example": "example-room"
 
-    # The prefix to apply to all generated room aliases.
-    aliases: ""
+    # The prefix(es) to apply to all generated room aliases.
+    # If there are multiple of them, each one is applied separately (so the room has more and more aliases).
+    # (Don't forget an empty string in the list if you want an unprefixed alias for your rooms!)
+    aliases:
+      - ""
 
     # The alias suffixes to apply for certain prefixes of rooms
     suffixes:
