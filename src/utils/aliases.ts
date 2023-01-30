@@ -65,8 +65,13 @@ export function makeLocalpart(localpart: string, identifier?: string): string {
     return applySuffixRules(localpart, identifier, config.conference.prefixes.suffixes);
 }
 
-export async function assignAliasVariations(client: MatrixClient, roomId: string, localpart: string, identifier?: string): Promise<void> {
-    const localparts = calculateAliasVariations(localpart, identifier);
+export async function assignAliasVariations(client: MatrixClient, roomId: string, origLocalparts: string[], identifier?: string): Promise<void> {
+    const localparts = new Set<string>();
+    for (const origLocalpart of origLocalparts) {
+        for (const localpart of calculateAliasVariations(origLocalpart, identifier)) {
+            localparts.add(localpart);
+        }
+    }
     for (const lp of localparts) {
         await safeAssignAlias(client, roomId, lp);
     }
@@ -156,4 +161,24 @@ export async function addAndDeleteManagedAliases(client: MatrixClient, roomId: s
  */
 export function slugify(input: string): string {
     return input.toLowerCase().replace(/[^0-9a-z-_.]+/g, "_");
+}
+
+/**
+ * Given an unprefixed alias name and the configured list of alias prefixes, returns a list of all prefixed aliases.
+ * @param name Unprefixed alias name.
+ * @param prefixes List of (or single) string prefix(es). Likely to be taken from `IPrefixConfig.aliases`.
+ * @returns
+ */
+export function applyAllAliasPrefixes(name: string, prefixes: string | string[]): string[] {
+    if (typeof(prefixes) === "string") {
+        // For legacy config compatibility, accept a single string in place of an array of strings:
+        return [prefixes + name];
+    }
+
+    if (prefixes.length === 0) {
+        // It seems undesirable to lose all aliases for a room, so assume this should have been 'no prefix' rather than 'no aliases'.
+        return [name];
+    }
+
+    return prefixes.map(prefix => prefix + name);
 }

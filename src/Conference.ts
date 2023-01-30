@@ -44,7 +44,7 @@ import {
     RS_STORED_SUBSPACE,
 } from "./models/room_state";
 import { makeDisplayName, objectFastClone, safeCreateRoom } from "./utils";
-import { addAndDeleteManagedAliases, assignAliasVariations, calculateAliasVariations, makeLocalpart } from "./utils/aliases";
+import { addAndDeleteManagedAliases, applyAllAliasPrefixes, assignAliasVariations, calculateAliasVariations, makeLocalpart } from "./utils/aliases";
 import config from "./config";
 import { MatrixRoom } from "./models/MatrixRoom";
 import { Auditorium, AuditoriumBackstage } from "./models/Auditorium";
@@ -410,11 +410,16 @@ export class Conference {
         if (!this.subspaces[subspaceId]) {
             subspace = await this.client.createSpace({
                 isPublic: true,
-                localpart: "space-" + config.conference.prefixes.aliases + aliasLocalpart,
                 name: name,
                 invites: [config.moderatorUserId],
             });
             this.subspaces[subspaceId] = subspace;
+
+            await assignAliasVariations(
+                this.client,
+                subspace.roomId,
+                applyAllAliasPrefixes("space-" + aliasLocalpart, config.conference.prefixes.aliases)
+            );
 
             await this.client.sendStateEvent(this.dbRoom.roomId, RS_STORED_SUBSPACE, subspaceId, {
                 roomId: subspace.roomId,
@@ -462,7 +467,7 @@ export class Conference {
                         makeInterestLocator(this.id, interestRoom.id),
                     ],
                 }));
-                await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + interestRoom.name, interestRoom.id);
+                await assignAliasVariations(this.client, roomId, applyAllAliasPrefixes(interestRoom.name, config.conference.prefixes.aliases), interestRoom.id);
                 this.interestRooms[interestRoom.id] = new InterestRoom(
                     roomId,
                     this.client,
@@ -510,16 +515,20 @@ export class Conference {
         }
 
         const parentSpace = await this.getDesiredParentSpace(auditorium);
-        const spaceName = "space-" + config.conference.prefixes.aliases + auditorium.slug;
         let audSpace;
         try {
             audSpace = await this.client.createSpace({
-                localpart: makeLocalpart(
-                    spaceName, auditorium.id
-                ),
                 isPublic: true,
                 name: makeDisplayName(auditorium.name, auditorium.id),
             });
+
+            await assignAliasVariations(
+                this.client,
+                audSpace.roomId,
+                applyAllAliasPrefixes("space-" + auditorium.slug, config.conference.prefixes.aliases),
+                auditorium.id
+            );
+
             // Ensure that the space can be viewed by guest users.
             await this.client.sendStateEvent(
                 audSpace.roomId,
@@ -528,7 +537,7 @@ export class Conference {
                 {guest_access:"can_join"},
             );
         } catch (e) {
-            await logMessage(LogLevel.ERROR, "utils", `Can't create space #${spaceName}: ${e}!`);
+            await logMessage(LogLevel.ERROR, "utils", `Can't create auditorium space for ${auditorium.slug}: ${e}!`);
             throw e;
         }
 
@@ -545,7 +554,7 @@ export class Conference {
             ],
             name: auditorium.name,
         }));
-        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.slug, auditorium.id);
+        await assignAliasVariations(this.client, roomId, applyAllAliasPrefixes(auditorium.slug, config.conference.prefixes.aliases), auditorium.id);
         this.auditoriums[auditorium.id] = new Auditorium(roomId, auditorium, this.client, this);
 
         // TODO: Send widgets after room creation
@@ -575,7 +584,7 @@ export class Conference {
                 makeAuditoriumBackstageLocator(this.id, auditorium.id),
             ],
         }));
-        await assignAliasVariations(this.client, roomId, config.conference.prefixes.aliases + auditorium.slug + "-backstage", auditorium.id);
+        await assignAliasVariations(this.client, roomId, applyAllAliasPrefixes(auditorium.slug + "-backstage", config.conference.prefixes.aliases), auditorium.id);
         this.auditoriumBackstages[auditorium.id] = new AuditoriumBackstage(roomId, auditorium, this.client, this);
 
         return this.auditoriumBackstages[auditorium.id];
@@ -610,11 +619,15 @@ export class Conference {
         }
 
         // Calculate all the aliases the room should have, then update the list of bot-assigned aliases to match
-        const aliasesToAssign = setUnion(
-            calculateAliasVariations(config.conference.prefixes.aliases + (await auditorium.getSlug()) + '-' + talk.slug),
-            calculateAliasVariations(config.conference.prefixes.aliases + 'talk-' + talk.id)
-        );
-        await addAndDeleteManagedAliases(this.client, roomId, aliasesToAssign);
+        const wantedBaseNames = [
+            (await auditorium.getSlug()) + '-' + talk.slug,
+            'talk-' + talk.id,
+        ];
+        const wantedPrefixedNames = wantedBaseNames.flatMap(baseName => applyAllAliasPrefixes(baseName, config.conference.prefixes.aliases));
+        const allAliasVariantsToAssign = wantedPrefixedNames
+            .map(a => calculateAliasVariations(a))
+            .reduce((setLeft, setRight) => setUnion(setLeft, setRight));
+        await addAndDeleteManagedAliases(this.client, roomId, allAliasVariantsToAssign);
 
         // TODO: Send widgets after creation
         // const widget = await LiveWidget.forTalk(this.talks[talk.id], this.client);
