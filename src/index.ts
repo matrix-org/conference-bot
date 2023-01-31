@@ -167,7 +167,10 @@ let userId;
         // wrongly enabled in conferences without one.
         await ircBridge.setup();
     }
-})();
+})().catch((ex) => {
+    LogService.error("index", "Fatal error", ex);
+    process.exit(1);
+});
 
 async function loadBackend(): Promise<IScheduleBackend> {
     switch (config.conference.schedule.backend) {
