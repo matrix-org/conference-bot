@@ -46,7 +46,10 @@ export function decodePrefix(id: string, prefixConfig: IPrefixConfig): {kind: Ro
             // For physical auditoriums: don't strip the prefix. For e.g. K.1.102 the `K` is a building name and is important!
             return {kind: RoomKind.Auditorium, name: override || id};
         }
-        return {kind: RoomKind.Auditorium, name: override || id.substring(auditoriumPrefix.length)};
+        // TODO(FOSDEM 2023): don't strip the prefix, because on FOSDEM's end they are not stripped in the livestream IDs.
+        //     It would be good to figure out why we wanted to strip prefixes originally and whether we need finer controls.
+        //return {kind: RoomKind.Auditorium, name: override || id.substring(auditoriumPrefix.length)};
+        return {kind: RoomKind.Auditorium, name: override || id };
     }
 
     const interestPrefix = prefixConfig.interestRooms.find(p => id.startsWith(p));
