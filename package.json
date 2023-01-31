@@ -6,6 +6,9 @@
   "repository": "git@github.com:matrix-org/conference-bot.git",
   "author": "The Matrix.org Foundation C.I.C.",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=18"
+  },
   "private": true,
   "scripts": {
     "start:bot": "yarn build:jsonschema && yarn build:ts && node lib/index.js",
@@ -19,6 +22,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@tsconfig/node18": "^1.0.1",
     "await-lock": "^2.1.0",
     "config": "^3.3.3",
     "escape-html": "^1.0.3",
