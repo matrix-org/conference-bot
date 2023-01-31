@@ -26,7 +26,7 @@ export function formatDuration(duration: number): string {
 }
 
 export function getAttr(name: string): string | null {
-    return Array.from(document.getElementsByTagName('meta'))
-        .find(t => t.name === name)!
-        .getAttribute('content');
+    return (Array.from(document.getElementsByTagName('meta'))
+        .find(t => t.name === name)
+        ?.getAttribute('content')) || null;
 }
