@@ -33,7 +33,7 @@
     "matrix-widget-api": "^0.1.0-beta.11",
     "moment": "^2.29.1",
     "node-fetch": "^2.6.1",
-    "pg": "^8.5.1",
+    "pg": "^8.9.0",
     "postcss-preset-env": "^6.7.0",
     "rfc4648": "^1.4.0",
     "string-template": "^1.0.0"
