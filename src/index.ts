@@ -122,7 +122,7 @@ let userId;
         displayName = profile?.displayname ?? localpart;
     } catch (ex) {
         LogService.warn("index", "The bot has no profile. Consider setting one.");
-        // No profile, so just a bot.
+        // No profile set, assume localpart.
         displayName = localpart;
     }
 
