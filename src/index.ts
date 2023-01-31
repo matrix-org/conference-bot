@@ -117,11 +117,13 @@ let userId;
 
     localpart = new UserID(userId).localpart;
 
-    const profile = await client.getUserProfile(userId);
-    if (profile?.displayname) {
-        displayName = profile.displayname;
-    } else {
-        displayName = localpart; // for sanity
+    try {
+        const profile = await client.getUserProfile(userId);
+        displayName = profile?.displayname ?? localpart;
+    } catch (ex) {
+        LogService.warn("index", "The bot has no profile. Consider setting one.");
+        // No profile set, assume localpart.
+        displayName = localpart;
     }
 
     registerCommands(conference, ircBridge);
@@ -165,7 +167,10 @@ let userId;
         // wrongly enabled in conferences without one.
         await ircBridge.setup();
     }
-})();
+})().catch((ex) => {
+    LogService.error("index", "Fatal error", ex);
+    process.exit(1);
+});
 
 async function loadBackend(): Promise<IScheduleBackend> {
     switch (config.conference.schedule.backend) {
