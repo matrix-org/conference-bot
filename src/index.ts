@@ -117,11 +117,13 @@ let userId;
 
     localpart = new UserID(userId).localpart;
 
-    const profile = await client.getUserProfile(userId);
-    if (profile?.displayname) {
-        displayName = profile.displayname;
-    } else {
-        displayName = localpart; // for sanity
+    try {
+        const profile = await client.getUserProfile(userId);
+        displayName = profile?.displayname ?? localpart;
+    } catch (ex) {
+        LogService.warn("index", "The bot has no profile. Consider setting one.");
+        // No profile, so just a bot.
+        displayName = localpart;
     }
 
     registerCommands(conference, ircBridge);
