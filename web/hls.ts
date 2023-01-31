@@ -20,9 +20,9 @@ import { getAttr } from "./common";
 
 const videoUrl = getAttr('org.matrix.confbot.video_url');
 
-export const videoEl = document.getElementById("livestream") as HTMLVideoElement;
-export const muteButton = document.getElementById('muteButton');
-export const controlsEl = document.getElementById("controlBar");
+export const videoEl = document.getElementById("livestream")! as HTMLVideoElement;
+export const muteButton = document.getElementById('muteButton')!;
+export const controlsEl = document.getElementById("controlBar")!;
 
 if (isWidget) {
     videoEl.classList.add('widget');
@@ -41,7 +41,7 @@ export function pause() {
     videoEl.pause();
 }
 
-export function play(readyFn: (isReady: boolean) => void = null) {
+export function play(readyFn: ((isReady: boolean) => void) | null = null) {
     isVideoMode = true;
     if (hls) hls.destroy();
     makeLivestream(readyFn || lastReadyFn);

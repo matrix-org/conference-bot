@@ -25,8 +25,8 @@ export function formatDuration(duration: number): string {
     return `${minutes}:${seconds}`;
 }
 
-export function getAttr(name: string): string {
-    return Array.from(document.getElementsByTagName('meta'))
+export function getAttr(name: string): string | null {
+    return (Array.from(document.getElementsByTagName('meta'))
         .find(t => t.name === name)
-        .getAttribute('content');
+        ?.getAttribute('content')) || null;
 }

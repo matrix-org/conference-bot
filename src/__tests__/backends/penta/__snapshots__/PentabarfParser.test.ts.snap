@@ -6,8 +6,8 @@ exports[`parsing pentabarf XML: overview: auditoriums 1`] = `
     "id": "A.01 (Someroom)",
     "isPhysical": false,
     "kind": "auditorium",
-    "name": "01 (Someroom)",
-    "slug": "01_someroom_",
+    "name": "A.01 (Someroom)",
+    "slug": "a.01_someroom_",
     "talks": Map {
       "E001" => {
         "auditoriumId": "A.01 (Someroom)",
@@ -51,8 +51,8 @@ exports[`parsing pentabarf XML: overview: conference 1`] = `
       "id": "A.01 (Someroom)",
       "isPhysical": false,
       "kind": "auditorium",
-      "name": "01 (Someroom)",
-      "slug": "01_someroom_",
+      "name": "A.01 (Someroom)",
+      "slug": "a.01_someroom_",
       "talks": Map {
         "E001" => {
           "auditoriumId": "A.01 (Someroom)",

@@ -84,7 +84,7 @@ export async function joinConference(opts, widgetApi, onCallback) {
             if (!openIdToken?.access_token) { // eslint-disable-line camelcase
                 // We've failed to get a token, don't try to init conference
                 console.warn('Expected to have an OpenID credential, cannot initialize widget.');
-                document.getElementById("widgetActionContainer").innerText = "Failed to load Jitsi widget";
+                document.getElementById("widgetActionContainer")!.innerText = "Failed to load Jitsi widget";
                 return;
             }
             jwt = createJWTToken(jitsiDomain, roomId, avatarUrl, displayName, openIdToken);
@@ -119,7 +119,7 @@ export async function joinConference(opts, widgetApi, onCallback) {
         if (title) meetApi.executeCommand("subject", title);
 
         meetApi.on("readyToClose", () => {
-            document.getElementById("jitsiContainer").innerHTML = "";
+            document.getElementById("jitsiContainer")!.innerHTML = "";
             meetApi = null;
             onCallback();
         });
