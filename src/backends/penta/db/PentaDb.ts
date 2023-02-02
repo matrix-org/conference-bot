@@ -162,7 +162,6 @@ export class PentaDb {
     }
 
     private postprocessDbTalk(talk: IRawDbTalk): IDbTalk {
-
         const qaStartDatetime = talk.qa_start_datetime + this.config.schedulePreBufferSeconds * 1000;
         let livestreamStartDatetime: number;
         if (talk.prerecorded) {
@@ -185,7 +184,7 @@ export class PentaDb {
     }
 
     private postprocessDbTalks(rows: IRawDbTalk[]): IDbTalk[] {
-        return rows.map(this.postprocessDbTalk);
+        return rows.map(this.postprocessDbTalk.bind(this));
     }
 
     private sanitizeRecords(rows: IDbPerson[]): IDbPerson[] {
