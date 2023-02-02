@@ -198,7 +198,7 @@ export class Scheduler {
                     //     time may slip forward.
                     await this.conference.backend.refreshShortTerm((minVar + 1) * 60);
                 } catch (e) {
-                    LogService.error("Scheduler", `Failed short-term schedule refresh: ${e.message ?? e}`);
+                    LogService.error("Scheduler", `Failed short-term schedule refresh: ${e.message ?? e}\n${e.stack ?? '?'}`);
                 }
 
                 const upcomingTalks = await this.conference.getUpcomingTalkStarts(minVar, minVar);
