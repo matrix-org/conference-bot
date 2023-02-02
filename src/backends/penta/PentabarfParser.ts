@@ -197,6 +197,13 @@ export class PentabarfParser {
                 for (const pEvent of arrayLike(pRoom.event)) {
                     if (!pEvent) continue;
 
+                    if (pEvent.title.startsWith("CANCELLED ")) {
+                        // FOSDEM represents cancelled talks with a title prefix.
+                        // There is currently no more 'proper' way to get this information.
+                        LogService.info("PentabarfParser", `Talk '${pEvent.attr?.["@_id"]}' has CANCELLED in prefix of title: ignoring.`)
+                        continue;
+                    }
+
                     const parsedStartTime = simpleTimeParse(pEvent.start);
                     const parsedDuration = simpleTimeParse(pEvent.duration);
                     const startTime = moment(dateTs).add(parsedStartTime.hours, 'hours').add(parsedStartTime.minutes, 'minutes');
