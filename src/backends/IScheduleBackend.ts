@@ -20,6 +20,15 @@ export interface IScheduleBackend {
     refresh(): Promise<void>;
 
     /**
+     * Calling this function requests the schedule backend to look ahead `lookaheadSeconds` seconds into the future
+     * and try its best to ensure whatever talks in that window of time are up-to-date in the backend's view of the schedule.
+     *
+     * This is an ugly hack to support short-notice changes to the conference schedule, as happens in real life.
+     * It is principally expected to be called by the Scheduler when scheduling tasks in the short-term future.
+     */
+    refreshShortTerm(lookaheadSeconds: number): Promise<void>;
+
+    /**
      * Returns true iff the current schedule was loaded from cache, rather than from the intended source.
      * This happens if there was a problem loading the schedule from the intended source for some reason.
      * The intention of exposing this information is that it allows us to send a notice into the
