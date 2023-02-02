@@ -102,7 +102,7 @@ export class InviteCommand implements ICommand {
                 await invitePersonToRoom(target, roomId);
             } catch (e) {
                 LogService.error("InviteCommand", e);
-                await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${target.mxid} / ${target.person.id} to ${roomId} - ignoring`);
+                await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${target.mxid}/${target.emails} / ${target.person.id} to ${roomId} - ignoring: ${e.message ?? e.statusMessage ?? '(see logs)'}`);
             }
         }
     }
