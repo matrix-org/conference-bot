@@ -116,6 +116,32 @@ export class PentaDb {
     }
 
     /**
+     * Returns a list of database entries for all talks who have some kind of event in the next `lookaheadSeconds` seconds.
+     *
+     * A suggested implementation might be to return all talks overlapping this window, but for now the simple implementation
+     * is just to return talks with a start, end or Q&A start within the time window.
+     *
+     * @param lookaheadMinutes Number of minutes to look ahead into the future.
+     */
+    public async getTalksWithUpcomingEvents(lookaheadMinutes: number): Promise<IDbTalk[]> {
+        const talksStarting = await this.getUpcomingTalkStarts(lookaheadMinutes, lookaheadMinutes);
+        const talksEnding = await this.getUpcomingTalkEnds(lookaheadMinutes, lookaheadMinutes);
+        const talksQaStarting = await this.getUpcomingQAStarts(lookaheadMinutes, lookaheadMinutes);
+        const result: IDbTalk[] = [];
+        const seenTalkIds = new Set();
+
+        for (const talk of talksStarting.concat(talksEnding, talksQaStarting)) {
+            if (seenTalkIds.has(talk.event_id)) {
+                continue;
+            }
+            seenTalkIds.add(talk.event_id);
+            result.push(talk);
+        }
+
+        return result;
+    }
+
+    /**
      * Gets the record for a talk.
      * @param talkId The talk ID.
      * @returns The record for the talk, if it exists; `null` otherwise.
@@ -136,7 +162,6 @@ export class PentaDb {
     }
 
     private postprocessDbTalk(talk: IRawDbTalk): IDbTalk {
-
         const qaStartDatetime = talk.qa_start_datetime + this.config.schedulePreBufferSeconds * 1000;
         let livestreamStartDatetime: number;
         if (talk.prerecorded) {
@@ -159,7 +184,7 @@ export class PentaDb {
     }
 
     private postprocessDbTalks(rows: IRawDbTalk[]): IDbTalk[] {
-        return rows.map(this.postprocessDbTalk);
+        return rows.map(this.postprocessDbTalk.bind(this));
     }
 
     private sanitizeRecords(rows: IDbPerson[]): IDbPerson[] {

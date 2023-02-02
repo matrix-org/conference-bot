@@ -43,6 +43,12 @@ export class CachingBackend implements IScheduleBackend {
     private wasCached: boolean = true;
 
     /**
+     * We hang on to the last backend for refreshing short-notice alterations.
+     * (I don't particularly like it, but there isn't time to reason through a better approach at the moment.)
+     */
+    private lastUsedBackend: IScheduleBackend | null = null;
+
+    /**
      * @param underlyingBackend A factory for the underlying backend, which will be reconstructed each time we try to refresh.
      */
     public constructor(private underlyingBackend: BackendFactory, private cachePath: string) {
@@ -76,6 +82,7 @@ export class CachingBackend implements IScheduleBackend {
 
     async refresh(): Promise<void> {
         const backend = await this.underlyingBackend();
+        this.lastUsedBackend = backend;
 
         this.conference = backend.conference;
         this.talks = backend.talks;
@@ -88,6 +95,15 @@ export class CachingBackend implements IScheduleBackend {
         } catch (e) {
             // I wish we could be noisier about this, but not sure it's worth jeopardising a successful refresh over...
             LogService.error("CachingBackend", "Failed to save cache to disk: ", e.body ?? e);
+        }
+    }
+
+    async refreshShortTerm(lookaheadSeconds: number): Promise<void> {
+        if (this.lastUsedBackend !== null) {
+            // It's notable that we don't save any changes to disk.
+            // It wouldn't be a bad idea to persist the changes, but introducing a lot of disk I/O into this frequent operation
+            // made me uncomfortable.
+            await this.lastUsedBackend.refreshShortTerm(lookaheadSeconds);
         }
     }
 

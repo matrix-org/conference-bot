@@ -71,6 +71,12 @@ export class JsonScheduleBackend implements IScheduleBackend {
         this.wasFromCache = false;
     }
 
+    async refreshShortTerm(_lookaheadSeconds: number): Promise<void> {
+        // NOP: There's no way to partially refresh a JSON schedule.
+        // Short-term changes to a JSON schedule are therefore currently unimplemented.
+        // This hack was intended for Penta anyway.
+    }
+
     get conference(): IConference {
         return this.loader.conference;
     };
