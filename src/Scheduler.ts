@@ -191,6 +191,16 @@ export class Scheduler {
             LogService.info("Scheduler", "Scheduling tasks");
             try {
                 const minVar = config.conference.lookaheadMinutes;
+                try {
+                    // Refresh upcoming parts of our schedule to ensure it's really up to date.
+                    // Rationale: Sometimes schedules get changed at short notice, so we try our best to accommodate that.
+                    // Rationale for adding 1 minute: so we don't cut it too close to the wire; whilst processing the refresh,
+                    //     time may slip forward.
+                    await this.conference.backend.refreshShortTerm((minVar + 1) * 60);
+                } catch (e) {
+                    LogService.error("Scheduler", `Failed short-term schedule refresh: ${e.message ?? e}`);
+                }
+
                 const upcomingTalks = await this.conference.getUpcomingTalkStarts(minVar, minVar);
                 const upcomingQA = await this.conference.getUpcomingQAStarts(minVar, minVar);
                 const upcomingEnds = await this.conference.getUpcomingTalkEnds(minVar, minVar);
