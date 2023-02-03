@@ -113,11 +113,8 @@ export class IRCBridge {
             const currentMemberState = await this.mxClient.getRoomStateEvent(roomId, 'm.room.member', this.config.botUserId);
             return !['join','invite'].includes(currentMemberState.membership);
         } catch (ex) {
-            if (ex instanceof MatrixError && ex.errcode === "M_NOT_FOUND") {
-                return true;
-            }
+            return ex instanceof MatrixError && ex.errcode === "M_NOT_FOUND";
         }
-        return false;
     }
 
     public async plumbChannelToRoom(channel: string, roomId: string) {
