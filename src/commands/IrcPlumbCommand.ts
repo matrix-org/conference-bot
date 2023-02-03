@@ -107,6 +107,6 @@ export class IrcPlumbCommand implements ICommand {
             return client.sendNotice(roomId, "Could not join that room, is the bot invited?");
         }
 
-        await this.plumbOne(client, resolvedRoomId, channel);
+        return this.plumbOne(client, resolvedRoomId, channel);
     }
 }
