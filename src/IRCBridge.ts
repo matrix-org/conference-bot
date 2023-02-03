@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MatrixClient, MatrixError, MatrixEvent } from "matrix-bot-sdk";
+import { MatrixClient, MatrixEvent } from "matrix-bot-sdk";
 import * as irc from "irc-upd";
 import { Auditorium } from "./models/Auditorium";
 import { InterestRoom } from "./models/InterestRoom";
@@ -113,7 +113,9 @@ export class IRCBridge {
             const currentMemberState = await this.mxClient.getRoomStateEvent(roomId, 'm.room.member', this.config.botUserId);
             return !['join','invite'].includes(currentMemberState.membership);
         } catch (ex) {
-            return ex instanceof MatrixError && ex.errcode === "M_NOT_FOUND";
+            // return ex instanceof MatrixError && ex.errcode === "M_NOT_FOUND";
+            // MatrixError isn't a thing yet, assume the bot isn't in the room.
+            return true;
         }
     }
 
