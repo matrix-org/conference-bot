@@ -43,36 +43,36 @@ export class InviteMeCommand implements ICommand {
 
         for (const aud of conference.storedAuditoriums) {
             addToGroup("auditorium", aud.roomId);
-            const audId = await aud.getId();
-            addToGroup(audId + ":*", aud.roomId);
-            addToGroup(audId + ":public", aud.roomId);
+            const audSlug = await aud.getSlug();
+            addToGroup(audSlug + ":*", aud.roomId);
+            addToGroup(audSlug + ":public", aud.roomId);
             addToGroup("public", aud.roomId);
             addToGroup("*", aud.roomId);
 
             // Auditoriums have a wrapping space, which should be auto-invited if needed.
             const space = await aud.getAssociatedSpace();
-            addToGroup(audId + ":*", space.roomId);
-            addToGroup(audId + ":public", space.roomId);
-            addToGroup(audId + ":space", space.roomId);
+            addToGroup(audSlug + ":*", space.roomId);
+            addToGroup(audSlug + ":public", space.roomId);
+            addToGroup(audSlug + ":space", space.roomId);
             addToGroup("public", space.roomId);
             addToGroup("*", space.roomId);
         }
 
         for (const audBack of conference.storedAuditoriumBackstages) {
             addToGroup("auditorium_backstage", audBack.roomId);
-            const audId = await audBack.getId();
-            addToGroup(audId + ":*", audBack.roomId);
-            addToGroup(audId + ":private", audBack.roomId);
+            const audSlug = await audBack.getSlug();
+            addToGroup(audSlug + ":*", audBack.roomId);
+            addToGroup(audSlug + ":private", audBack.roomId);
             addToGroup("private", audBack.roomId);
             addToGroup("*", audBack.roomId);
         }
 
         for (const talk of conference.storedTalks) {
             addToGroup("talk", talk.roomId);
-            const audId = await talk.getAuditoriumId();
-            addToGroup(audId + ":talk", talk.roomId);
-            addToGroup(audId + ":*", talk.roomId);
-            addToGroup(audId + ":private", talk.roomId);
+            const audSlug = await conference.getAuditorium(await talk.getAuditoriumId()).getSlug();
+            addToGroup(audSlug + ":talk", talk.roomId);
+            addToGroup(audSlug + ":*", talk.roomId);
+            addToGroup(audSlug + ":private", talk.roomId);
             addToGroup("private", talk.roomId);
             addToGroup("*", talk.roomId);
         }
