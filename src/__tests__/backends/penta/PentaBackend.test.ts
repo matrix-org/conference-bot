@@ -62,6 +62,7 @@ test("talks should be rehydrated from the database", async () => {
                 role: Role.Speaker
             }
         ]),
+        findAllPeopleForTalk: jest.fn(PentaDb.prototype.findAllPeopleForTalk).mockResolvedValue([]),
     } as any as PentaDb;
 
     const b = new PentaBackend(backendConfig, parser, fakeDb);
