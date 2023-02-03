@@ -681,14 +681,32 @@ export class Conference {
 
     public async getPeopleForAuditorium(auditorium: Auditorium): Promise<IPerson[]> {
         const audit = await auditorium.getDefinition();
-        const people: IPerson[] = [];
-        for (const t of Object.values(this.talks)) {
-            const talk = await t.getDefinition();
-            if (talk.auditoriumId == audit.id) {
-                people.push(...talk.speakers);
+
+        if (audit.isPhysical) {
+            // We need a special case for physical auditoriums
+            const db = await this.getPentaDb();
+            if (db !== null) {
+                const peopleInAud = await db.findAllPeopleForAuditorium(audit.id);
+                // We probably don't need to drag speakers online for a physical auditorium,
+                // but we would benefit from the hosts and coordinators.
+                return peopleInAud.filter(x => x.role != Role.Speaker);
+            } else {
+                // TODO(non-penta, physical auditoriums)
+                LogService.error("Conference", "No PentaDb; cannot get people in physical auditorium (NOT IMPLEMENTED)!");
+                return [];
             }
+        } else {
+            // TODO Filter out duplicate people.
+            //      Maybe not entirely trivial given the roles can vary...
+            const people: IPerson[] = [];
+            for (const t of Object.values(this.talks)) {
+                const talk = await t.getDefinition();
+                if (talk.auditoriumId == audit.id) {
+                    people.push(...talk.speakers);
+                }
+            }
+            return people;
         }
-        return people;
     }
 
     public async getPeopleForTalk(talk: Talk): Promise<IPerson[]> {
