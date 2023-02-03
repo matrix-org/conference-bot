@@ -66,6 +66,7 @@ test("the cache should restore the same talks that were saved", async () => {
                 role: Role.Speaker
             }
         ]),
+        findAllPeopleForTalk: jest.fn(PentaDb.prototype.findAllPeopleForTalk).mockResolvedValue([]),
     } as any as PentaDb;
 
     async function newPentaBackend(): Promise<PentaBackend> {
