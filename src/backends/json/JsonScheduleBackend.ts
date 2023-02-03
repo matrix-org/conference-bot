@@ -7,6 +7,7 @@ import * as fetch from "node-fetch";
 import * as path from "path";
 import { LogService } from "matrix-bot-sdk";
 import { readJsonFileAsync, writeJsonFileAsync } from "../../utils";
+import { PentaDb } from "../penta/db/PentaDb";
 
 export class JsonScheduleBackend implements IScheduleBackend {
     constructor(private loader: JsonScheduleLoader, private cfg: IJsonScheduleBackendConfig, private wasFromCache: boolean) {
@@ -75,6 +76,10 @@ export class JsonScheduleBackend implements IScheduleBackend {
         // NOP: There's no way to partially refresh a JSON schedule.
         // Short-term changes to a JSON schedule are therefore currently unimplemented.
         // This hack was intended for Penta anyway.
+    }
+
+    getPentaDb(): PentaDb | null {
+        return null;
     }
 
     get conference(): IConference {

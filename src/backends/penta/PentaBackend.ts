@@ -154,6 +154,10 @@ export class PentaBackend implements IScheduleBackend {
         }
     }
 
+    getPentaDb(): PentaDb | null {
+        return this.db;
+    }
+
     conference: IConference;
     talks: Map<TalkId, ITalk>;
     auditoriums: Map<AuditoriumId, IAuditorium>;

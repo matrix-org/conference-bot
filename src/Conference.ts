@@ -56,14 +56,11 @@ import { InterestRoom } from "./models/InterestRoom";
 import { IStateEvent } from "./models/room_state";
 import { logMessage } from "./LogProxy";
 import { IScheduleBackend } from "./backends/IScheduleBackend";
-import { PentaBackend } from "./backends/penta/PentaBackend";
 import { setUnion } from "./utils/sets";
 
 export class Conference {
     private rootSpace: Space | null;
     private dbRoom: MatrixRoom | null;
-    // TODO This shouldn't be here.
-    private pentaDb: PentaDb | null = null;
     private subspaces: {
         [subspaceId: string]: Space
     } = {};
@@ -189,11 +186,6 @@ export class Conference {
 
     public async construct() {
         this.reset();
-
-        if (this.backend instanceof PentaBackend) {
-            // TODO this is not nice.
-            this.pentaDb = this.backend.db;
-        }
 
         // Locate all the rooms for the conference
         const roomIds = await this.client.getJoinedRooms();
@@ -335,10 +327,11 @@ export class Conference {
         }
     }
 
+    /**
+     * Very ugly, but get direct access to the PentaDb if supported/enabled.
+     */
     public async getPentaDb(): Promise<PentaDb | null> {
-        if (this.pentaDb === null) return null;
-        await this.pentaDb.connect();
-        return this.pentaDb;
+        return this.backend.getPentaDb();
     }
 
     public async getSpace(): Promise<Space | null> {

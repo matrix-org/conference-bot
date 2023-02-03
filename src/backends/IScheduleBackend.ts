@@ -1,4 +1,5 @@
 import { IAuditorium, IConference, IInterestRoom, ITalk } from "../models/schedule";
+import { PentaDb } from "./penta/db/PentaDb";
 
 export type TalkId = string;
 export type AuditoriumId = string;
@@ -35,6 +36,12 @@ export interface IScheduleBackend {
      * management room, so that the admin knows what's going on.
      */
     wasLoadedFromCache(): boolean;
+
+    /**
+     * Get a PentaDb if this is the Pentabarf backend.
+     * (very ugly, I know...)
+     */
+    getPentaDb(): PentaDb | null;
 
     /**
      * Raw view of the conference.

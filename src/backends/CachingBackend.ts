@@ -5,6 +5,7 @@ import { RoomKind } from "../models/room_kinds";
 import { IConference, ITalk, IAuditorium, IInterestRoom } from "../models/schedule";
 import { jsonReplacerMapToObject, readJsonFileAsync, writeJsonFileAsync } from "../utils";
 import { IScheduleBackend, TalkId } from "./IScheduleBackend";
+import { PentaDb } from "./penta/db/PentaDb";
 
 
 type BackendFactory = () => Promise<IScheduleBackend>;
@@ -151,5 +152,9 @@ export class CachingBackend implements IScheduleBackend {
 
     wasLoadedFromCache(): boolean {
         return this.wasCached;
+    }
+
+    getPentaDb(): PentaDb | null {
+        return this.lastUsedBackend?.getPentaDb() || null;
     }
 }
