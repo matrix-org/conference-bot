@@ -114,7 +114,8 @@ export class IRCBridge {
             return !['join','invite'].includes(currentMemberState.membership);
         } catch (ex) {
             // return ex instanceof MatrixError && ex.errcode === "M_NOT_FOUND";
-            // MatrixError isn't a thing yet, assume the bot isn't in the room.
+            // MatrixError requires a newer version of the SDK (https://github.com/matrix-org/conference-bot/pull/163).
+            // Assume the bot isn't in the room.
             return true;
         }
     }
