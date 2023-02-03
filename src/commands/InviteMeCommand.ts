@@ -43,36 +43,36 @@ export class InviteMeCommand implements ICommand {
 
         for (const aud of conference.storedAuditoriums) {
             addToGroup("auditorium", aud.roomId);
-            const audId = await aud.getId();
-            addToGroup(audId + ":*", aud.roomId);
-            addToGroup(audId + ":public", aud.roomId);
+            const audSlug = await aud.getSlug();
+            addToGroup(audSlug + ":*", aud.roomId);
+            addToGroup(audSlug + ":public", aud.roomId);
             addToGroup("public", aud.roomId);
             addToGroup("*", aud.roomId);
 
             // Auditoriums have a wrapping space, which should be auto-invited if needed.
             const space = await aud.getAssociatedSpace();
-            addToGroup(audId + ":*", space.roomId);
-            addToGroup(audId + ":public", space.roomId);
-            addToGroup(audId + ":space", space.roomId);
+            addToGroup(audSlug + ":*", space.roomId);
+            addToGroup(audSlug + ":public", space.roomId);
+            addToGroup(audSlug + ":space", space.roomId);
             addToGroup("public", space.roomId);
             addToGroup("*", space.roomId);
         }
 
         for (const audBack of conference.storedAuditoriumBackstages) {
             addToGroup("auditorium_backstage", audBack.roomId);
-            const audId = await audBack.getId();
-            addToGroup(audId + ":*", audBack.roomId);
-            addToGroup(audId + ":private", audBack.roomId);
+            const audSlug = await audBack.getSlug();
+            addToGroup(audSlug + ":*", audBack.roomId);
+            addToGroup(audSlug + ":private", audBack.roomId);
             addToGroup("private", audBack.roomId);
             addToGroup("*", audBack.roomId);
         }
 
         for (const talk of conference.storedTalks) {
             addToGroup("talk", talk.roomId);
-            const audId = await talk.getAuditoriumId();
-            addToGroup(audId + ":talk", talk.roomId);
-            addToGroup(audId + ":*", talk.roomId);
-            addToGroup(audId + ":private", talk.roomId);
+            const audSlug = await conference.getAuditorium(await talk.getAuditoriumId()).getSlug();
+            addToGroup(audSlug + ":talk", talk.roomId);
+            addToGroup(audSlug + ":*", talk.roomId);
+            addToGroup(audSlug + ":private", talk.roomId);
             addToGroup("private", talk.roomId);
             addToGroup("*", talk.roomId);
         }
@@ -86,14 +86,35 @@ export class InviteMeCommand implements ICommand {
         return groups;
     }
 
+    /**
+     * Render a (somewhat) pretty list of group names.
+     */
+    private prettyGroupNameList(roomGroups: Map<string, Set<string>>) {
+        const bySection = new Map<string, string[]>();
+
+        // organise the groups into sections
+        Array.from(roomGroups.keys()).forEach(group => {
+            const section = group.split(":")[0];
+            if (!bySection.has(section)) {
+                bySection.set(section, []);
+            }
+            bySection.get(section)!.push(group);
+        });
+
+        const sections = Array.from(bySection.entries());
+        sections.sort(([aSection], [bSection]) => aSection.localeCompare(bSection));
+
+        return "<ul>" + sections.map(([_sectionName, groups]) => {
+            groups.sort();
+            return "<li>" + groups.map(x => `<code>${x}</code>`).join(", ") + "</li>";
+        }).join("\n") + "</ul>";
+    }
+
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
         const roomGroups = await this.roomGroups(conference);
 
         if (!args.length) {
-            const groupNames = Array.from(roomGroups.keys());
-            groupNames.sort();
-
-            return client.replyNotice(roomId, event, "Please specify a room ID or alias, or one of the room groups: " + groupNames.join(", "));
+            return client.replyHtmlNotice(roomId, event, "Please specify a room ID or alias, or one of the room groups:\n" + this.prettyGroupNameList(roomGroups));
         }
         const userId = args[1] || event['sender'];
 

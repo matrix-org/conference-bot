@@ -21,7 +21,7 @@ import { Scheduler } from "../Scheduler";
 import config from "../config";
 
 export class StatusCommand implements ICommand {
-    public readonly prefixes = ["status", "stat"];
+    public readonly prefixes = ["status", "stat", "refresh"];
 
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
         let html = "<h4>Conference Bot Status</h4>";
