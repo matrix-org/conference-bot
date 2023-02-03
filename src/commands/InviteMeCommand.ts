@@ -18,6 +18,7 @@ import { ICommand } from "./ICommand";
 import { LogLevel, MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { logMessage } from "../LogProxy";
+import { group } from "console";
 
 export class InviteMeCommand implements ICommand {
     public readonly prefixes = ["inviteme", "inviteto"];
@@ -86,14 +87,35 @@ export class InviteMeCommand implements ICommand {
         return groups;
     }
 
+    /**
+     * Render a (somewhat) pretty list of group names.
+     */
+    private prettyGroupNameList(roomGroups: Map<string, Set<string>>) {
+        const bySection = new Map<string, string[]>();
+
+        // organise the groups into sections
+        Array.from(roomGroups.keys()).forEach(group => {
+            const section = group.split(":")[0];
+            if (! bySection.has(section)) {
+                bySection.set(section, []);
+            }
+            bySection.get(section)!.push(group);
+        });
+
+        const sections = Array.from(bySection.entries());
+        sections.sort(([aSection, _aGroups], [bSection, _bGroups]) => aSection.localeCompare(bSection));
+
+        return "<ul>" + sections.map(([_sectionName, groups]) => {
+            groups.sort();
+            return "<li>" + groups.map(x => `<code>${x}</code>`).join(", ") + "</li>";
+        }).join("\n") + "</ul>";
+    }
+
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
         const roomGroups = await this.roomGroups(conference);
 
         if (!args.length) {
-            const groupNames = Array.from(roomGroups.keys());
-            groupNames.sort();
-
-            return client.replyNotice(roomId, event, "Please specify a room ID or alias, or one of the room groups: " + groupNames.join(", "));
+            return client.replyHtmlNotice(roomId, event, "Please specify a room ID or alias, or one of the room groups:\n" + this.prettyGroupNameList(roomGroups));
         }
         const userId = args[1] || event['sender'];
 
