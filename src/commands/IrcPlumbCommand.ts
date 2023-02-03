@@ -66,7 +66,7 @@ export class IrcPlumbCommand implements ICommand {
             await this.ircBridge.plumbChannelToRoom(channel, resolvedRoomId);
         } catch (ex) {
             LogService.warn("IrcPlumbCommand", ex);
-            return await logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel to room ${resolvedRoomId}`);
+            return logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel to room ${resolvedRoomId}`);
         }
 
         try {
@@ -74,8 +74,10 @@ export class IrcPlumbCommand implements ICommand {
             await client.setUserPowerLevel(this.ircBridge.botUserId, resolvedRoomId, KickPowerLevel);
         } catch (ex) {
             LogService.warn("IrcPlumbCommand", ex);
-            return await logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel to room ${resolvedRoomId}: could not set AS power level`);
+            return logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel to room ${resolvedRoomId}: could not set AS power level`);
         }
+
+        logMessage(LogLevel.INFO,"IrcPlumbCommand", `Plumbed channel ${channel} to ${resolvedRoomId}`);
     }
 
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
@@ -106,7 +108,5 @@ export class IrcPlumbCommand implements ICommand {
         }
 
         await this.plumbOne(client, resolvedRoomId, channel);
-
-        return client.sendNotice(roomId, "Plumbed channel");
     }
 }
