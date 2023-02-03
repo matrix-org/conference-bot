@@ -14,12 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { LogService, MatrixClient } from "matrix-bot-sdk";
+import { LogLevel, LogService, MatrixClient } from "matrix-bot-sdk";
 import { ResolvedPersonIdentifier, resolveIdentifiers } from "../../invites";
 import { Auditorium } from "../../models/Auditorium";
 import { Conference } from "../../Conference";
 import { asyncFilter } from "../../utils";
 import { InterestRoom } from "../../models/InterestRoom";
+import { logMessage } from "../../LogProxy";
 
 export interface IAction {
     (client: MatrixClient, roomId: string, people: ResolvedPersonIdentifier[]): Promise<void>;
@@ -59,9 +60,12 @@ export async function doAuditoriumResolveAction(
         ? await conference.getInviteTargetsForAuditorium(realAud)
         : await conference.getModeratorsForAuditorium(realAud);
     const resolvedAudPeople = audPeople.map(p => allPossiblePeople.find(b => p.id === b.person.id));
-    if (resolvedAudPeople.some(p => !p)) throw new Error(`Failed to resolve all targets for auditorium ${audId}`);
+    if (resolvedAudPeople.some(p => !p)) {
+        logMessage(LogLevel.WARN, "people", `Failed to resolve all targets for auditorium ${audId}. Inviting others anyway.`);
+    }
 
-    await action(client, realAud.roomId, resolvedAudPeople as ResolvedPersonIdentifier[]);
+    const resolvedAudPeopleOnly = resolvedAudPeople.filter(p => !!p);
+    await action(client, realAud.roomId, resolvedAudPeopleOnly as ResolvedPersonIdentifier[]);
 
     if (!skipTalks) {
         const talks = await asyncFilter(
@@ -79,10 +83,11 @@ export async function doAuditoriumResolveAction(
                 const unresolveable = talkPeople.filter(
                     p => allPossiblePeople.find(b => p.id === b.person.id) === undefined
                 )
-                throw new Error(`Failed to resolve all targets for talk ${await talk.getId()}: ` + JSON.stringify(unresolveable));
+                logMessage(LogLevel.WARN, "people", `Failed to resolve all targets for talk ${await talk.getId()}: ` + JSON.stringify(unresolveable));
             }
 
-            await action(client, talk.roomId, resolvedTalkPeople as ResolvedPersonIdentifier[]);
+            const resolvedTalkPeopleOnly = resolvedTalkPeople.filter(p => !!p);
+            await action(client, talk.roomId, resolvedTalkPeopleOnly as ResolvedPersonIdentifier[]);
         }
     }
 }
