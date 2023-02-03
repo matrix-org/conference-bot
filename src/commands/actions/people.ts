@@ -34,6 +34,7 @@ export async function doAuditoriumResolveAction(
     skipTalks = false,
     isInvite = true,
 ): Promise<void> {
+    const audId = await aud.getId();
     // We know that everyone should be in the backstage room, so resolve that list of people
     // to make the identity server lookup efficient.
     const backstagePeople = isInvite
@@ -41,7 +42,7 @@ export async function doAuditoriumResolveAction(
         : await conference.getModeratorsForAuditorium(aud);
     LogService.info("backstagePeople", `${backstagePeople}`);
     const resolvedBackstagePeople = await resolveIdentifiers(backstagePeople);
-    const backstage = conference.getAuditoriumBackstage(await aud.getId());
+    const backstage = conference.getAuditoriumBackstage(audId);
 
     LogService.info("resolvedBackstagePeople", `${resolvedBackstagePeople}`);
 
@@ -53,12 +54,12 @@ export async function doAuditoriumResolveAction(
 
     if (backstageOnly) return;
 
-    const realAud = conference.getAuditorium(await aud.getId());
+    const realAud = conference.getAuditorium(audId);
     const audPeople = isInvite
         ? await conference.getInviteTargetsForAuditorium(realAud)
         : await conference.getModeratorsForAuditorium(realAud);
     const resolvedAudPeople = audPeople.map(p => allPossiblePeople.find(b => p.id === b.person.id));
-    if (resolvedAudPeople.some(p => !p)) throw new Error("Failed to resolve all targets for auditorium");
+    if (resolvedAudPeople.some(p => !p)) throw new Error(`Failed to resolve all targets for auditorium ${audId}`);
 
     await action(client, realAud.roomId, resolvedAudPeople as ResolvedPersonIdentifier[]);
 
@@ -78,7 +79,7 @@ export async function doAuditoriumResolveAction(
                 const unresolveable = talkPeople.filter(
                     p => allPossiblePeople.find(b => p.id === b.person.id) === undefined
                 )
-                throw new Error("Failed to resolve all targets for talk: " + JSON.stringify(unresolveable));
+                throw new Error(`Failed to resolve all targets for talk ${await talk.getId()}: ` + JSON.stringify(unresolveable));
             }
 
             await action(client, talk.roomId, resolvedTalkPeople as ResolvedPersonIdentifier[]);
