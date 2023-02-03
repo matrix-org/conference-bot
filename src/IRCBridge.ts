@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MatrixClient, MatrixEvent } from "matrix-bot-sdk";
+import { MatrixClient, MatrixError, MatrixEvent } from "matrix-bot-sdk";
 import * as irc from "irc-upd";
 import { Auditorium } from "./models/Auditorium";
 import { InterestRoom } from "./models/InterestRoom";
@@ -108,8 +108,22 @@ export class IRCBridge {
         return channel && channel.startsWith(this.config.channelPrefix);
     }
 
+    public async shouldInviteBot(roomId: string) {
+        try {
+            const currentMemberState = await this.mxClient.getRoomStateEvent(roomId, 'm.room.member', this.config.botUserId);
+            return !['join','invite'].includes(currentMemberState.membership);
+        } catch (ex) {
+            if (ex instanceof MatrixError && ex.errcode === "M_NOT_FOUND") {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public async plumbChannelToRoom(channel: string, roomId: string) {
-        await this.mxClient.inviteUser(this.config.botUserId, roomId);
+        if (await this.shouldInviteBot(roomId)) {
+            await this.ircClient.join(channel);
+        }
         await this.ircClient.join(channel);
         const result = await this.executeCommand(`plumb ${roomId} ${this.config.serverName} ${channel}`);
         const resultText = result.content.body;
