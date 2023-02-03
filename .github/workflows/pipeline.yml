@@ -13,6 +13,7 @@ jobs:
       - uses: actions/setup-node@v3 # "v1.3.0"
         with:
           node-version: 18
+      - run: yarn
       - run: yarn test
 
   build:
@@ -24,4 +25,6 @@ jobs:
         with:
           node-version: 18
       # TODO build:web fails currently, but it'd be good to make that work when possible and then add it here.
-      - run: yarn build:jsonschema && yarn build:ts
+      - run: yarn
+      - run: yarn build:jsonschema
+      - run: yarn build:ts
