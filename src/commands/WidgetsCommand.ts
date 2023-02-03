@@ -41,6 +41,17 @@ export class WidgetsCommand implements ICommand {
             await client.sendStateEvent(talk.roomId, scoreboardWidget.type, scoreboardWidget.state_key, scoreboardWidget.content);
             await client.sendStateEvent(talk.roomId, talkLayout.type, talkLayout.state_key, talkLayout.content);
         }
+
+        if ((await aud.getDefinition()).isPhysical) {
+            // For physical auditoriums, the talks don't have anywhere to display a Q&A scoreboard.
+            // So what we do instead is add a Q&A scoreboard to the backstage room, so that an organiser can read off
+            // any questions if necessary.
+            const backstage = conference.getAuditoriumBackstage(await aud.getId());
+            const audScoreboardWidget = await LiveWidget.scoreboardForAuditorium(aud, client);
+            const backstageLayout = LiveWidget.layoutForPhysicalAudBackstage(audScoreboardWidget);
+            await client.sendStateEvent(backstage.roomId, audScoreboardWidget.type, audScoreboardWidget.state_key, audScoreboardWidget.content);
+            await client.sendStateEvent(backstage.roomId, backstageLayout.type, backstageLayout.state_key, backstageLayout.content);
+        }
     }
 
     public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {

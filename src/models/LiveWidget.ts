@@ -104,9 +104,17 @@ export class LiveWidget {
     }
 
     public static async scoreboardForTalk(talk: Talk, client: MatrixClient): Promise<IStateEvent<IWidget>> {
-        const widgetId = sha256(JSON.stringify(await talk.getDefinition()) + "_SCOREBOARD");
-        const aud = await config.RUNTIME.conference.getAuditorium(await talk.getAuditoriumId());
-        const title = aud ? `Messages from ${await aud.getCanonicalAlias()}` : `Messages from ${await talk.getAuditoriumId()}`;
+        const aud = config.RUNTIME.conference.getAuditorium(await talk.getAuditoriumId());
+        if (aud === undefined) {
+            throw new Error(`No auditorium ${await talk.getAuditoriumId()} for talk ${await talk.getId()}`);
+        }
+        return this.scoreboardForAuditorium(aud, client, talk);
+    }
+
+    public static async scoreboardForAuditorium(aud: Auditorium, client: MatrixClient, talk?: Talk): Promise<IStateEvent<IWidget>> {
+        // note: this is a little bit awkward, but there's nothing special about the widget ID, it just needs to be unique
+        const widgetId = sha256(JSON.stringify([await aud.getId(), talk ? await talk.getId() : ""]) + "_SCOREBOARD");
+        const title = `Messages from ${await aud.getCanonicalAlias()}`;
         return {
             type: "im.vector.modular.widgets",
             state_key: widgetId,
@@ -120,8 +128,8 @@ export class LiveWidget {
                 url: config.webserver.publicBaseUrl + "/widgets/scoreboard.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&talkId=$talkId&theme=$theme",
                 data: {
                     title: title,
-                    auditoriumId: await talk.getAuditoriumId(),
-                    talkId: await talk.getId(),
+                    auditoriumId: await aud.getId(),
+                    talkId: talk ? await talk.getId() : null
                 },
             } as IWidget,
         };
@@ -162,6 +170,23 @@ export class LiveWidget {
                         index: 0,
                         width: 100,
                         height: 40,
+                    },
+                },
+            },
+        };
+    }
+
+    public static layoutForPhysicalAudBackstage(scoreboard: IStateEvent<IWidget>): IStateEvent<ILayout> {
+        return {
+            type: "io.element.widgets.layout",
+            state_key: "",
+            content: {
+                widgets: {
+                    [scoreboard.state_key]: {
+                        container: "top",
+                        index: 0,
+                        width: 100,
+                        height: 60,
                     },
                 },
             },
