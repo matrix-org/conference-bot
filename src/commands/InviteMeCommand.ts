@@ -103,7 +103,7 @@ export class InviteMeCommand implements ICommand {
         });
 
         const sections = Array.from(bySection.entries());
-        sections.sort(([aSection, _aGroups], [bSection, _bGroups]) => aSection.localeCompare(bSection));
+        sections.sort(([aSection], [bSection]) => aSection.localeCompare(bSection));
 
         return "<ul>" + sections.map(([_sectionName, groups]) => {
             groups.sort();
