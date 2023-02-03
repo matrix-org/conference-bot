@@ -692,10 +692,11 @@ export class Conference {
     }
 
     public async getPeopleForTalk(talk: Talk): Promise<IPerson[]> {
-        const db = await this.getPentaDb();
-        if (db !== null) {
-            return await this.resolvePeople(await db.findAllPeopleForTalk(await talk.getId()));
-        }
+        // Legacy, should check it still does what we want before uncommenting (if that's what we want).
+        // const db = await this.getPentaDb();
+        // if (db !== null) {
+        //     return await this.resolvePeople(await db.findAllPeopleForTalk(await talk.getId()));
+        // }
 
         return talk.getSpeakers();
     }
