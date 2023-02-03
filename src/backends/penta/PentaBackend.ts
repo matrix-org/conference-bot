@@ -71,6 +71,17 @@ export class PentaBackend implements IScheduleBackend {
         const dbTalk = await this.db.getTalk(talk.id);
         if (dbTalk === null) return;
         this.rehydrateTalkFrom(talk, dbTalk);
+
+        // Not all people are listed in the Penta XML!
+        // Notably, devroom managers ('coordinators') are only available in the database.
+        // Make sure we get those whilst we hydrate our talk...
+        for (const person of await this.db.findAllPeopleForTalk(talk.id)) {
+            // Ensure we don't wind up duplicating people; this step is purely to get people who were missed out of the XML.
+            if (!talk.speakers.find(s => s.id == person.id)) {
+                // The person is already hydrated — they're straight from the DB — so no hydration step needed here.
+                talk.speakers.push(person);
+            }
+        }
     }
 
     private rehydrateTalkFrom(talk: ITalk, dbTalk: IDbTalk): void {
