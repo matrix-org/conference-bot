@@ -10,7 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: mskelton/setup-yarn@c34a9f0a8ec681943a2348edab381a9cc02fa3f4 # "v1.3.0"
+      - uses: actions/setup-node@v3 # "v1.3.0"
+        with:
+          node-version: 18
       - run: yarn test
 
   build:
@@ -18,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: mskelton/setup-yarn@c34a9f0a8ec681943a2348edab381a9cc02fa3f4 # "v1.3.0"
+      - uses: actions/setup-node@v3 # "v1.3.0"
+        with:
+          node-version: 18
       # TODO build:web fails currently, but it'd be good to make that work when possible and then add it here.
       - run: yarn build:jsonschema && yarn build:ts
