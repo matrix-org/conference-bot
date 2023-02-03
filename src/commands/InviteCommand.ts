@@ -46,6 +46,14 @@ export class InviteCommand implements ICommand {
             let people: IPerson[] = [];
             for (const aud of conference.storedAuditoriumBackstages) {
                 people.push(...await conference.getInviteTargetsForAuditorium(aud, true));
+                if ((await aud.getDefinition()).isPhysical) {
+                    // for a physical auditorium, additionally pick up speakers
+                    // (speakers are normally excluded from other rooms, but we want them in the support room)
+                    const db = await conference.getPentaDb();
+                    if (db !== null) {
+                        people.push(...await db.findAllPeopleForAuditorium(await aud.getId()));
+                    }
+                }
             }
             people = people.filter(p => p.role === Role.Speaker);
             const newPeople: IPerson[] = [];
