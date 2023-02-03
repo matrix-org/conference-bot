@@ -58,12 +58,13 @@ export class InviteCommand implements ICommand {
         } else if (args[0] && args[0] === "coordinators-support") {
             let people: IPerson[] = [];
             for (const aud of conference.storedAuditoriums) {
-                if (!(await aud.getId()).startsWith("D.")) {
+                // TODO In 2023 we didn't want this. I don't know why it was here before?
+                //if (!(await aud.getId()).startsWith("D.")) {
                     // HACK: Only invite coordinators for D.* auditoriums.
                     // TODO: Make invitations for support rooms more configurable.
                     //       https://github.com/matrix-org/conference-bot/issues/76
-                    continue;
-                }
+                    //continue;
+                //}
 
                 const inviteTargets = await conference.getInviteTargetsForAuditorium(aud, true);
                 people.push(...inviteTargets.filter(i => i.role === Role.Coordinator));
