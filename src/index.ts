@@ -18,7 +18,7 @@ limitations under the License.
 // TODO: Timezones!! (Europe-Brussels)
 // TODO: Start webserver
 
-import { Intent, LogLevel, LogService, MatrixClient, SimpleFsStorageProvider, UserID } from "matrix-bot-sdk";
+import { LogLevel, LogService, MatrixClient, SimpleFsStorageProvider, UserID } from "matrix-bot-sdk";
 import * as path from "path";
 import config, { IPentaScheduleBackendConfig } from "./config";
 import { ICommand } from "./commands/ICommand";
