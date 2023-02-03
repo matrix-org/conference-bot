@@ -18,7 +18,6 @@ import { ICommand } from "./ICommand";
 import { LogLevel, MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { logMessage } from "../LogProxy";
-import { group } from "console";
 
 export class InviteMeCommand implements ICommand {
     public readonly prefixes = ["inviteme", "inviteto"];
