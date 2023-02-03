@@ -96,7 +96,7 @@ export class InviteMeCommand implements ICommand {
         // organise the groups into sections
         Array.from(roomGroups.keys()).forEach(group => {
             const section = group.split(":")[0];
-            if (! bySection.has(section)) {
+            if (!bySection.has(section)) {
                 bySection.set(section, []);
             }
             bySection.get(section)!.push(group);
