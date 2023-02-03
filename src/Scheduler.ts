@@ -318,6 +318,8 @@ export class Scheduler {
     }
 
     private async _execute(task: ITask) {
+        // This is undefined when we're either just plain missing a talk room when we shouldn't,
+        // or when the auditorium is physical (in which case talks don't have rooms).
         const confTalk: Talk | undefined = this.conference.getTalk(task.talk.id);
         const confAud = this.conference.getAuditorium(task.talk.auditoriumId);
         const confAudBackstage = this.conference.getAuditoriumBackstage(task.talk.auditoriumId);
