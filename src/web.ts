@@ -197,23 +197,31 @@ export async function renderScoreboardWidget(req: Request, res: Response) {
     if (!audId || Array.isArray(audId)) {
         return res.sendStatus(404);
     }
-    const talkId = req.query?.['talkId'] as string;
-    if (!talkId || Array.isArray(talkId)) {
-        return res.sendStatus(404);
-    }
 
     const aud = config.RUNTIME.conference.getAuditorium(audId);
     if (!aud) {
         return res.sendStatus(404);
     }
 
-    const talk = config.RUNTIME.conference.getTalk(talkId);
-    if (!talk) {
-        return res.sendStatus(404);
-    }
+    if (!(await aud.getDefinition()).isPhysical) {
+        // For physical auditoriums, the widget sits in the backstage room and so there isn't any talk ID to cross-reference, so skip
+        // these checks for physical auditoriums.
+        // I'm not sure why we want to check a talk ID anyway — 'security'?
+        // But I'll leave it be.
 
-    if (await talk.getAuditoriumId() !== await aud.getId()) {
-        return res.sendStatus(404);
+        const talkId = req.query?.['talkId'] as string;
+        if (!talkId || Array.isArray(talkId)) {
+            return res.sendStatus(404);
+        }
+
+        const talk = config.RUNTIME.conference.getTalk(talkId);
+        if (!talk) {
+            return res.sendStatus(404);
+        }
+
+        if (await talk.getAuditoriumId() !== await aud.getId()) {
+            return res.sendStatus(404);
+        }
     }
 
     return res.render('scoreboard.liquid', {
