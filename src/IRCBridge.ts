@@ -122,7 +122,7 @@ export class IRCBridge {
 
     public async plumbChannelToRoom(channel: string, roomId: string) {
         if (await this.shouldInviteBot(roomId)) {
-            await this.ircClient.join(channel);
+            await this.mxClient.inviteUser(this.config.botUserId, roomId);
         }
         await this.ircClient.join(channel);
         const result = await this.executeCommand(`plumb ${roomId} ${this.config.serverName} ${channel}`);
