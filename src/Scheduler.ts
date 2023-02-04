@@ -450,6 +450,8 @@ export class Scheduler {
             if (confTalk === undefined) return;
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 1 minute!</h3><p>The next talk will start automatically after yours. Wrap it up!</p>`);
         } else if (task.type === ScheduledTaskType.TalkEnd1M) {
+            // It's a bit spammy for a physical talk.
+            if (confTalk === undefined) return;
             await this.client.sendHtmlText(confAud.roomId, `<h3>This talk ends in about 1 minute!</h3>`);
         } else if (task.type === ScheduledTaskType.TalkCheckin45M) {
             if (confTalk === undefined) return;
