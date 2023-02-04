@@ -401,7 +401,8 @@ export class Scheduler {
             } else {
                 await this.client.sendHtmlText(confAud.roomId, `<h3>The talk will end shortly</h3>`);
             }
-        } else if (task.type === ScheduledTaskType.TalkStart1H && confTalk !== undefined) {
+        } else if (task.type === ScheduledTaskType.TalkStart1H) {
+            if (confTalk === undefined) return;
             // This stage is skipped entirely for physical auditoriums' talks, because it only serves to nag
             // TODO Do we need to ensure that coordinators have checked in?
 
@@ -445,11 +446,13 @@ export class Scheduler {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 5 minutes</h3><p>The next talk will start automatically after yours.</p>`);
             }
             await this.client.sendHtmlText(confAud.roomId, `<h3>This talk ends in about 5 minutes</h3>` + (task.talk.qa_startTime !== null ? `<p>Ask questions here for the speakers!</p>`: ''));
-        } else if (task.type === ScheduledTaskType.TalkLivestreamEnd1M && confTalk !== undefined) {
+        } else if (task.type === ScheduledTaskType.TalkLivestreamEnd1M) {
+            if (confTalk === undefined) return;
             await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 1 minute!</h3><p>The next talk will start automatically after yours. Wrap it up!</p>`);
         } else if (task.type === ScheduledTaskType.TalkEnd1M) {
             await this.client.sendHtmlText(confAud.roomId, `<h3>This talk ends in about 1 minute!</h3>`);
-        } else if (task.type === ScheduledTaskType.TalkCheckin45M && confTalk !== undefined) {
+        } else if (task.type === ScheduledTaskType.TalkCheckin45M) {
+            if (confTalk === undefined) return;
             // TODO This is skipped entirely for physical talks, but do we want to ensure coordinators are checked-in?
 
             if (!task.talk.prerecorded) return;
@@ -486,7 +489,8 @@ export class Scheduler {
                 const resolved = (await resolveIdentifiers(this.client, userIds)).filter(p => p.mxid).map(p => p.mxid!);
                 await this.checkins.expectCheckinFrom(resolved);
             }
-        } else if (task.type === ScheduledTaskType.TalkCheckin30M && confTalk !== undefined) {
+        } else if (task.type === ScheduledTaskType.TalkCheckin30M) {
+            if (confTalk === undefined) return;
             // TODO This is skipped entirely for physical talks, but do we want to ensure coordinators are checked-in?
 
             if (!task.talk.prerecorded) return;
@@ -523,7 +527,8 @@ export class Scheduler {
                 const resolved = (await resolveIdentifiers(this.client, userIds)).filter(p => p.mxid).map(p => p.mxid!);
                 await this.checkins.expectCheckinFrom(resolved);
             } // else no complaints
-        } else if (task.type === ScheduledTaskType.TalkCheckin15M && confTalk !== undefined) {
+        } else if (task.type === ScheduledTaskType.TalkCheckin15M) {
+            if (confTalk === undefined) return;
             // TODO This is skipped entirely for physical talks, but do we want to ensure coordinators are checked-in?
 
             if (!task.talk.prerecorded) return;
