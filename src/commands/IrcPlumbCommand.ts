@@ -33,7 +33,7 @@ export class IrcPlumbCommand implements ICommand {
         for (const auditorium of conference.storedAuditoriums) {
             const channelName = await this.ircBridge.deriveChannelName(auditorium);
             try {
-                await this.plumbOne(client, channelName, auditorium.roomId);
+                await this.plumbOne(client, auditorium.roomId, channelName);
                 // Wait before plumbing the next one so as to not overwhelm the poor bridge.
                 await new Promise(r => setTimeout(r, PLUMB_WAIT_MS));
             } catch (ex) {
@@ -44,7 +44,7 @@ export class IrcPlumbCommand implements ICommand {
         for (const interest of conference.storedInterestRooms) {
             const channelName = await this.ircBridge.deriveChannelNameSI(interest);
             try {
-                await this.plumbOne(client, channelName, interest.roomId);
+                await this.plumbOne(client, interest.roomId, channelName);
                 // Wait before plumbing the next one so as to not overwhelm the poor bridge.
                 await new Promise(r => setTimeout(r, PLUMB_WAIT_MS));
             } catch (ex) {
