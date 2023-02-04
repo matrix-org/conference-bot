@@ -15,11 +15,12 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { LogLevel, LogService, MatrixClient, PowerLevelAction } from "matrix-bot-sdk";
+import { LogLevel, LogService, MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { IRCBridge } from "../IRCBridge";
 import { logMessage } from "../LogProxy";
 import { KickPowerLevel } from "../models/room_kinds";
+import { PowerLevelAction } from "matrix-bot-sdk/lib/models/PowerLevelAction";
 
 const PLUMB_WAIT_MS = 10000;
 
