@@ -20,6 +20,7 @@ import { Auditorium } from "./models/Auditorium";
 import { InterestRoom } from "./models/InterestRoom";
 import config from "./config";
 import { makeLocalpart } from "./utils/aliases";
+import { LogService } from 'matrix-bot-sdk';
 
 export interface IRCBridgeOpts {
     botNick: string;
@@ -87,9 +88,13 @@ export class IRCBridge {
         } else {
             this.botRoomId = data.roomId;
         }
-
-        // This should timeout if the connection is broken
-        await this.executeCommand("bridgeversion");
+    
+        try {
+            // This should timeout if the connection is broken
+            await this.executeCommand("bridgeversion");
+        } catch (ex) {
+            LogService.warn(`IRCBridge`, "Failed to get IRC bridge version, it may be unreachable.");
+        }
 
         this.ircClient = new irc.Client(this.config.serverName, this.config.botNick, {
             port: this.config.port,
