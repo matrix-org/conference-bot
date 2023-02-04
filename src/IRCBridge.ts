@@ -134,6 +134,10 @@ export class IRCBridge {
         await this.ircClient.join(channel);
         const result = await this.executeCommand(`plumb ${roomId} ${this.config.serverName} ${channel}`);
         const resultText = result.content.body;
+        if (resultText.match(/Room mapping already exists/)) {
+            // Already bridged
+            return;
+        }
         if (resultText !== 'Room plumbed.') {
             throw Error(`IRC bridge gave an error: ${resultText}`);
         }
