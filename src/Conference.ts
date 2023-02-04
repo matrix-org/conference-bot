@@ -823,8 +823,8 @@ export class Conference {
         const until = Date.now() + inNextMinutes * 60000;
 
         const upcomingTalks: ITalk[] = [];
-        for (const t of Object.values(this.talks)) {
-            const talk = await t.getDefinition();
+        // Must use backend.talks here because we are interested in physical talks as well.
+        for (const talk of Object.values(this.backend.talks)) {
             const talkEventTime = lambda(talk);
             // If null is returned then the talk does not have this event, so don't return it as upcoming.
             if (talkEventTime === null) continue;
