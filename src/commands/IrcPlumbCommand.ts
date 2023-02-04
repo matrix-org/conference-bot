@@ -22,7 +22,7 @@ import { logMessage } from "../LogProxy";
 import { KickPowerLevel } from "../models/room_kinds";
 import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
-const PLUMB_WAIT_MS = 1000;
+const PLUMB_WAIT_MS = 10000;
 
 export class IrcPlumbCommand implements ICommand {
     public readonly prefixes = ["plumb-irc"];
