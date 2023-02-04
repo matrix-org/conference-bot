@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import {LogService, MatrixClient, MatrixEvent} from "matrix-bot-sdk";
+import { LogService, MatrixClient, MatrixEvent } from "matrix-bot-sdk";
 import * as irc from "irc-upd";
 import { Auditorium } from "./models/Auditorium";
 import { InterestRoom } from "./models/InterestRoom";
@@ -93,9 +93,13 @@ export class IRCBridge {
         } else {
             this.botRoomId = data.roomId;
         }
-
-        // This should timeout if the connection is broken
-        await this.executeCommand("bridgeversion");
+    
+        try {
+            // This should timeout if the connection is broken
+            await this.executeCommand("bridgeversion");
+        } catch (ex) {
+            LogService.warn(`IRCBridge`, "Failed to get IRC bridge version, it may be unreachable.");
+        }
 
         this.ircClient = new irc.Client(this.config.serverName, this.config.botNick, {
             port: this.config.port,
