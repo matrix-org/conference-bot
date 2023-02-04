@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { LogLevel, LogService, MatrixClient } from "matrix-bot-sdk";
+import { LogLevel, LogService, MatrixClient, PowerLevelAction } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { IRCBridge } from "../IRCBridge";
 import { logMessage } from "../LogProxy";
@@ -70,8 +70,10 @@ export class IrcPlumbCommand implements ICommand {
         }
 
         try {
-            // The bridge needs the ability to kick KLINED users.
-            await client.setUserPowerLevel(this.ircBridge.botUserId, resolvedRoomId, KickPowerLevel);
+            if (!await client.userHasPowerLevelForAction(this.ircBridge.botUserId, resolvedRoomId, PowerLevelAction.Kick)) {
+                // The bridge needs the ability to kick KLINED users.
+                await client.setUserPowerLevel(this.ircBridge.botUserId, resolvedRoomId, KickPowerLevel);
+            }
         } catch (ex) {
             LogService.warn("IrcPlumbCommand", ex);
             return logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel to room ${resolvedRoomId}: could not set AS power level`);
