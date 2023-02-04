@@ -35,9 +35,15 @@ export function renderAuditoriumWidget(req: Request, res: Response) {
         return res.sendStatus(404);
     }
 
+    let sid = audId.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    // HACK HACK HACK HACK HACK FOSDEM 2023
+    // k1103blahblh -> k1103, ud111a -> ud111a
+    sid = sid.replace(/([a-z][0-9]+)[a-z]{2,}/, "$1");
+
     const streamUrl = template(config.livestream.auditoriumUrl, {
         id: audId.toLowerCase(),
-        sId: audId.toLowerCase().replace(/[^a-z0-9]/g, ''),
+        sId: sid
     });
 
     return res.render('auditorium.liquid', {
