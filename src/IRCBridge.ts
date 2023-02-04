@@ -56,7 +56,7 @@ export class IRCBridge {
     }
 
     public async deriveChannelName(auditorium: Auditorium) {
-        const name = await auditorium.getName();
+        const name = await auditorium.getSlug();
         if (!name) {
             throw Error('Auditorium name is empty');
         }
