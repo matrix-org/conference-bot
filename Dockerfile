@@ -1,4 +1,4 @@
-FROM node:14-alpine AS builder
+FROM node:18-alpine AS builder
 
 COPY ./ /app/
 WORKDIR /app
@@ -8,7 +8,7 @@ RUN yarn install
 ENV NODE_ENV=production
 RUN yarn build
 
-FROM node:14-alpine
+FROM node:18-alpine
 
 COPY --from=builder /app/lib /app/lib
 COPY --from=builder /app/srv /app/srv

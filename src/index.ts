@@ -26,7 +26,7 @@ import { HelpCommand } from "./commands/HelpCommand";
 import { BuildCommand } from "./commands/BuildCommand";
 import { Conference } from "./Conference";
 import { InviteCommand } from "./commands/InviteCommand";
-import * as express from "express";
+import express from "express";
 import { Liquid } from "liquidjs";
 import {
     makeHybridWidget,

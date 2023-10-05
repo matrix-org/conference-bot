@@ -16,7 +16,7 @@ limitations under the License.
 
 import * as parser from 'fast-xml-parser';
 import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from "../../models/schedule";
-import * as moment from "moment";
+import moment from "moment";
 import { RoomKind } from "../../models/room_kinds";
 import { IPrefixConfig } from "../../config";
 import { LogService } from 'matrix-bot-sdk';
