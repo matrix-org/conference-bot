@@ -87,7 +87,7 @@ export class Conference {
         [personId: string]: IPerson;
     } = {};
 
-    constructor(public readonly backend: IScheduleBackend, public readonly id: string, public readonly client: MatrixClient) {
+    constructor(public readonly backend: IScheduleBackend, public readonly id: string, public readonly client: ConferenceMatrixClient, private readonly config: IConfig) {
         this.client.on("room.event", async (roomId: string, event) => {
             if (event['type'] === 'm.room.member' && event['content']?.['third_party_invite']) {
                 const emailInviteToken = event['content']['third_party_invite']['signed']?.['token'];

@@ -18,7 +18,7 @@ import { Conference } from "./Conference";
 import AwaitLock from "await-lock";
 import { logMessage } from "./LogProxy";
 import config from "./config";
-import { LogLevel, LogService, MatrixClient, MentionPill } from "matrix-bot-sdk";
+import { LogLevel, LogService, MentionPill } from "matrix-bot-sdk";
 import { makeRoomPublic } from "./utils";
 import { Scoreboard } from "./Scoreboard";
 import { LiveWidget } from "./models/LiveWidget";
@@ -26,6 +26,7 @@ import { ResolvedPersonIdentifier, resolveIdentifiers } from "./invites";
 import { ITalk, Role } from "./models/schedule";
 import { Talk } from "./models/Talk";
 import { CheckInMap } from "./CheckInMap";
+import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
 
 export enum ScheduledTaskType {
     TalkStart = "talk_start",
@@ -145,7 +146,7 @@ export class Scheduler {
     private pending: { [taskId: string]: ITask } = {};
     private lock = new AwaitLock();
 
-    constructor(private readonly client: MatrixClient,
+    constructor(private readonly client: ConferenceMatrixClient,
         private readonly conference: Conference,
         private readonly scoreboard: Scoreboard,
         private readonly checkins: CheckInMap) {
