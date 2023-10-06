@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { LogLevel, MatrixClient } from "matrix-bot-sdk";
+import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { invitePersonToRoom, ResolvedPersonIdentifier } from "../invites";
 import { logMessage } from "../LogProxy";

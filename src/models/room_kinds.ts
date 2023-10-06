@@ -14,11 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import config from "../config";
+import { RoomCreateOptions } from "matrix-bot-sdk";
+
 
 export const KickPowerLevel = 50;
 
-export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = {
+export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = (moderatorUserId: string) => ({
     ban: 50,
     events_default: 0,
     invite: 50,
@@ -40,10 +41,10 @@ export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = {
         "m.space.child": 100,
     },
     users: {
-        [config.moderatorUserId]: 100,
+        [moderatorUserId]: 100,
         // should be populated with the creator
     },
-};
+});
 
 export const PRIVATE_ROOM_POWER_LEVELS_TEMPLATE = {
     ...PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
@@ -78,7 +79,7 @@ export const RSC_AUDITORIUM_ID = "auditoriumId";
 export const RSC_TALK_ID = "talkId";
 export const RSC_SPECIAL_INTEREST_ID = "interestId";
 
-export const CONFERENCE_ROOM_CREATION_TEMPLATE = {
+export const CONFERENCE_ROOM_CREATION_TEMPLATE: RoomCreateOptions = {
     preset: 'private_chat',
     visibility: 'private',
     initial_state: [
@@ -90,7 +91,7 @@ export const CONFERENCE_ROOM_CREATION_TEMPLATE = {
     },
 };
 
-export const AUDITORIUM_CREATION_TEMPLATE = {
+export const AUDITORIUM_CREATION_TEMPLATE = (moderatorUserId: string) => ({
     preset: 'public_chat',
     visibility: 'public',
     initial_state: [
@@ -100,11 +101,11 @@ export const AUDITORIUM_CREATION_TEMPLATE = {
     creation_content: {
         [RSC_ROOM_KIND_FLAG]: RoomKind.Auditorium,
     },
-    power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
-    invite: [config.moderatorUserId],
-};
+    power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE(moderatorUserId),
+    invite: [moderatorUserId],
+} satisfies RoomCreateOptions);
 
-export const AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE = {
+export const AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE: RoomCreateOptions = {
     preset: 'private_chat',
     visibility: 'private',
     initial_state: [
@@ -117,7 +118,7 @@ export const AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE = {
     power_level_content_override: PRIVATE_ROOM_POWER_LEVELS_TEMPLATE,
 };
 
-export const TALK_CREATION_TEMPLATE = { // before being opened up to the public
+export const TALK_CREATION_TEMPLATE = (moderatorUserId: string) => ({ // before being opened up to the public
     preset: 'private_chat',
     visibility: 'private',
     initial_state: [
@@ -127,11 +128,11 @@ export const TALK_CREATION_TEMPLATE = { // before being opened up to the public
     creation_content: {
         [RSC_ROOM_KIND_FLAG]: RoomKind.Talk,
     },
-    power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
-    invite: [config.moderatorUserId],
-}
+    power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE(moderatorUserId),
+    invite: [moderatorUserId],
+} satisfies RoomCreateOptions);
 
-export const SPECIAL_INTEREST_CREATION_TEMPLATE = {
+export const SPECIAL_INTEREST_CREATION_TEMPLATE = (moderatorUserId: string) => ({
     preset: 'public_chat',
     visibility: 'public',
     initial_state: [
@@ -148,16 +149,16 @@ export const SPECIAL_INTEREST_CREATION_TEMPLATE = {
             "m.room.power_levels": 50,
         },
     },
-    invite: [config.moderatorUserId],
-};
+    invite: [moderatorUserId],
+} satisfies RoomCreateOptions);
 
-export function mergeWithCreationTemplate(template: any, addlProps: any): any {
+export function mergeWithCreationTemplate(template: RoomCreateOptions, addlProps: any): any {
     const result = {...template};
-    template.initial_state = template.initial_state.slice(); // clone to prevent mutation by accident
+    template.initial_state = template.initial_state?.slice(); // clone to prevent mutation by accident
     for (const prop of Object.keys(addlProps)) {
         switch (prop) {
             case 'initial_state':
-                result.initial_state.push(...addlProps.initial_state);
+                result.initial_state?.push(...addlProps.initial_state);
                 break;
             case 'creation_content':
                 result.creation_content = {...result.creation_content, ...addlProps.creation_content};

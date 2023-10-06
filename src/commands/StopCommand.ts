@@ -16,9 +16,7 @@ limitations under the License.
 
 import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
-import { Conference } from "../Conference";
-import config from "../config";
-import { ScheduledTaskType, Scheduler } from "../Scheduler";
+import { Scheduler } from "../Scheduler";
 
 export class StopCommand implements ICommand {
     public readonly prefixes = ["stop"];

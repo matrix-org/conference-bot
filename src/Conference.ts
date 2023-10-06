@@ -460,7 +460,7 @@ export class Conference {
                 );
             } else {
                 // Create a new interest room.
-                roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(SPECIAL_INTEREST_CREATION_TEMPLATE, {
+                roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(SPECIAL_INTEREST_CREATION_TEMPLATE(this.config.moderatorUserId), {
                     creation_content: {
                         [RSC_CONFERENCE_ID]: this.id,
                         [RSC_SPECIAL_INTEREST_ID]: interestRoom.id,
@@ -550,7 +550,7 @@ export class Conference {
 
         await parentSpace.addChildSpace(audSpace, { order: `auditorium-${auditorium.id}` });
 
-        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_CREATION_TEMPLATE, {
+        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_CREATION_TEMPLATE(this.config.moderatorUserId), {
             creation_content: {
                 [RSC_CONFERENCE_ID]: this.id,
                 [RSC_AUDITORIUM_ID]: auditorium.id,
@@ -608,7 +608,7 @@ export class Conference {
         }
 
         if (!this.talks[talk.id]) {
-            roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(TALK_CREATION_TEMPLATE, {
+            roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(TALK_CREATION_TEMPLATE(this.config.moderatorUserId), {
                 name: talk.title,
                 creation_content: {
                     [RSC_CONFERENCE_ID]: this.id,
