@@ -21,7 +21,7 @@ import { IRCBridge, IRCBridgeOpts } from "./IRCBridge";
 import { Scheduler } from "./Scheduler";
 import { CheckInMap } from "./CheckInMap";
 
-interface IConfig {
+export interface IConfig {
     homeserverUrl: string;
     accessToken: string;
     userId: string;
@@ -74,14 +74,6 @@ interface IConfig {
         };
     };
     ircBridge: IRCBridgeOpts | null;
-
-    RUNTIME: {
-        client: MatrixClient;
-        conference: Conference;
-        scheduler: Scheduler;
-        ircBridge: IRCBridge | null;
-        checkins: CheckInMap;
-    };
 }
 
 export interface IPrefixConfig {
