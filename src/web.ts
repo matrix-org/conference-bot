@@ -16,7 +16,6 @@ limitations under the License.
 
 import { Response, Request } from "express";
 import * as template from "string-template";
-import config from "./config";
 import { base32 } from "rfc4648";
 import { LogService, MatrixClient } from "matrix-bot-sdk";
 import { sha256 } from "./utils";
@@ -25,8 +24,9 @@ import { Scoreboard } from "./Scoreboard";
 import { LiveWidget } from "./models/LiveWidget";
 import { IDbTalk } from "./backends/penta/db/DbTalk";
 import { Conference } from "./Conference";
+import { IConfig } from "./config";
 
-export function renderAuditoriumWidget(req: Request, res: Response, conference: Conference) {
+export function renderAuditoriumWidget(req: Request, res: Response, conference: Conference, auditoriumUrl: string) {
     const audId = req.query?.['auditoriumId'] as string;
     if (!audId || Array.isArray(audId)) {
         return res.sendStatus(404);
@@ -36,7 +36,7 @@ export function renderAuditoriumWidget(req: Request, res: Response, conference: 
         return res.sendStatus(404);
     }
 
-    const streamUrl = template(config.livestream.auditoriumUrl, {
+    const streamUrl = template(auditoriumUrl, {
         id: audId.toLowerCase(),
         sId: audId.toLowerCase().replace(/[^a-z0-9]/g, ''),
     });
@@ -77,7 +77,7 @@ async function getDbTalk(talkId: string, conference: Conference): Promise<IDbTal
     return dbTalksCache[talkId].talk;
 }
 
-export async function renderTalkWidget(req: Request, res: Response, conference: Conference) {
+export async function renderTalkWidget(req: Request, res: Response, conference: Conference, talkUrl: string, jitsiDomain: string) {
     const audId = req.query?.['auditoriumId'] as string;
     if (!audId || Array.isArray(audId)) {
         return res.sendStatus(404);
@@ -105,7 +105,7 @@ export async function renderTalkWidget(req: Request, res: Response, conference: 
     // Pentabarf database for every visiting attendee once talk rooms are opened to the public.
     const dbTalk = await getDbTalk(talkId, conference);
 
-    const streamUrl = template(config.livestream.talkUrl, {
+    const streamUrl = template(talkUrl, {
         audId: audId.toLowerCase(),
         slug: (await talk.getDefinition()).slug.toLowerCase(),
         jitsi: base32.stringify(Buffer.from(talk.roomId), { pad: false }).toLowerCase(),
@@ -115,20 +115,20 @@ export async function renderTalkWidget(req: Request, res: Response, conference: 
         theme: req.query?.['theme'] === 'dark' ? 'dark' : 'light',
         videoUrl: streamUrl,
         roomName: await talk.getName(),
-        conferenceDomain: config.livestream.jitsiDomain,
+        conferenceDomain: jitsiDomain,
         conferenceId: base32.stringify(Buffer.from(talk.roomId), { pad: false }).toLowerCase(),
         livestreamStartTime: dbTalk?.livestream_start_datetime ?? "",
         livestreamEndTime: dbTalk?.livestream_end_datetime ?? "",
     });
 }
 
-export async function renderHybridWidget(req: Request, res: Response) {
+export async function renderHybridWidget(req: Request, res: Response, hybridUrl: string, jitsiDomain: string) {
     const roomId = req.query?.['roomId'] as string;
     if (!roomId || Array.isArray(roomId)) {
         return res.sendStatus(404);
     }
 
-    const streamUrl = template(config.livestream.hybridUrl, {
+    const streamUrl = template(hybridUrl, {
         jitsi: base32.stringify(Buffer.from(roomId), { pad: false }).toLowerCase(),
     });
 
@@ -136,18 +136,18 @@ export async function renderHybridWidget(req: Request, res: Response) {
         theme: req.query?.['theme'] === 'dark' ? 'dark' : 'light',
         videoUrl: streamUrl,
         roomName: "Livestream / Q&A",
-        conferenceDomain: config.livestream.jitsiDomain,
+        conferenceDomain: jitsiDomain,
         conferenceId: base32.stringify(Buffer.from(roomId), { pad: false }).toLowerCase(),
     });
 }
 
-export async function makeHybridWidget(req: Request, res: Response, client: MatrixClient) {
+export async function makeHybridWidget(req: Request, res: Response, client: MatrixClient, avatar: string, url: string) {
     const roomId = req.query?.['roomId'] as string;
     if (!roomId || Array.isArray(roomId)) {
         return res.sendStatus(404);
     }
 
-    const widget = await LiveWidget.hybridForRoom(roomId, client);
+    const widget = await LiveWidget.hybridForRoom(roomId, client, avatar, url);
     const layout = LiveWidget.layoutForHybrid(widget);
 
     res.send({
@@ -157,9 +157,9 @@ export async function makeHybridWidget(req: Request, res: Response, client: Matr
     });
 }
 
-export async function rtmpRedirect(req: Request, res: Response, conference: Conference) {
+export async function rtmpRedirect(req: Request, res: Response, conference: Conference, cfg: IConfig["livestream"]["onpublish"]) {
     // Check auth (salt must match known salt)
-    if (req.query?.['auth'] !== config.livestream.onpublish.salt) {
+    if (req.query?.['auth'] !== cfg.salt) {
         return res.sendStatus(200); // fake a 'no mapping' response for security
     }
 
@@ -174,13 +174,13 @@ export async function rtmpRedirect(req: Request, res: Response, conference: Conf
         if (!talk) return res.sendStatus(200); // Annoying thing of nginx wanting "no mapping" to be 200 OK
 
         // Redirect to RTMP URL
-        const hostname = template(config.livestream.onpublish.rtmpHostnameTemplate, {
+        const hostname = template(cfg.rtmpHostnameTemplate, {
             squishedAudId: (await talk.getAuditoriumId()).replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
         });
         const ip = await dns.promises.resolve(hostname);
-        const uri = template(config.livestream.onpublish.rtmpUrlTemplate, {
+        const uri = template(cfg.rtmpUrlTemplate, {
             hostname: ip,
-            saltedHash: sha256((await talk.getId()) + '.' + config.livestream.onpublish.salt),
+            saltedHash: sha256((await talk.getId()) + '.' + cfg.salt),
         });
         return res.redirect(uri);
     } catch (e) {

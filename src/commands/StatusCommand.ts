@@ -18,7 +18,6 @@ import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { Scheduler } from "../Scheduler";
-import config from "../config";
 
 export class StatusCommand implements ICommand {
     public readonly prefixes = ["status", "stat", "refresh"];

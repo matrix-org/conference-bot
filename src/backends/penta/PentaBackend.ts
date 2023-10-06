@@ -1,4 +1,4 @@
-import config, { IPentaScheduleBackendConfig } from "../../config";
+import { IConfig, IPentaScheduleBackendConfig } from "../../config";
 import { IConference, ITalk, IAuditorium, IInterestRoom, IPerson } from "../../models/schedule";
 import { AuditoriumId, InterestId, IScheduleBackend, TalkId } from "../IScheduleBackend";
 import { PentaDb } from "./db/PentaDb";
@@ -9,7 +9,7 @@ import { IDbTalk } from "./db/DbTalk";
 
 
 export class PentaBackend implements IScheduleBackend {
-    constructor(private cfg: IPentaScheduleBackendConfig, parser: PentabarfParser, public db: PentaDb) {
+    constructor(parser: PentabarfParser, public db: PentaDb) {
         this.updateFromParser(parser);
     }
 
@@ -118,17 +118,18 @@ export class PentaBackend implements IScheduleBackend {
         return false;
     }
 
-    static async new(cfg: IPentaScheduleBackendConfig): Promise<PentaBackend> {
-        const xml = await fetch(cfg.scheduleDefinition).then(async r => {
+    static async new(config: IConfig): Promise<PentaBackend> {
+        const pentaConfig = config.conference.schedule as IPentaScheduleBackendConfig;
+        const xml = await fetch(pentaConfig.scheduleDefinition).then(async r => {
             if (! r.ok) {
                 throw new Error("Penta XML fetch not OK: " + r.status + "; " + await r.text())
             }
             return await r.text();
         });
         const parsed = new PentabarfParser(xml, config.conference.prefixes);
-        const db = new PentaDb(cfg.database);
+        const db = new PentaDb(config);
         await db.connect();
-        const backend = new PentaBackend(cfg, parsed, db);
+        const backend = new PentaBackend(parsed, db);
         await backend.init();
         return backend;
     }

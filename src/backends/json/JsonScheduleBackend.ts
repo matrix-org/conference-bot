@@ -1,5 +1,4 @@
-import { rename } from "fs";
-import config, { IJsonScheduleBackendConfig } from "../../config";
+import { IJsonScheduleBackendConfig } from "../../config";
 import { IConference, ITalk, IAuditorium, IInterestRoom } from "../../models/schedule";
 import { AuditoriumId, InterestId, IScheduleBackend, TalkId } from "../IScheduleBackend";
 import { JsonScheduleLoader } from "./JsonScheduleLoader";
@@ -9,7 +8,7 @@ import { LogService } from "matrix-bot-sdk";
 import { readJsonFileAsync, writeJsonFileAsync } from "../../utils";
 
 export class JsonScheduleBackend implements IScheduleBackend {
-    constructor(private loader: JsonScheduleLoader, private cfg: IJsonScheduleBackendConfig, private wasFromCache: boolean) {
+    constructor(private loader: JsonScheduleLoader, private cfg: IJsonScheduleBackendConfig, private wasFromCache: boolean, public readonly dataPath: string) {
 
     }
 
@@ -17,11 +16,11 @@ export class JsonScheduleBackend implements IScheduleBackend {
         return this.wasFromCache;
     }
 
-    private static async loadConferenceFromCfg(cfg: IJsonScheduleBackendConfig, allowUseCache: boolean): Promise<{loader: JsonScheduleLoader, cached: boolean}> {
+    private static async loadConferenceFromCfg(dataPath: string, cfg: IJsonScheduleBackendConfig, allowUseCache: boolean): Promise<{loader: JsonScheduleLoader, cached: boolean}> {
         let jsonDesc;
         let cached = false;
 
-        const cachedSchedulePath = path.join(config.dataPath, 'cached_schedule.json');
+        const cachedSchedulePath = path.join(dataPath, 'cached_schedule.json');
 
         try {
             if (cfg.scheduleDefinition.startsWith("http")) {
@@ -60,13 +59,13 @@ export class JsonScheduleBackend implements IScheduleBackend {
         return {loader: new JsonScheduleLoader(jsonDesc), cached};
     }
 
-    static async new(cfg: IJsonScheduleBackendConfig): Promise<JsonScheduleBackend> {
-        const loader = await JsonScheduleBackend.loadConferenceFromCfg(cfg, true);
-        return new JsonScheduleBackend(loader.loader, cfg, loader.cached);
+    static async new(dataPath: string, cfg: IJsonScheduleBackendConfig): Promise<JsonScheduleBackend> {
+        const loader = await JsonScheduleBackend.loadConferenceFromCfg(dataPath, cfg, true);
+        return new JsonScheduleBackend(loader.loader, cfg, loader.cached, dataPath);
     }
 
     async refresh(): Promise<void> {
-        this.loader = (await JsonScheduleBackend.loadConferenceFromCfg(this.cfg, false)).loader;
+        this.loader = (await JsonScheduleBackend.loadConferenceFromCfg(this.dataPath, this.cfg, false)).loader;
         // If we managed to load anything, this isn't from the cache anymore.
         this.wasFromCache = false;
     }

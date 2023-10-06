@@ -6,10 +6,15 @@ export class ConferenceMatrixClient extends MatrixClient {
         const idClient = await new MatrixClient(confConfig.homeserverUrl, confConfig.accessToken).getIdentityServerClient(confConfig.idServerDomain);
         await idClient.acceptAllTerms();
         idClient.brand = confConfig.idServerBrand;      
-        return new ConferenceMatrixClient(confConfig.homeserverUrl, confConfig.accessToken, idClient, storage);
+        return new ConferenceMatrixClient(confConfig.homeserverUrl, confConfig.accessToken, idClient, confConfig.managementRoom, storage);
     }
 
-    constructor(homeserverUrl: string, accessToken: string, public readonly identityClient: IdentityClient, storage?: IStorageProvider) {
+    constructor(
+        homeserverUrl: string,
+        accessToken: string,
+        public readonly identityClient: IdentityClient,
+        public readonly managementRoom: string,
+        storage?: IStorageProvider) {
         super(homeserverUrl, accessToken, storage);
     }
 }

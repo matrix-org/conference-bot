@@ -18,11 +18,9 @@ import { IStateEvent } from "./room_state";
 import { IWidget } from "matrix-widget-api";
 import { sha256 } from "../utils";
 import { Auditorium } from "./Auditorium";
-import config from "../config";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Talk } from "./Talk";
 import * as template from "string-template";
-import { base32 } from "rfc4648";
 import { Conference } from "../Conference";
 
 export interface ILayout {
@@ -37,11 +35,9 @@ export interface ILayout {
 }
 
 export class LiveWidget {
-    private constructor() {
-        // nothing
-    }
+    private constructor() { }
 
-    public static async forAuditorium(aud: Auditorium, client: MatrixClient): Promise<IStateEvent<IWidget>> {
+    public static async forAuditorium(aud: Auditorium, client: MatrixClient, avatar: string, baseUrl: string): Promise<IStateEvent<IWidget>> {
         const widgetId = sha256(JSON.stringify(await aud.getDefinition()));
         return {
             type: "im.vector.modular.widgets",
@@ -52,8 +48,8 @@ export class LiveWidget {
                 type: "m.custom",
                 waitForIframeLoad: true,
                 name: "Livestream",
-                avatar_url: config.livestream.widgetAvatar,
-                url: config.webserver.publicBaseUrl + "/widgets/auditorium.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&theme=$theme",
+                avatar_url: avatar,
+                url: baseUrl + "/widgets/auditorium.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&theme=$theme",
                 data: {
                     title: await aud.getName(),
                     auditoriumId: await aud.getId(),
@@ -62,7 +58,7 @@ export class LiveWidget {
         };
     }
 
-    public static async forTalk(talk: Talk, client: MatrixClient): Promise<IStateEvent<IWidget>> {
+    public static async forTalk(talk: Talk, client: MatrixClient, avatar: string, baseUrl: string): Promise<IStateEvent<IWidget>> {
         const widgetId = sha256(JSON.stringify(await talk.getDefinition()));
         return {
             type: "im.vector.modular.widgets",
@@ -73,8 +69,8 @@ export class LiveWidget {
                 type: "m.custom",
                 waitForIframeLoad: true,
                 name: "Livestream / Q&A",
-                avatar_url: config.livestream.widgetAvatar,
-                url: config.webserver.publicBaseUrl + "/widgets/talk.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&talkId=$talkId&theme=$theme#displayName=$matrix_display_name&avatarUrl=$matrix_avatar_url&userId=$matrix_user_id&roomId=$matrix_room_id&auth=openidtoken-jwt",
+                avatar_url: avatar,
+                url: baseUrl + "/widgets/talk.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&talkId=$talkId&theme=$theme#displayName=$matrix_display_name&avatarUrl=$matrix_avatar_url&userId=$matrix_user_id&roomId=$matrix_room_id&auth=openidtoken-jwt",
                 data: {
                     title: await talk.getName(),
                     auditoriumId: await talk.getAuditoriumId(),
@@ -84,7 +80,7 @@ export class LiveWidget {
         };
     }
 
-    public static async hybridForRoom(roomId: string, client: MatrixClient): Promise<IStateEvent<IWidget>> {
+    public static async hybridForRoom(roomId: string, client: MatrixClient, avatar: string, url: string): Promise<IStateEvent<IWidget>> {
         const widgetId = sha256(JSON.stringify({roomId, kind: "hybrid"}));
         return {
             type: "im.vector.modular.widgets",
@@ -95,8 +91,8 @@ export class LiveWidget {
                 type: "m.custom",
                 waitForIframeLoad: true,
                 name: "Livestream / Q&A",
-                avatar_url: config.livestream.widgetAvatar,
-                url: config.webserver.publicBaseUrl + "/widgets/hybrid.html?widgetId=$matrix_widget_id&roomId=$matrix_room_id&theme=$theme#displayName=$matrix_display_name&avatarUrl=$matrix_avatar_url&userId=$matrix_user_id&roomId=$matrix_room_id&auth=openidtoken-jwt",
+                avatar_url: avatar,
+                url: url + "/widgets/hybrid.html?widgetId=$matrix_widget_id&roomId=$matrix_room_id&theme=$theme#displayName=$matrix_display_name&avatarUrl=$matrix_avatar_url&userId=$matrix_user_id&roomId=$matrix_room_id&auth=openidtoken-jwt",
                 data: {
                     title: "Join the conference to ask questions",
                 },
@@ -104,17 +100,17 @@ export class LiveWidget {
         };
     }
 
-    public static async scoreboardForTalk(talk: Talk, client: MatrixClient, conference: Conference): Promise<IStateEvent<IWidget>> {
+    public static async scoreboardForTalk(talk: Talk, client: MatrixClient, conference: Conference, avatar: string, url: string): Promise<IStateEvent<IWidget>> {
         const aud = conference.getAuditorium(await talk.getAuditoriumId());
         if (aud === undefined) {
             throw new Error(`No auditorium ${await talk.getAuditoriumId()} for talk ${await talk.getId()}`);
         }
-        return this.scoreboardForAuditorium(aud, client, talk);
+        return this.scoreboardForAuditorium(aud, client, avatar, url, talk);
     }
 
-    public static async scoreboardForAuditorium(aud: Auditorium, client: MatrixClient, talk?: Talk): Promise<IStateEvent<IWidget>> {
+    public static async scoreboardForAuditorium(aud: Auditorium, client: MatrixClient, avatar: string, url: string, talk?: Talk): Promise<IStateEvent<IWidget>> {
         // note: this is a little bit awkward, but there's nothing special about the widget ID, it just needs to be unique
-        const widgetId = sha256(JSON.stringify([await aud.getId(), talk ? await talk.getId() : ""]) + "_SCOREBOARD");
+        const widgetId = sha256(JSON.stringify([await aud.getId(), (await talk?.getId()) ?? '' ]) + "_SCOREBOARD");
         const title = `Messages from ${await aud.getCanonicalAlias()}`;
         return {
             type: "im.vector.modular.widgets",
@@ -125,8 +121,8 @@ export class LiveWidget {
                 type: "m.custom",
                 waitForIframeLoad: true,
                 name: "Upvoted messages",
-                avatar_url: config.livestream.widgetAvatar,
-                url: config.webserver.publicBaseUrl + "/widgets/scoreboard.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&talkId=$talkId&theme=$theme",
+                avatar_url: avatar,
+                url: url + "/widgets/scoreboard.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&talkId=$talkId&theme=$theme",
                 data: {
                     title: title,
                     auditoriumId: await aud.getId(),
@@ -136,9 +132,9 @@ export class LiveWidget {
         };
     }
 
-    public static async scheduleForAuditorium(aud: Auditorium, client: MatrixClient): Promise<IStateEvent<IWidget>> {
+    public static async scheduleForAuditorium(aud: Auditorium, client: MatrixClient, avatar: string, scheduleUrl: string): Promise<IStateEvent<IWidget>> {
         const widgetId = sha256(JSON.stringify(await aud.getDefinition()) + "_AUDSCHED");
-        const widgetUrl = template(config.livestream.scheduleUrl, {
+        const widgetUrl = template(scheduleUrl, {
             audId: await aud.getId(),
         });
         return {
@@ -150,7 +146,7 @@ export class LiveWidget {
                 type: "m.custom",
                 waitForIframeLoad: true,
                 name: "Schedule",
-                avatar_url: config.livestream.widgetAvatar,
+                avatar_url: avatar,
                 url: widgetUrl,
                 data: {
                     title: "Conference Schedule",

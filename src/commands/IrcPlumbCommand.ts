@@ -20,13 +20,14 @@ import { Conference } from "../Conference";
 import { IRCBridge } from "../IRCBridge";
 import { logMessage } from "../LogProxy";
 import { KickPowerLevel } from "../models/room_kinds";
+import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
 const PLUMB_WAIT_MS = 1000;
 
 export class IrcPlumbCommand implements ICommand {
     public readonly prefixes = ["plumb-irc"];
 
-    constructor(private readonly client: MatrixClient, private readonly conference: Conference, private readonly ircBridge: IRCBridge) {
+    constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference, private readonly ircBridge: IRCBridge) {
     }
 
     private async plumbAll(roomId: string) {

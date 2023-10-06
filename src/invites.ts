@@ -14,8 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { IdentityClient, LogLevel, MatrixClient } from "matrix-bot-sdk";
-import config from "./config";
+import { LogLevel } from "matrix-bot-sdk";
 import { RS_3PID_PERSON_ID } from "./models/room_state";
 import { logMessage } from "./LogProxy";
 import { IPerson } from "./models/schedule";

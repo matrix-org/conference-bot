@@ -20,15 +20,15 @@ import { Conference } from "../Conference";
 import { invitePersonToRoom, ResolvedPersonIdentifier, resolveIdentifiers } from "../invites";
 import { RS_3PID_PERSON_ID } from "../models/room_state";
 import { runRoleCommand } from "./actions/roles";
-import config from "../config";
 import { logMessage } from "../LogProxy";
 import { IPerson, Role } from "../models/schedule";
 import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
+import { IConfig } from "../config";
 
 export class InviteCommand implements ICommand {
     public readonly prefixes = ["invite", "inv"];
 
-    constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference) {}
+    constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference, private readonly config: IConfig) {}
 
     private async createInvites(people: IPerson[], alias: string) {
         const resolved = await resolveIdentifiers(this.client, people);
@@ -57,7 +57,7 @@ export class InviteCommand implements ICommand {
                     newPeople.push(p);
                 }
             });
-            await this.createInvites(newPeople, config.conference.supportRooms.speakers);
+            await this.createInvites(newPeople, this.config.conference.supportRooms.speakers);
         } else if (args[0] && args[0] === "coordinators-support") {
             let people: IPerson[] = [];
             for (const aud of this.conference.storedAuditoriums) {
@@ -77,13 +77,13 @@ export class InviteCommand implements ICommand {
                     newPeople.push(p);
                 }
             });
-            await this.createInvites(newPeople, config.conference.supportRooms.coordinators);
+            await this.createInvites(newPeople, this.config.conference.supportRooms.coordinators);
         } else if (args[0] && args[0] === "si-support") {
             const people: IPerson[] = [];
             for (const sir of this.conference.storedInterestRooms) {
                 people.push(...await this.conference.getInviteTargetsForInterest(sir));
             }
-            await this.createInvites(people, config.conference.supportRooms.specialInterest);
+            await this.createInvites(people, this.config.conference.supportRooms.specialInterest);
         } else {
             await runRoleCommand((_client,_room,people) => this.ensureInvited(roomId, people), this.conference, this.client, roomId, event, args);
         }

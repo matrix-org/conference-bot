@@ -15,13 +15,14 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { LogLevel, MatrixClient } from "matrix-bot-sdk";
+import { LogLevel } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { logMessage } from "../LogProxy";
+import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
 export class InviteMeCommand implements ICommand {
 
-    constructor(private readonly client: MatrixClient, private readonly conference: Conference) {}
+    constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference) {}
 
     public readonly prefixes = ["inviteme", "inviteto"];
 

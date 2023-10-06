@@ -72,9 +72,9 @@ export class ConferenceBot {
         switch (config.conference.schedule.backend) {
             case "penta":
                 const pentaCfg: IPentaScheduleBackendConfig = config.conference.schedule;
-                return await CachingBackend.new(() => PentaBackend.new(pentaCfg), path.join(config.dataPath, "penta_cache.json"));
+                return await CachingBackend.new(() => PentaBackend.new(config), path.join(config.dataPath, "penta_cache.json"));
             case "json":
-                return await JsonScheduleBackend.new(config.conference.schedule);
+                return await JsonScheduleBackend.new(config.dataPath, config.conference.schedule);
             default:
                 throw new Error(`Unknown scheduling backend: choose penta or json!`)
         }
@@ -88,11 +88,11 @@ export class ConferenceBot {
         const conference = new Conference(backend, config.conference.id, client, config);
         const checkins = new CheckInMap(client, config);
         const scoreboard = new Scoreboard(conference, client, config);
-        const scheduler = new Scheduler(client, conference, scoreboard, checkins);
+        const scheduler = new Scheduler(client, conference, scoreboard, checkins, config);
     
         let ircBridge: IRCBridge | null = null;
         if (config.ircBridge != null) {
-            ircBridge = new IRCBridge(config.ircBridge, client);
+            ircBridge = new IRCBridge(config, client);
         }
     
     
@@ -185,14 +185,14 @@ export class ConferenceBot {
         app.engine('liquid', engine.express());
         app.set('views', tmplPath);
         app.set('view engine', 'liquid');
-        app.get('/widgets/auditorium.html', (req, res) => renderAuditoriumWidget(req, res, this.conference));
-        app.get('/widgets/talk.html', (req, res) =>  renderTalkWidget(req, res, this.conference));
+        app.get('/widgets/auditorium.html', (req, res) => renderAuditoriumWidget(req, res, this.conference, this.config.livestream.auditoriumUrl));
+        app.get('/widgets/talk.html', (req, res) =>  renderTalkWidget(req, res, this.conference, this.config.livestream.talkUrl, this.config.livestream.jitsiDomain));
         app.get('/widgets/scoreboard.html', (req, res) =>  renderScoreboardWidget(req,res, this.conference));
-        app.get('/widgets/hybrid.html', renderHybridWidget);
-        app.post('/onpublish', (req, res) =>  rtmpRedirect(req,res,this.conference));
+        app.get('/widgets/hybrid.html', (req, res) => renderHybridWidget(req, res, this.config.livestream.hybridUrl, this.config.livestream.jitsiDomain));
+        app.post('/onpublish', (req, res) =>  rtmpRedirect(req,res,this.conference, this.config.livestream.onpublish));
         app.get('/healthz', renderHealthz);
         app.get('/scoreboard/:roomId', (rq, rs) => renderScoreboard(rq, rs, this.scoreboard, this.conference));
-        app.get('/make_hybrid', (req, res) =>  makeHybridWidget(req, res, this.client));
+        app.get('/make_hybrid', (req, res) =>  makeHybridWidget(req, res, this.client, this.config.livestream.widgetAvatar, this.config.webserver.publicBaseUrl));
         app.listen(this.config.webserver.port, this.config.webserver.address, () => {
             LogService.info("web", `Webserver running at http://${this.config.webserver.address}:${this.config.webserver.port}`);
         });
@@ -201,12 +201,12 @@ export class ConferenceBot {
     private async registerCommands(userId: string, localpart: string, displayName: string) {
         const commands: ICommand[] = [
             new AttendanceCommand(this.client, this.conference),
-            new BuildCommand(this.client, this.conference),
+            new BuildCommand(this.client, this.conference, this.config),
             new CopyModeratorsCommand(this.client),
             new DevCommand(this.client, this.conference),
             new FDMCommand(this.client, this.conference),
             new HelpCommand(this.client),
-            new InviteCommand(this.client, this.conference),
+            new InviteCommand(this.client, this.conference, this.config),
             new InviteMeCommand(this.client, this.conference),
             new JoinCommand(this.client),
             new PermissionsCommand(this.client, this.conference),
@@ -215,7 +215,7 @@ export class ConferenceBot {
             new StatusCommand(this.client, this.conference, this.scheduler),
             new StopCommand(this.client, this.scheduler),
             new VerifyCommand(this.client, this.conference),
-            new WidgetsCommand(this.client, this.conference),
+            new WidgetsCommand(this.client, this.conference, this.config),
         ];
         if (this.ircBridge !== null) {
             commands.push(new IrcPlumbCommand(this.client, this.conference, this.ircBridge));

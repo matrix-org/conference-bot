@@ -17,7 +17,6 @@ limitations under the License.
 import { Conference } from "./Conference";
 import AwaitLock from "await-lock";
 import { logMessage } from "./LogProxy";
-import config from "./config";
 import { LogLevel, LogService, MentionPill } from "matrix-bot-sdk";
 import { makeRoomPublic } from "./utils";
 import { Scoreboard } from "./Scoreboard";
@@ -27,6 +26,7 @@ import { ITalk, Role } from "./models/schedule";
 import { Talk } from "./models/Talk";
 import { CheckInMap } from "./CheckInMap";
 import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
+import { IConfig } from "./config";
 
 export enum ScheduledTaskType {
     TalkStart = "talk_start",
@@ -149,7 +149,8 @@ export class Scheduler {
     constructor(private readonly client: ConferenceMatrixClient,
         private readonly conference: Conference,
         private readonly scoreboard: Scoreboard,
-        private readonly checkins: CheckInMap) {
+        private readonly checkins: CheckInMap,
+        private readonly config: IConfig) {
     }
 
     public async prepare() {
@@ -161,7 +162,7 @@ export class Scheduler {
         this.inAuditoriums.push(...(schedulerData?.inAuditoriums || []));
 
         if (this.inAuditoriums.length) {
-            await this.client.sendNotice(config.managementRoom, `Running schedule in auditoriums: ${this.inAuditoriums.join(', ')}`);
+            await this.client.sendNotice(this.config.managementRoom, `Running schedule in auditoriums: ${this.inAuditoriums.join(', ')}`);
         }
 
         await this.runTasks();
@@ -195,7 +196,7 @@ export class Scheduler {
             await this.lock.acquireAsync();
             LogService.info("Scheduler", "Scheduling tasks");
             try {
-                const minVar = config.conference.lookaheadMinutes;
+                const minVar = this.config.conference.lookaheadMinutes;
                 try {
                     // Refresh upcoming parts of our schedule to ensure it's really up to date.
                     // Rationale: Sometimes schedules get changed at short notice, so we try our best to accommodate that.
@@ -384,9 +385,9 @@ export class Scheduler {
         } else if (task.type === ScheduledTaskType.TalkEnd) {
             if (confTalk !== undefined) {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk has ended - opening up this room to all attendees.</h3><p>@room - They won't see the history in this room.</p>`);
-                const widget = await LiveWidget.forTalk(confTalk, this.client);
+                const widget = await LiveWidget.forTalk(confTalk, this.client, this.config.livestream.widgetAvatar, this.config.webserver.publicBaseUrl);
                 const layout = await LiveWidget.layoutForTalk(widget, null);
-                const scoreboard = await LiveWidget.scoreboardForTalk(confTalk, this.client, this.conference);
+                const scoreboard = await LiveWidget.scoreboardForTalk(confTalk, this.client, this.conference, this.config.livestream.widgetAvatar, this.config.webserver.publicBaseUrl);
                 await this.client.sendStateEvent(confTalk.roomId, widget.type, widget.state_key, widget.content);
                 await this.client.sendStateEvent(confTalk.roomId, scoreboard.type, scoreboard.state_key, {});
                 await this.client.sendStateEvent(confTalk.roomId, layout.type, layout.state_key, layout.content);
@@ -549,7 +550,7 @@ export class Scheduler {
                     }
                 }
                 const roomPill = await MentionPill.forRoom(confTalk.roomId, this.client);
-                await this.client.sendHtmlText(config.managementRoom, `<h3>Talk is missing speakers</h3><p>${roomPill.html} is missing one or more speakers: ${pills.join(', ')}</p><p>The talk starts in about 15 minutes.</p>`);
+                await this.client.sendHtmlText(this.config.managementRoom, `<h3>Talk is missing speakers</h3><p>${roomPill.html} is missing one or more speakers: ${pills.join(', ')}</p><p>The talk starts in about 15 minutes.</p>`);
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>@room - please check in.</h3><p>${pills.join(', ')} - It does not appear as though you are present for your talk. Please say something in this room. The conference staff have been notified.</p>`);
                 await this.client.sendHtmlText(confAudBackstage.roomId, `<h3>Required persons not checked in for upcoming talk</h3><p>Please track down the speakers for <b>${await confTalk.getName()}</b>. The conference staff have been notified.</p><p>Missing: ${pills.join(', ')}</p>`);
 

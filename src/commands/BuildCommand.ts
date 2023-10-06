@@ -15,18 +15,19 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { LogLevel, LogService, MatrixClient, MentionPill, RichReply } from "matrix-bot-sdk";
+import { LogLevel, LogService, MentionPill, RichReply } from "matrix-bot-sdk";
 import { Auditorium } from "../models/Auditorium";
 import { ITalk } from "../models/schedule";
-import config from "../config";
+import { IConfig } from "../config";
 import { Conference } from "../Conference";
 import { logMessage } from "../LogProxy";
 import { editNotice } from "../utils";
+import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
 export class BuildCommand implements ICommand {
     public readonly prefixes = ["build", "b"];
 
-    constructor(private readonly client: MatrixClient, private readonly conference: Conference) {}
+    constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference, private readonly config: IConfig) {}
 
     public async run(roomId: string, event: any, args: string[]) {
         if (!args) args = [];
@@ -66,7 +67,7 @@ export class BuildCommand implements ICommand {
 
         // Create subspaces
         let subspacesCreated = 0;
-        const subspacesConfig = Object.entries(config.conference.subspaces);
+        const subspacesConfig = Object.entries(this.config.conference.subspaces);
         const statusEventId = await this.client.sendNotice(
             roomId,
             `0/${subspacesConfig.length} subspaces have been created`,

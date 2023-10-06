@@ -20,24 +20,27 @@ import { Conference } from "../Conference";
 import { LiveWidget } from "../models/LiveWidget";
 import { asyncFilter } from "../utils";
 import { Auditorium } from "../models/Auditorium";
+import { IConfig } from "../config";
 
 export class WidgetsCommand implements ICommand {
-    constructor(private readonly client: MatrixClient, private readonly conference: Conference) {}
+    constructor(private readonly client: MatrixClient, private readonly conference: Conference, private readonly config: IConfig) {}
 
     public readonly prefixes = ["widgets"];
 
     private async addToRoom(aud: Auditorium) {
-        const audWidget = await LiveWidget.forAuditorium(aud, this.client);
+        const avatar = this.config.livestream.widgetAvatar;
+        const baseUrl = this.config.webserver.publicBaseUrl;
+        const audWidget = await LiveWidget.forAuditorium(aud, this.client, avatar, baseUrl);
         const audLayout = LiveWidget.layoutForAuditorium(audWidget);
-        const audSchedule = await LiveWidget.scheduleForAuditorium(aud, this.client);
+        const audSchedule = await LiveWidget.scheduleForAuditorium(aud, this.client, avatar, baseUrl);
         await this.client.sendStateEvent(aud.roomId, audWidget.type, audWidget.state_key, audWidget.content);
         await this.client.sendStateEvent(aud.roomId, audSchedule.type, audSchedule.state_key, audSchedule.content);
         await this.client.sendStateEvent(aud.roomId, audLayout.type, audLayout.state_key, audLayout.content);
 
         const talks = await asyncFilter(this.conference.storedTalks, async t => (await t.getAuditoriumId()) === (await aud.getId()));
         for (const talk of talks) {
-            const talkWidget = await LiveWidget.forTalk(talk, this.client);
-            const scoreboardWidget = await LiveWidget.scoreboardForTalk(talk, this.client, this.conference);
+            const talkWidget = await LiveWidget.forTalk(talk, this.client, avatar, baseUrl);
+            const scoreboardWidget = await LiveWidget.scoreboardForTalk(talk, this.client, this.conference, avatar, baseUrl);
             const talkLayout = LiveWidget.layoutForTalk(talkWidget, scoreboardWidget);
             await this.client.sendStateEvent(talk.roomId, talkWidget.type, talkWidget.state_key, talkWidget.content);
             await this.client.sendStateEvent(talk.roomId, scoreboardWidget.type, scoreboardWidget.state_key, scoreboardWidget.content);
@@ -49,7 +52,7 @@ export class WidgetsCommand implements ICommand {
             // So what we do instead is add a Q&A scoreboard to the backstage room, so that an organiser can read off
             // any questions if necessary.
             const backstage = this.conference.getAuditoriumBackstage(await aud.getId());
-            const audScoreboardWidget = await LiveWidget.scoreboardForAuditorium(aud, this.client);
+            const audScoreboardWidget = await LiveWidget.scoreboardForAuditorium(aud, this.client, avatar, baseUrl);
             const backstageLayout = LiveWidget.layoutForPhysicalAudBackstage(audScoreboardWidget);
             await this.client.sendStateEvent(backstage.roomId, audScoreboardWidget.type, audScoreboardWidget.state_key, audScoreboardWidget.content);
             await this.client.sendStateEvent(backstage.roomId, backstageLayout.type, backstageLayout.state_key, backstageLayout.content);
