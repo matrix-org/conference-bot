@@ -19,8 +19,7 @@ import config from "./config";
 import { RS_3PID_PERSON_ID } from "./models/room_state";
 import { logMessage } from "./LogProxy";
 import { IPerson } from "./models/schedule";
-
-let idClient: IdentityClient;
+import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
 
 const MAX_EMAILS_PER_BATCH = 1000;
 
@@ -30,17 +29,9 @@ export interface ResolvedPersonIdentifier {
     person: IPerson;
 }
 
-async function ensureIdentityClient(client: MatrixClient) {
-    if (!idClient) {
-        idClient = await client.getIdentityServerClient(config.idServerDomain);
-        await idClient.acceptAllTerms();
-        idClient.brand = config.idServerBrand;
-    }
-}
-
-async function resolveBatch(batch: IPerson[]): Promise<ResolvedPersonIdentifier[]> {
+async function resolveBatch(client: ConferenceMatrixClient, batch: IPerson[]): Promise<ResolvedPersonIdentifier[]> {
     if (batch.length <= 0) return [];
-    const results = await idClient.lookup(batch.map(p => ({address: p.email, kind: "email"})));
+    const results = await client.identityClient.lookup(batch.map(p => ({address: p.email, kind: "email"})));
     const resolved: ResolvedPersonIdentifier[] = [];
     for (let i = 0; i < results.length; i++) {
         const result = results[i];
@@ -54,15 +45,13 @@ async function resolveBatch(batch: IPerson[]): Promise<ResolvedPersonIdentifier[
     return resolved;
 }
 
-export async function resolveIdentifiers(client: MatrixClient, people: IPerson[]): Promise<ResolvedPersonIdentifier[]> {
-    await ensureIdentityClient(client);
-
+export async function resolveIdentifiers(client: ConferenceMatrixClient, people: IPerson[]): Promise<ResolvedPersonIdentifier[]> {
     const resolved: ResolvedPersonIdentifier[] = [];
 
     const pendingLookups: IPerson[] = [];
 
     const doResolve = async () => {
-        const results = await resolveBatch(pendingLookups);
+        const results = await resolveBatch(client, pendingLookups);
         resolved.push(...results);
     };
 
@@ -86,23 +75,21 @@ export async function resolveIdentifiers(client: MatrixClient, people: IPerson[]
     return resolved;
 }
 
-export async function invitePersonToRoom(client: MatrixClient, resolvedPerson: ResolvedPersonIdentifier, roomId: string): Promise<void> {
+export async function invitePersonToRoom(client: ConferenceMatrixClient, resolvedPerson: ResolvedPersonIdentifier, roomId: string): Promise<void> {
     if (resolvedPerson.mxid) {
         return await client.inviteUser(resolvedPerson.mxid.trim(), roomId);
-    }
-
-    await ensureIdentityClient(client);
+    }    
 
     if (!resolvedPerson.emails) {
         throw new Error(`No e-mail addresses for resolved person ${resolvedPerson.person.id}.`);
     }
 
     for (const email of resolvedPerson.emails) {
-        const idInvite = await idClient.makeEmailInvite(email, roomId);
+        const idInvite = await client.identityClient.makeEmailInvite(email, roomId);
         const content = {
             display_name: idInvite.display_name,
             // XXX: https://github.com/matrix-org/matrix-doc/issues/2948
-            key_validity_url: `${idClient.serverUrl}/_matrix/identity/v2/pubkey/ephemeral/isvalid`,
+            key_validity_url: `${client.identityClient.serverUrl}/_matrix/identity/v2/pubkey/ephemeral/isvalid`,
             public_key: idInvite.public_key,
             public_keys: idInvite.public_keys,
             [RS_3PID_PERSON_ID]: resolvedPerson.person.id,

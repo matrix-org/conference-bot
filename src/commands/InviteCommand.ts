@@ -23,11 +23,12 @@ import { runRoleCommand } from "./actions/roles";
 import config from "../config";
 import { logMessage } from "../LogProxy";
 import { IPerson, Role } from "../models/schedule";
+import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
 export class InviteCommand implements ICommand {
     public readonly prefixes = ["invite", "inv"];
 
-    constructor(private readonly client: MatrixClient, private readonly conference: Conference) {}
+    constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference) {}
 
     private async createInvites(people: IPerson[], alias: string) {
         const resolved = await resolveIdentifiers(this.client, people);

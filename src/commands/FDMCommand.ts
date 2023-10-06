@@ -20,11 +20,12 @@ import { Conference } from "../Conference";
 import { invitePersonToRoom, resolveIdentifiers } from "../invites";
 import { logMessage } from "../LogProxy";
 import { IPerson } from "../models/schedule";
+import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
 export class FDMCommand implements ICommand {
     public readonly prefixes = ["fdm"];
 
-    constructor(private readonly client: MatrixClient, private readonly conference: Conference) {}
+    constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference) {}
 
     public async run(roomId: string, event: any, args: string[]) {
         const spi = this.conference.getInterestRoom("I.infodesk");

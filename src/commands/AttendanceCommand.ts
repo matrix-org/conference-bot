@@ -20,11 +20,12 @@ import { Conference } from "../Conference";
 import { resolveIdentifiers } from "../invites";
 import { COLOR_GREEN, COLOR_RED } from "../models/colors";
 import { IPerson } from "../models/schedule";
+import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
 export class AttendanceCommand implements ICommand {
     public readonly prefixes = ["attendance"];
 
-    constructor(private readonly client: MatrixClient, private readonly conference: Conference) {}
+    constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference) {}
 
     public async run(roomId: string, event: any, args: string[]) {
         await this.client.sendNotice(roomId, "Calculating...");

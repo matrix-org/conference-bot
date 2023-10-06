@@ -61,6 +61,7 @@ import { JsonScheduleBackend } from "./backends/json/JsonScheduleBackend";
 import { JoinCommand } from "./commands/JoinRoomCommand";
 import { StatusCommand } from "./commands/StatusCommand";
 import { CachingBackend } from "./backends/CachingBackend";
+import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
 
 LogService.setLogger(new CustomLogger());
 LogService.setLevel(LogLevel.DEBUG);
@@ -81,13 +82,12 @@ export class ConferenceBot {
 
     public static async start(config: IConfig): Promise<ConferenceBot> {
         const storage = new SimpleFsStorageProvider(path.join(config.dataPath, "bot.json"));
-        const client = new MatrixClient(config.homeserverUrl, config.accessToken, storage);
+        const client = await ConferenceMatrixClient.create(config, storage);
         client.impersonateUserId(config.userId);       
-
         const backend = await this.loadBackend(config);
-        const conference = new Conference(backend, config.conference.id, client);
-        const checkins = new CheckInMap(client, conference);
-        const scoreboard = new Scoreboard(conference, client);
+        const conference = new Conference(backend, config.conference.id, client, config);
+        const checkins = new CheckInMap(client, config);
+        const scoreboard = new Scoreboard(conference, client, config);
         const scheduler = new Scheduler(client, conference, scoreboard, checkins);
     
         let ircBridge: IRCBridge | null = null;
@@ -102,7 +102,7 @@ export class ConferenceBot {
     private constructor(
         private readonly config: IConfig,
         private readonly backend: IScheduleBackend,
-        public readonly client: MatrixClient,
+        public readonly client: ConferenceMatrixClient,
         public readonly conference: Conference,
         public readonly scoreboard: Scoreboard,
         public readonly scheduler: Scheduler,

@@ -19,11 +19,12 @@ import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { ResolvedPersonIdentifier } from "../invites";
 import { runRoleCommand } from "./actions/roles";
+import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
 export class PermissionsCommand implements ICommand {
     public readonly prefixes = ["permissions", "perms"];
 
-    constructor(private readonly client: MatrixClient, private readonly conference: Conference) {}
+    constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference) {}
 
     public async run(roomId: string, event: any, args: string[]) {
         await this.client.replyNotice(roomId, event, "Updating member permissions. This might take a while.");
