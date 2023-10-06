@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { IdentityClient, LogLevel } from "matrix-bot-sdk";
+import { IdentityClient, LogLevel, MatrixClient } from "matrix-bot-sdk";
 import config from "./config";
 import { RS_3PID_PERSON_ID } from "./models/room_state";
 import { logMessage } from "./LogProxy";
@@ -30,9 +30,9 @@ export interface ResolvedPersonIdentifier {
     person: IPerson;
 }
 
-async function ensureIdentityClient() {
+async function ensureIdentityClient(client: MatrixClient) {
     if (!idClient) {
-        idClient = await config.RUNTIME.client.getIdentityServerClient(config.idServerDomain);
+        idClient = await client.getIdentityServerClient(config.idServerDomain);
         await idClient.acceptAllTerms();
         idClient.brand = config.idServerBrand;
     }
@@ -54,8 +54,8 @@ async function resolveBatch(batch: IPerson[]): Promise<ResolvedPersonIdentifier[
     return resolved;
 }
 
-export async function resolveIdentifiers(people: IPerson[]): Promise<ResolvedPersonIdentifier[]> {
-    await ensureIdentityClient();
+export async function resolveIdentifiers(client: MatrixClient, people: IPerson[]): Promise<ResolvedPersonIdentifier[]> {
+    await ensureIdentityClient(client);
 
     const resolved: ResolvedPersonIdentifier[] = [];
 
@@ -72,7 +72,7 @@ export async function resolveIdentifiers(people: IPerson[]): Promise<ResolvedPer
             continue;
         }
         if (!person.email) {
-            await logMessage(LogLevel.WARN, "invites", `No email or Matrix ID for person ${person.id} (${person.role}) - ${person.name}`);
+            await logMessage(LogLevel.WARN, "invites", `No email or Matrix ID for person ${person.id} (${person.role}) - ${person.name}`, client);
             continue;
         }
 
@@ -86,12 +86,12 @@ export async function resolveIdentifiers(people: IPerson[]): Promise<ResolvedPer
     return resolved;
 }
 
-export async function invitePersonToRoom(resolvedPerson: ResolvedPersonIdentifier, roomId: string): Promise<void> {
+export async function invitePersonToRoom(client: MatrixClient, resolvedPerson: ResolvedPersonIdentifier, roomId: string): Promise<void> {
     if (resolvedPerson.mxid) {
-        return await config.RUNTIME.client.inviteUser(resolvedPerson.mxid.trim(), roomId);
+        return await client.inviteUser(resolvedPerson.mxid.trim(), roomId);
     }
 
-    await ensureIdentityClient();
+    await ensureIdentityClient(client);
 
     if (!resolvedPerson.emails) {
         throw new Error(`No e-mail addresses for resolved person ${resolvedPerson.person.id}.`);
@@ -108,6 +108,6 @@ export async function invitePersonToRoom(resolvedPerson: ResolvedPersonIdentifie
             [RS_3PID_PERSON_ID]: resolvedPerson.person.id,
         };
         const stateKey = idInvite.token; // not included in the content
-        await config.RUNTIME.client.sendStateEvent(roomId, "m.room.third_party_invite", stateKey, content);
+        await client.sendStateEvent(roomId, "m.room.third_party_invite", stateKey, content);
     }
 }

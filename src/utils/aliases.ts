@@ -53,7 +53,7 @@ export async function safeAssignAlias(client: MatrixClient, roomId: string, loca
         aliasInfo.alt_aliases.push(localpart);
         await client.sendStateEvent(roomId, "m.room.canonical_alias", "", aliasInfo);
     } catch (e) {
-        await logMessage(LogLevel.WARN, "utils/alias", `Non-fatal error trying to assign '${localpart}' as an alias to ${roomId} - ${e.message}`);
+        await logMessage(LogLevel.WARN, "utils/alias", `Non-fatal error trying to assign '${localpart}' as an alias to ${roomId} - ${e.message}`, client);
     }
 }
 

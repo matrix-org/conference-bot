@@ -52,7 +52,7 @@ export async function replaceRoomIdsWithPills(client: MatrixClient, text: string
             alias = (await client.getPublishedAlias(roomId)) || roomId;
         } catch (e) {
             // This is a recursive call, so tell the function not to try and call us
-            await logMessage(LogLevel.WARN, "utils", `Failed to resolve room alias for ${roomId} - see console for details`, null, true);
+            await logMessage(LogLevel.WARN, "utils", `Failed to resolve room alias for ${roomId} - see console for details`, client, null, true);
             LogService.warn("utils", e);
         }
         const regexRoomId = new RegExp(escapeRegex(roomId), "g");

@@ -15,24 +15,25 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
+import { Scheduler, getStartTime, sortTasks } from "../Scheduler";
+import moment = require("moment");
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
-import config from "../config";
-import { getStartTime, ScheduledTaskType, sortTasks } from "../Scheduler";
-import moment = require("moment");
 
 export class ScheduleCommand implements ICommand {
     public readonly prefixes = ["schedule"];
 
-    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
+    constructor(private readonly client: MatrixClient, private readonly conference: Conference, private readonly scheduler: Scheduler) {}
+
+    public async run(roomId: string, event: any, args: string[]) {
         if (args[0] === 'reset') {
-            await config.RUNTIME.scheduler.reset();
-            await client.sendNotice(roomId, "Schedule processing has been reset.");
+            await this.scheduler.reset();
+            await this.client.sendNotice(roomId, "Schedule processing has been reset.");
         } else if (args[0] === 'view') {
-            const upcoming = sortTasks(config.RUNTIME.scheduler.inspect());
+            const upcoming = sortTasks(this.scheduler.inspect());
             let html = "Upcoming tasks:<ul>";
             for (const task of upcoming) {
-                const talkRoom = conference.getTalk(task.talk.id);
+                const talkRoom = this.conference.getTalk(task.talk.id);
                 if (!talkRoom) continue;
                 const taskStart = moment(getStartTime(task));
                 const formattedTimestamp = taskStart.format("YYYY-MM-DD HH:mm:ss [UTC]ZZ");
@@ -40,19 +41,19 @@ export class ScheduleCommand implements ICommand {
                 if (html.length > 20000) {
                     // chunk up the message so we don't fail to send one very large event.
                     html += "</ul>";
-                    await client.sendHtmlNotice(roomId, html);
+                    await this.client.sendHtmlNotice(roomId, html);
                     html = "…<ul>";
                 }
 
                 html += `<li>${formattedTimestamp}: <b>${task.type} on ${await talkRoom.getName()}</b> (<code>${task.id}</code>) ${taskStart.fromNow()}</li>`;
             }
             html += "</ul>";
-            await client.sendHtmlNotice(roomId, html);
+            await this.client.sendHtmlNotice(roomId, html);
         } else if (args[0] === 'execute') {
-            await config.RUNTIME.scheduler.execute(args[1]);
-            await client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
+            await this.scheduler.execute(args[1]);
+            await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
         } else {
-            await client.sendNotice(roomId, "Unknown schedule command.");
+            await this.client.sendNotice(roomId, "Unknown schedule command.");
         }
     }
 }

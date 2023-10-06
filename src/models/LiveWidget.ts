@@ -23,6 +23,7 @@ import { MatrixClient } from "matrix-bot-sdk";
 import { Talk } from "./Talk";
 import * as template from "string-template";
 import { base32 } from "rfc4648";
+import { Conference } from "../Conference";
 
 export interface ILayout {
     widgets: {
@@ -103,8 +104,8 @@ export class LiveWidget {
         };
     }
 
-    public static async scoreboardForTalk(talk: Talk, client: MatrixClient): Promise<IStateEvent<IWidget>> {
-        const aud = config.RUNTIME.conference.getAuditorium(await talk.getAuditoriumId());
+    public static async scoreboardForTalk(talk: Talk, client: MatrixClient, conference: Conference): Promise<IStateEvent<IWidget>> {
+        const aud = conference.getAuditorium(await talk.getAuditoriumId());
         if (aud === undefined) {
             throw new Error(`No auditorium ${await talk.getAuditoriumId()} for talk ${await talk.getId()}`);
         }

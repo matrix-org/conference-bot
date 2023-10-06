@@ -25,6 +25,7 @@ import { LiveWidget } from "./models/LiveWidget";
 import { ResolvedPersonIdentifier, resolveIdentifiers } from "./invites";
 import { ITalk, Role } from "./models/schedule";
 import { Talk } from "./models/Talk";
+import { CheckInMap } from "./CheckInMap";
 
 export enum ScheduledTaskType {
     TalkStart = "talk_start",
@@ -144,7 +145,10 @@ export class Scheduler {
     private pending: { [taskId: string]: ITask } = {};
     private lock = new AwaitLock();
 
-    constructor(private client: MatrixClient, private conference: Conference, private scoreboard: Scoreboard) {
+    constructor(private readonly client: MatrixClient,
+        private readonly conference: Conference,
+        private readonly scoreboard: Scoreboard,
+        private readonly checkins: CheckInMap) {
     }
 
     public async prepare() {
@@ -237,7 +241,7 @@ export class Scheduler {
             } catch (e) {
                 LogService.error("Scheduler", e);
                 try {
-                    await logMessage(LogLevel.ERROR, "Scheduler", `Error scheduling tasks: ${e?.message || 'unknown error'}`);
+                    await logMessage(LogLevel.ERROR, "Scheduler", `Error scheduling tasks: ${e?.message || 'unknown error'}`, this.client);
                 } catch (e) {
                     LogService.error("Scheduler", e);
                 }
@@ -273,7 +277,7 @@ export class Scheduler {
                         await this._execute(task);
                     } catch (e) {
                         LogService.error("Scheduler", e);
-                        await logMessage(LogLevel.ERROR, "Scheduler", `Error running task ${taskId}: ${e?.message || 'unknown error'}`);
+                        await logMessage(LogLevel.ERROR, "Scheduler", `Error running task ${taskId}: ${e?.message || 'unknown error'}`, this.client);
                     }
                     delete this.pending[taskId];
                     this.completedIds.push(taskId);
@@ -283,7 +287,7 @@ export class Scheduler {
             } catch (e) {
                 LogService.error("Scheduler", e);
                 try {
-                    await logMessage(LogLevel.ERROR, "Scheduler", `Error running tasks: ${e?.message || 'unknown error'}`);
+                    await logMessage(LogLevel.ERROR, "Scheduler", `Error running tasks: ${e?.message || 'unknown error'}`, this.client);
                 } catch (e) {
                     LogService.error("Scheduler", e);
                 }
@@ -381,7 +385,7 @@ export class Scheduler {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk has ended - opening up this room to all attendees.</h3><p>@room - They won't see the history in this room.</p>`);
                 const widget = await LiveWidget.forTalk(confTalk, this.client);
                 const layout = await LiveWidget.layoutForTalk(widget, null);
-                const scoreboard = await LiveWidget.scoreboardForTalk(confTalk, this.client);
+                const scoreboard = await LiveWidget.scoreboardForTalk(confTalk, this.client, this.conference);
                 await this.client.sendStateEvent(confTalk.roomId, widget.type, widget.state_key, widget.content);
                 await this.client.sendStateEvent(confTalk.roomId, scoreboard.type, scoreboard.state_key, {});
                 await this.client.sendStateEvent(confTalk.roomId, layout.type, layout.state_key, layout.content);
@@ -401,8 +405,8 @@ export class Scheduler {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 1 hour</h3><p>Please say something (anything) in this room to check in.</p>`);
 
                 const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
-                const resolved = (await resolveIdentifiers(userIds)).filter(p => p.mxid).map(p => p.mxid!);
-                await config.RUNTIME.checkins.expectCheckinFrom(resolved);
+                const resolved = (await resolveIdentifiers(this.client, userIds)).filter(p => p.mxid).map(p => p.mxid!);
+                await this.checkins.expectCheckinFrom(resolved);
             }
         } else if (task.type === ScheduledTaskType.TalkStart5M && confTalk !== undefined) {
             if (!task.talk.prerecorded) {
@@ -444,7 +448,7 @@ export class Scheduler {
 
             if (!task.talk.prerecorded) return;
             const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
-            const resolved = await resolveIdentifiers(userIds);
+            const resolved = await resolveIdentifiers(this.client, userIds);
             const speakers = resolved.filter(p => p.person.role === Role.Speaker);
             const hosts = resolved.filter(p => p.person.role === Role.Host);
             const coordinators = resolved.filter(p => p.person.role === Role.Coordinator);
@@ -454,10 +458,10 @@ export class Scheduler {
             for (const person of required) {
                 if (!person.mxid) {
                     missing.push(person);
-                } else if (!config.RUNTIME.checkins.isCheckedIn(person.mxid)) {
+                } else if (!this.checkins.isCheckedIn(person.mxid)) {
                     missing.push(person);
                 } else {
-                    await config.RUNTIME.checkins.extendCheckin(person.mxid);
+                    await this.checkins.extendCheckin(person.mxid);
                 }
             }
             if (missing.length > 0) {
@@ -473,15 +477,15 @@ export class Scheduler {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 45 minutes</h3><p>${pills.join(', ')} - Please say something (anything) in this room to check in.</p>`);
 
                 const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
-                const resolved = (await resolveIdentifiers(userIds)).filter(p => p.mxid).map(p => p.mxid!);
-                await config.RUNTIME.checkins.expectCheckinFrom(resolved);
+                const resolved = (await resolveIdentifiers(this.client, userIds)).filter(p => p.mxid).map(p => p.mxid!);
+                await this.checkins.expectCheckinFrom(resolved);
             }
         } else if (task.type === ScheduledTaskType.TalkCheckin30M && confTalk !== undefined) {
             // TODO This is skipped entirely for physical talks, but do we want to ensure coordinators are checked-in?
 
             if (!task.talk.prerecorded) return;
             const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
-            const resolved = await resolveIdentifiers(userIds);
+            const resolved = await resolveIdentifiers(this.client, userIds);
             const speakers = resolved.filter(p => p.person.role === Role.Speaker);
             const hosts = resolved.filter(p => p.person.role === Role.Host);
             const coordinators = resolved.filter(p => p.person.role === Role.Coordinator);
@@ -491,10 +495,10 @@ export class Scheduler {
             for (const person of required) {
                 if (!person.mxid) {
                     missing.push(person);
-                } else if (!config.RUNTIME.checkins.isCheckedIn(person.mxid)) {
+                } else if (!this.checkins.isCheckedIn(person.mxid)) {
                     missing.push(person);
                 } else {
-                    await config.RUNTIME.checkins.extendCheckin(person.mxid);
+                    await this.checkins.extendCheckin(person.mxid);
                 }
             }
             if (missing.length > 0) {
@@ -510,15 +514,15 @@ export class Scheduler {
                 await this.client.sendHtmlText(confAudBackstage.roomId, `<h3>Required persons not checked in for upcoming talk</h3><p>Please track down the speakers for <b>${await confTalk.getName()}</b>.</p><p>Missing: ${pills.join(', ')}</p>`);
 
                 const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
-                const resolved = (await resolveIdentifiers(userIds)).filter(p => p.mxid).map(p => p.mxid!);
-                await config.RUNTIME.checkins.expectCheckinFrom(resolved);
+                const resolved = (await resolveIdentifiers(this.client, userIds)).filter(p => p.mxid).map(p => p.mxid!);
+                await this.checkins.expectCheckinFrom(resolved);
             } // else no complaints
         } else if (task.type === ScheduledTaskType.TalkCheckin15M && confTalk !== undefined) {
             // TODO This is skipped entirely for physical talks, but do we want to ensure coordinators are checked-in?
 
             if (!task.talk.prerecorded) return;
             const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
-            const resolved = await resolveIdentifiers(userIds);
+            const resolved = await resolveIdentifiers(this.client, userIds);
             const speakers = resolved.filter(p => p.person.role === Role.Speaker);
             const hosts = resolved.filter(p => p.person.role === Role.Host);
             const coordinators = resolved.filter(p => p.person.role === Role.Coordinator);
@@ -528,10 +532,10 @@ export class Scheduler {
             for (const person of required) {
                 if (!person.mxid) {
                     missing.push(person);
-                } else if (!config.RUNTIME.checkins.isCheckedIn(person.mxid)) {
+                } else if (!this.checkins.isCheckedIn(person.mxid)) {
                     missing.push(person);
                 } else {
-                    await config.RUNTIME.checkins.extendCheckin(person.mxid);
+                    await this.checkins.extendCheckin(person.mxid);
                 }
             }
             if (missing.length > 0) {
@@ -549,11 +553,11 @@ export class Scheduler {
                 await this.client.sendHtmlText(confAudBackstage.roomId, `<h3>Required persons not checked in for upcoming talk</h3><p>Please track down the speakers for <b>${await confTalk.getName()}</b>. The conference staff have been notified.</p><p>Missing: ${pills.join(', ')}</p>`);
 
                 const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
-                const resolved = (await resolveIdentifiers(userIds)).filter(p => p.mxid).map(p => p.mxid!);
-                await config.RUNTIME.checkins.expectCheckinFrom(resolved);
+                const resolved = (await resolveIdentifiers(this.client, userIds)).filter(p => p.mxid).map(p => p.mxid!);
+                await this.checkins.expectCheckinFrom(resolved);
             } // else no complaints
         } else {
-            await logMessage(LogLevel.WARN, "Scheduler", `Unknown task type for execute(): ${task.type}`);
+            await logMessage(LogLevel.WARN, "Scheduler", `Unknown task type for execute(): ${task.type}`, this.client);
         }
     }
 

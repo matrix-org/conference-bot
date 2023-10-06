@@ -116,19 +116,19 @@ export class Conference {
                                 const aud = this.storedAuditoriums.find(a => a.roomId === roomId);
                                 if (aud) {
                                     const mods = await this.getModeratorsForAuditorium(aud);
-                                    const resolved = await resolveIdentifiers(mods);
+                                    const resolved = await resolveIdentifiers(this.client, mods);
                                     await PermissionsCommand.ensureModerator(this.client, roomId, resolved);
                                 } else {
                                     const audBackstage = this.storedAuditoriumBackstages.find(a => a.roomId === roomId);
                                     if (audBackstage) {
                                         const mods = await this.getModeratorsForAuditorium(audBackstage);
-                                        const resolved = await resolveIdentifiers(mods);
+                                        const resolved = await resolveIdentifiers(this.client, mods);
                                         await PermissionsCommand.ensureModerator(this.client, roomId, resolved);
                                     } else {
                                         const talk = this.storedTalks.find(a => a.roomId === roomId);
                                         if (talk) {
                                             const mods = await this.getModeratorsForTalk(talk);
-                                            const resolved = await resolveIdentifiers(mods);
+                                            const resolved = await resolveIdentifiers(this.client, mods);
                                             await PermissionsCommand.ensureModerator(this.client, roomId, resolved);
                                         }
                                     }
@@ -537,7 +537,7 @@ export class Conference {
                 {guest_access:"can_join"},
             );
         } catch (e) {
-            await logMessage(LogLevel.ERROR, "utils", `Can't create auditorium space for ${auditorium.slug}: ${e}!`);
+            await logMessage(LogLevel.ERROR, "utils", `Can't create auditorium space for ${auditorium.slug}: ${e}!`, this.client);
             throw e;
         }
 

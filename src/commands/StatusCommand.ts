@@ -23,12 +23,14 @@ import config from "../config";
 export class StatusCommand implements ICommand {
     public readonly prefixes = ["status", "stat", "refresh"];
 
-    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
+    constructor(private readonly client: MatrixClient, private readonly conference: Conference, private readonly scheduler: Scheduler) {}
+
+    public async run(roomId: string, event: any, args: string[]) {
         let html = "<h4>Conference Bot Status</h4>";
 
-        await client.sendReadReceipt(roomId, event['event_id']);
+        await this.client.sendReadReceipt(roomId, event['event_id']);
 
-        const backend = conference.backend;
+        const backend = this.conference.backend;
 
         let scheduleRefreshOk = false;
         try {
@@ -40,14 +42,14 @@ export class StatusCommand implements ICommand {
         let roomStateBotResetOk = false;
         try {
             // Try to reset our view of the state first, to ensure we don't miss anything (e.g. if we got invited to a room since bot startup).
-            await conference.construct();
+            await this.conference.construct();
             roomStateBotResetOk = true;
         } catch (error) {}
 
         ////////////////////////////////////////
         html += "<h5>Schedule</h5><ul>";
         html += `<li>Schedule source healthy: <strong>${(! backend.wasLoadedFromCache()) && scheduleRefreshOk}</strong></li>`;
-        html += `<li>Conference ID: <code>${conference.id}</code></li>`;
+        html += `<li>Conference ID: <code>${this.conference.id}</code></li>`;
 
         html += "</ul>";
 
@@ -55,23 +57,22 @@ export class StatusCommand implements ICommand {
         ////////////////////////////////////////
         html += "<h5>Rooms</h5><ul>";
         html += `<li>State reconstruct healthy: <strong>${roomStateBotResetOk}</strong></li>`;
-        html += `<li>Conference space located: <strong>${conference.hasRootSpace}</strong></li>`;
-        html += `<li>Conference 'database room' located: <strong>${conference.hasDbRoom}</strong></li>`;
-        html += `<li>№ auditoriums located: <strong>${conference.storedAuditoriums.length}</strong></li>`;
-        html += `<li>№ auditorium backstages located: <strong>${conference.storedAuditoriumBackstages.length}</strong></li>`;
-        html += `<li>№ talk rooms located: <strong>${conference.storedTalks.length}</strong></li>`;
+        html += `<li>Conference space located: <strong>${this.conference.hasRootSpace}</strong></li>`;
+        html += `<li>Conference 'database room' located: <strong>${this.conference.hasDbRoom}</strong></li>`;
+        html += `<li>№ auditoriums located: <strong>${this.conference.storedAuditoriums.length}</strong></li>`;
+        html += `<li>№ auditorium backstages located: <strong>${this.conference.storedAuditoriumBackstages.length}</strong></li>`;
+        html += `<li>№ talk rooms located: <strong>${this.conference.storedTalks.length}</strong></li>`;
 
         html += "</ul>";
 
 
         ////////////////////////////////////////
         html += "<h5>Scheduler</h5><ul>";
-        const scheduler: Scheduler = config.RUNTIME.scheduler;
-        html += `<li>Scheduled tasks yet to run: <strong>${scheduler.inspect().length}</strong></li>`;
+        html += `<li>Scheduled tasks yet to run: <strong>${this.scheduler.inspect().length}</strong></li>`;
 
         html += "</ul>";
 
 
-        await client.sendHtmlNotice(roomId, html);
+        await this.client.sendHtmlNotice(roomId, html);
     }
 }

@@ -62,12 +62,6 @@ import { JoinCommand } from "./commands/JoinRoomCommand";
 import { StatusCommand } from "./commands/StatusCommand";
 import { CachingBackend } from "./backends/CachingBackend";
 
-process.on('SIGINT', () => {
-    // Die immediately
-    // TODO: Wait for pending tasks
-    process.exit();
-});
-
 LogService.setLogger(new CustomLogger());
 LogService.setLevel(LogLevel.DEBUG);
 LogService.info("index", "Bot starting...");
@@ -92,15 +86,15 @@ export class ConferenceBot {
 
         const backend = await this.loadBackend(config);
         const conference = new Conference(backend, config.conference.id, client);
+        const checkins = new CheckInMap(client, conference);
         const scoreboard = new Scoreboard(conference, client);
-        const scheduler = new Scheduler(client, conference, scoreboard);
+        const scheduler = new Scheduler(client, conference, scoreboard, checkins);
     
         let ircBridge: IRCBridge | null = null;
         if (config.ircBridge != null) {
             ircBridge = new IRCBridge(config.ircBridge, client);
         }
     
-        const checkins = new CheckInMap(client, conference);
     
         return new ConferenceBot(config, backend, client, conference, scoreboard, scheduler, ircBridge, checkins);
     }
@@ -108,10 +102,10 @@ export class ConferenceBot {
     private constructor(
         private readonly config: IConfig,
         private readonly backend: IScheduleBackend,
-        private readonly client: MatrixClient,
-        private readonly conference: Conference,
-        private readonly scoreboard: Scoreboard,
-        private readonly scheduler: Scheduler,
+        public readonly client: MatrixClient,
+        public readonly conference: Conference,
+        public readonly scoreboard: Scoreboard,
+        public readonly scheduler: Scheduler,
         private readonly ircBridge: IRCBridge|null,
         private readonly checkins: CheckInMap) {
 
@@ -191,14 +185,14 @@ export class ConferenceBot {
         app.engine('liquid', engine.express());
         app.set('views', tmplPath);
         app.set('view engine', 'liquid');
-        app.get('/widgets/auditorium.html', renderAuditoriumWidget);
-        app.get('/widgets/talk.html', renderTalkWidget);
-        app.get('/widgets/scoreboard.html', renderScoreboardWidget);
+        app.get('/widgets/auditorium.html', (req, res) => renderAuditoriumWidget(req, res, this.conference));
+        app.get('/widgets/talk.html', (req, res) =>  renderTalkWidget(req, res, this.conference));
+        app.get('/widgets/scoreboard.html', (req, res) =>  renderScoreboardWidget(req,res, this.conference));
         app.get('/widgets/hybrid.html', renderHybridWidget);
-        app.post('/onpublish', rtmpRedirect);
+        app.post('/onpublish', (req, res) =>  rtmpRedirect(req,res,this.conference));
         app.get('/healthz', renderHealthz);
-        app.get('/scoreboard/:roomId', (rq, rs) => renderScoreboard(rq, rs, this.scoreboard));
-        app.get('/make_hybrid', makeHybridWidget);
+        app.get('/scoreboard/:roomId', (rq, rs) => renderScoreboard(rq, rs, this.scoreboard, this.conference));
+        app.get('/make_hybrid', (req, res) =>  makeHybridWidget(req, res, this.client));
         app.listen(this.config.webserver.port, this.config.webserver.address, () => {
             LogService.info("web", `Webserver running at http://${this.config.webserver.address}:${this.config.webserver.port}`);
         });
@@ -206,25 +200,25 @@ export class ConferenceBot {
 
     private async registerCommands(userId: string, localpart: string, displayName: string) {
         const commands: ICommand[] = [
-            new HelpCommand(),
-            new BuildCommand(),
-            new VerifyCommand(),
-            new InviteCommand(),
-            new DevCommand(),
-            new PermissionsCommand(),
-            new InviteMeCommand(),
-            new JoinCommand(),
-            new WidgetsCommand(),
-            new RunCommand(),
-            new StopCommand(),
-            new CopyModeratorsCommand(),
-            new AttendanceCommand(),
-            new ScheduleCommand(),
-            new FDMCommand(),
-            new StatusCommand(),
+            new AttendanceCommand(this.client, this.conference),
+            new BuildCommand(this.client, this.conference),
+            new CopyModeratorsCommand(this.client),
+            new DevCommand(this.client, this.conference),
+            new FDMCommand(this.client, this.conference),
+            new HelpCommand(this.client),
+            new InviteCommand(this.client, this.conference),
+            new InviteMeCommand(this.client, this.conference),
+            new JoinCommand(this.client),
+            new PermissionsCommand(this.client, this.conference),
+            new RunCommand(this.client, this.conference, this.scheduler),
+            new ScheduleCommand(this.client, this.conference, this.scheduler),
+            new StatusCommand(this.client, this.conference, this.scheduler),
+            new StopCommand(this.client, this.scheduler),
+            new VerifyCommand(this.client, this.conference),
+            new WidgetsCommand(this.client, this.conference),
         ];
         if (this.ircBridge !== null) {
-            commands.push(new IrcPlumbCommand(this.ircBridge));
+            commands.push(new IrcPlumbCommand(this.client, this.conference, this.ircBridge));
         }
 
         this.client.on("room.message", async (roomId: string, event: any) => {
@@ -265,7 +259,7 @@ export class ConferenceBot {
                 for (const command of commands) {
                     if (command.prefixes.includes(args[0].toLowerCase())) {
                         LogService.info("index", `${event['sender']} is running command: ${content['body']}`);
-                        return await command.run(this.conference, this.client, roomId, event, args.slice(1));
+                        return await command.run(roomId, event, args.slice(1));
                     }
                 }
             } catch (e) {
@@ -278,10 +272,18 @@ export class ConferenceBot {
     }
 }
 
-(async function () {
-    const conf = await ConferenceBot.start(runtimeConfig);
-    return conf.main();
-})().catch((ex) => {
-    LogService.error("index", "Fatal error", ex);
-    process.exit(1);
-});
+if (require.main === module) {
+    (async function () {
+        process.on('SIGINT', () => {
+            // Die immediately
+            // TODO: Wait for pending tasks
+            process.exit();
+        });
+        
+        const conf = await ConferenceBot.start(runtimeConfig);
+        return conf.main();
+    })().catch((ex) => {
+        LogService.error("index", "Fatal error", ex);
+        process.exit(1);
+    });
+}

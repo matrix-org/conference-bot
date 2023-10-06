@@ -23,15 +23,17 @@ import { logMessage } from "../LogProxy";
 export class JoinCommand implements ICommand {
     public readonly prefixes = ["join"];
 
-    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
+    constructor(private readonly client: MatrixClient) {}
+
+    public async run(roomId: string, event: any, args: string[]) {
         if (!args.length) {
-            return client.replyNotice(roomId, event, "Please specify a room ID or alias");
+            return this.client.replyNotice(roomId, event, "Please specify a room ID or alias");
         }
 
-        await client.unstableApis.addReactionToEvent(roomId, event['event_id'], '⌛️');
+        await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '⌛️');
 
-        await client.joinRoom(args[0], []);
+        await this.client.joinRoom(args[0], []);
 
-        await client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
+        await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
     }
 }

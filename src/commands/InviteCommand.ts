@@ -27,15 +27,17 @@ import { IPerson, Role } from "../models/schedule";
 export class InviteCommand implements ICommand {
     public readonly prefixes = ["invite", "inv"];
 
-    private async createInvites(client: MatrixClient, people: IPerson[], alias: string) {
-        const resolved = await resolveIdentifiers(people);
+    constructor(private readonly client: MatrixClient, private readonly conference: Conference) {}
 
-        const targetRoomId = await client.resolveRoom(alias);
-        await InviteCommand.ensureInvited(client, targetRoomId, resolved);
+    private async createInvites(people: IPerson[], alias: string) {
+        const resolved = await resolveIdentifiers(this.client, people);
+
+        const targetRoomId = await this.client.resolveRoom(alias);
+        await this.ensureInvited(targetRoomId, resolved);
     }
 
-    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
-        await client.replyNotice(roomId, event, "Sending invites to participants. This might take a while.");
+    public async run(roomId: string, event: any, args: string[]) {
+        await this.client.replyNotice(roomId, event, "Sending invites to participants. This might take a while.");
 
         // This is called invite but it's really membership sync in a way. We're iterating over
         // every possible room the bot knows about and making sure that we have the right people
@@ -44,8 +46,8 @@ export class InviteCommand implements ICommand {
 
         if (args[0] && args[0] === "speakers-support") {
             let people: IPerson[] = [];
-            for (const aud of conference.storedAuditoriumBackstages) {
-                people.push(...await conference.getInviteTargetsForAuditorium(aud, true));
+            for (const aud of this.conference.storedAuditoriumBackstages) {
+                people.push(...await this.conference.getInviteTargetsForAuditorium(aud, true));
             }
             people = people.filter(p => p.role === Role.Speaker);
             const newPeople: IPerson[] = [];
@@ -54,18 +56,18 @@ export class InviteCommand implements ICommand {
                     newPeople.push(p);
                 }
             });
-            await this.createInvites(client, newPeople, config.conference.supportRooms.speakers);
+            await this.createInvites(newPeople, config.conference.supportRooms.speakers);
         } else if (args[0] && args[0] === "coordinators-support") {
             let people: IPerson[] = [];
-            for (const aud of conference.storedAuditoriums) {
+            for (const aud of this.conference.storedAuditoriums) {
                 if (!(await aud.getId()).startsWith("D.")) {
                     // HACK: Only invite coordinators for D.* auditoriums.
                     // TODO: Make invitations for support rooms more configurable.
-                    //       https://github.com/matrix-org/conference-bot/issues/76
+                    //       https://github.com/matrix-org/this.conference-bot/issues/76
                     continue;
                 }
 
-                const inviteTargets = await conference.getInviteTargetsForAuditorium(aud, true);
+                const inviteTargets = await this.conference.getInviteTargetsForAuditorium(aud, true);
                 people.push(...inviteTargets.filter(i => i.role === Role.Coordinator));
             }
             const newPeople: IPerson[] = [];
@@ -74,24 +76,24 @@ export class InviteCommand implements ICommand {
                     newPeople.push(p);
                 }
             });
-            await this.createInvites(client, newPeople, config.conference.supportRooms.coordinators);
+            await this.createInvites(newPeople, config.conference.supportRooms.coordinators);
         } else if (args[0] && args[0] === "si-support") {
             const people: IPerson[] = [];
-            for (const sir of conference.storedInterestRooms) {
-                people.push(...await conference.getInviteTargetsForInterest(sir));
+            for (const sir of this.conference.storedInterestRooms) {
+                people.push(...await this.conference.getInviteTargetsForInterest(sir));
             }
-            await this.createInvites(client, people, config.conference.supportRooms.specialInterest);
+            await this.createInvites(people, config.conference.supportRooms.specialInterest);
         } else {
-            await runRoleCommand(InviteCommand.ensureInvited, conference, client, roomId, event, args);
+            await runRoleCommand((_client,_room,people) => this.ensureInvited(roomId, people), this.conference, this.client, roomId, event, args);
         }
 
-        await client.sendNotice(roomId, "Invites sent!");
+        await this.client.sendNotice(roomId, "Invites sent!");
     }
 
-    public static async ensureInvited(client: MatrixClient, roomId: string, people: ResolvedPersonIdentifier[]) {
+    public async ensureInvited(roomId: string, people: ResolvedPersonIdentifier[]) {
         // We don't want to invite anyone we have already invited or that has joined though, so
         // avoid those people. We do this by querying the room state and filtering.
-        const state = await client.getRoomState(roomId);
+        const state = await this.client.getRoomState(roomId);
         const emailInvitePersonIds = state.filter(s => s.type === "m.room.third_party_invite").map(s => s.content?.[RS_3PID_PERSON_ID]).filter(i => !!i);
         const members = state.filter(s => s.type === "m.room.member").map(s => new MembershipEvent(s));
         const effectiveJoinedUserIds = members.filter(m => m.effectiveMembership === "join").map(m => m.membershipFor);
@@ -99,10 +101,10 @@ export class InviteCommand implements ICommand {
             if (target.mxid && effectiveJoinedUserIds.includes(target.mxid)) continue;
             if (emailInvitePersonIds.includes(target.person.id)) continue;
             try {
-                await invitePersonToRoom(target, roomId);
+                await invitePersonToRoom(this.client, target, roomId);
             } catch (e) {
                 LogService.error("InviteCommand", e);
-                await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${target.mxid}/${target.emails} / ${target.person.id} to ${roomId} - ignoring: ${e.message ?? e.statusMessage ?? '(see logs)'}`);
+                await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${target.mxid}/${target.emails} / ${target.person.id} to ${roomId} - ignoring: ${e.message ?? e.statusMessage ?? '(see logs)'}`, this.client);
             }
         }
     }

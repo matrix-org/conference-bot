@@ -41,14 +41,14 @@ export async function doAuditoriumResolveAction(
         ? await conference.getInviteTargetsForAuditorium(aud, true)
         : await conference.getModeratorsForAuditorium(aud);
     LogService.info("backstagePeople", `${backstagePeople}`);
-    const resolvedBackstagePeople = await resolveIdentifiers(backstagePeople);
+    const resolvedBackstagePeople = await resolveIdentifiers(client, backstagePeople);
     const backstage = conference.getAuditoriumBackstage(audId);
 
     LogService.info("resolvedBackstagePeople", `${resolvedBackstagePeople}`);
 
     const allPossiblePeople = isInvite
         ? resolvedBackstagePeople
-        : await resolveIdentifiers(await conference.getInviteTargetsForAuditorium(aud, true));
+        : await resolveIdentifiers(client, await conference.getInviteTargetsForAuditorium(aud, true));
 
     await action(client, backstage.roomId, resolvedBackstagePeople);
 
@@ -93,5 +93,5 @@ export async function doInterestResolveAction(action: IAction, client: MatrixCli
     const people = isInvite
         ? await conference.getInviteTargetsForInterest(int)
         : await conference.getModeratorsForInterest(int);
-    await action(client, int.roomId, await resolveIdentifiers(people));
+    await action(client, int.roomId, await resolveIdentifiers(client, people));
 }

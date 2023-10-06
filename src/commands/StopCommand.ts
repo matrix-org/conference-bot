@@ -18,13 +18,16 @@ import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import config from "../config";
-import { ScheduledTaskType } from "../Scheduler";
+import { ScheduledTaskType, Scheduler } from "../Scheduler";
 
 export class StopCommand implements ICommand {
     public readonly prefixes = ["stop"];
 
-    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
-        await config.RUNTIME.scheduler.stop();
-        await client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
+    constructor(private readonly client: MatrixClient, private readonly scheduler: Scheduler) {}
+
+
+    public async run(roomId: string, event: any, args: string[]) {
+        await this.scheduler.stop();
+        await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
     }
 }

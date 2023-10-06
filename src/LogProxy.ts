@@ -16,7 +16,7 @@ limitations under the License.
 
 // Borrowed from Mjolnir
 
-import { LogLevel, LogService, TextualMessageEventContent } from "matrix-bot-sdk";
+import { LogLevel, LogService, MatrixClient, TextualMessageEventContent } from "matrix-bot-sdk";
 import config from "./config";
 import { replaceRoomIdsWithPills } from "./utils";
 import * as htmlEscape from "escape-html";
@@ -28,17 +28,16 @@ const levelToFn = {
     [LogLevel.ERROR.toString()]: LogService.error,
 };
 
-export async function logMessage(level: LogLevel, module: string, message: string | any, additionalRoomIds: string[] | string | null = null, isRecursive = false) {
+export async function logMessage(level: LogLevel, module: string, message: string | any, client: MatrixClient, additionalRoomIds: string[] | string | null = null, isRecursive = false) {
     if (!additionalRoomIds) additionalRoomIds = [];
     if (!Array.isArray(additionalRoomIds)) additionalRoomIds = [additionalRoomIds];
 
-    if (config.RUNTIME.client && LogLevel.INFO.includes(level)) {
+    if (LogLevel.INFO.includes(level)) {
         let clientMessage = message;
         if (level === LogLevel.WARN) clientMessage = `⚠ | ${message}`;
         if (level === LogLevel.ERROR) clientMessage = `‼ | ${message}`;
 
         const roomIds = [config.managementRoom, ...additionalRoomIds];
-        const client = config.RUNTIME.client;
 
         let evContent: TextualMessageEventContent = {
             body: message,

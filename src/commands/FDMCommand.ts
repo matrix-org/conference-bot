@@ -24,15 +24,17 @@ import { IPerson } from "../models/schedule";
 export class FDMCommand implements ICommand {
     public readonly prefixes = ["fdm"];
 
-    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
-        const spi = conference.getInterestRoom("I.infodesk");
-        const infBackstage = await client.resolveRoom("#infodesk-backstage:fosdem.org");
-        const vol = await client.resolveRoom("#volunteers:fosdem.org");
-        const volBackstage = await client.resolveRoom("#volunteers-backstage:fosdem.org");
+    constructor(private readonly client: MatrixClient, private readonly conference: Conference) {}
 
-        const db = await conference.getPentaDb();
+    public async run(roomId: string, event: any, args: string[]) {
+        const spi = this.conference.getInterestRoom("I.infodesk");
+        const infBackstage = await this.client.resolveRoom("#infodesk-backstage:fosdem.org");
+        const vol = await this.client.resolveRoom("#volunteers:fosdem.org");
+        const volBackstage = await this.client.resolveRoom("#volunteers-backstage:fosdem.org");
+
+        const db = await this.conference.getPentaDb();
         if (db === null) {
-            await client.replyNotice(roomId, event, "Command not available as PentaDb is not enabled.");
+            await this.client.replyNotice(roomId, event, "Command not available as PentaDb is not enabled.");
             return;
         }
 
@@ -51,39 +53,39 @@ export class FDMCommand implements ICommand {
                 html += `<li>${person.name}</li>`;
             }
             html += "</ul>";
-            await client.sendHtmlNotice(roomId, html);
+            await this.client.sendHtmlNotice(roomId, html);
         } else if (args[0] === 'invite') {
-            const infodesk = await conference.getInviteTargetsForInterest(spi);
-            const infodeskResolved = await resolveIdentifiers(infodesk);
-            const inBsJoined = await client.getJoinedRoomMembers(infBackstage);
-            const volJoined = await client.getJoinedRoomMembers(vol);
-            const volBsJoined = await client.getJoinedRoomMembers(volBackstage);
+            const infodesk = await this.conference.getInviteTargetsForInterest(spi);
+            const infodeskResolved = await resolveIdentifiers(this.client, infodesk);
+            const inBsJoined = await this.client.getJoinedRoomMembers(infBackstage);
+            const volJoined = await this.client.getJoinedRoomMembers(vol);
+            const volBsJoined = await this.client.getJoinedRoomMembers(volBackstage);
             for (const person of infodeskResolved) {
                 try {
                     if (person.mxid && inBsJoined.includes(person.mxid)) continue;
-                    await invitePersonToRoom(person, infBackstage);
+                    await invitePersonToRoom(this.client, person, infBackstage);
                 } catch (e) {
-                    await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.id} to ${infBackstage} - ignoring`);
+                    await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.id} to ${infBackstage} - ignoring`, this.client);
                 }
             }
-            const volResolved = await resolveIdentifiers(volunteers);
+            const volResolved = await resolveIdentifiers(this.client, volunteers);
             for (const person of volResolved) {
                 try {
                     if (person.mxid && volJoined.includes(person.mxid)) continue;
-                    await invitePersonToRoom(person, vol);
+                    await invitePersonToRoom(this.client, person, vol);
                 } catch (e) {
-                    await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.id} to ${vol} - ignoring`);
+                    await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.id} to ${vol} - ignoring`, this.client);
                 }
                 try {
                     if (person.mxid && volBsJoined.includes(person.mxid)) continue;
-                    await invitePersonToRoom(person, volBackstage);
+                    await invitePersonToRoom(this.client, person, volBackstage);
                 } catch (e) {
-                    await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.id} to ${volBackstage} - ignoring`);
+                    await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.id} to ${volBackstage} - ignoring`, this.client);
                 }
             }
-            await client.sendNotice(roomId, "Invites sent");
+            await this.client.sendNotice(roomId, "Invites sent");
         } else {
-            await client.replyNotice(roomId, event, "Unknown command");
+            await this.client.replyNotice(roomId, event, "Unknown command");
         }
     }
 }
