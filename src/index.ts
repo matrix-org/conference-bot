@@ -16,11 +16,10 @@ limitations under the License.
 
 // TODO: Healthz
 // TODO: Timezones!! (Europe-Brussels)
-// TODO: Start webserver
 
 import { LogLevel, LogService, SimpleFsStorageProvider, UserID } from "matrix-bot-sdk";
 import * as path from "path";
-import runtimeConfig, { IConfig, IPentaScheduleBackendConfig } from "./config";
+import runtimeConfig, { IConfig, RunMode } from "./config";
 import { ICommand } from "./commands/ICommand";
 import { HelpCommand } from "./commands/HelpCommand";
 import { BuildCommand } from "./commands/BuildCommand";
@@ -82,6 +81,9 @@ export class ConferenceBot {
     }
 
     public static async start(config: IConfig): Promise<ConferenceBot> {
+        if (!config.mode[config.mode]) {
+            throw Error(`Incorrect mode '${config.mode}'`);
+        }
         const storage = new SimpleFsStorageProvider(path.join(config.dataPath, "bot.json"));
         const client = await ConferenceMatrixClient.create(config, storage);
         client.impersonateUserId(config.userId);       
@@ -90,7 +92,7 @@ export class ConferenceBot {
         const checkins = new CheckInMap(client, config);
         const scoreboard = new Scoreboard(conference, client, config);
         const scheduler = new Scheduler(client, conference, scoreboard, checkins, config);
-    
+
         let ircBridge: IRCBridge | null = null;
         if (config.ircBridge != null) {
             ircBridge = new IRCBridge(config, client);
@@ -130,14 +132,28 @@ export class ConferenceBot {
             // No profile set, assume localpart.
             displayName = localpart;
         }
-    
-        this.registerCommands(userId, localpart, displayName);
-    
+
+        // Setup the webserver first.
+        await this.setupWebserver();
+
         await this.client.joinRoom(this.config.managementRoom);
-    
         await this.conference.construct();
+
+        // Load the previous room scoreboards. This has to happen before we start syncing, otherwise
+        // new scoreboard changes will get lost. The `MatrixClient` resumes syncing from where it left
+        // off, so events will only be missed if the bot dies while processing them.
+        await this.scoreboard.load();
+
+        // Finally load the client
+        await this.client.start();
+
+        if (this.config.mode === RunMode.webserver) {
+            // If we're not the main bot instance, we don't need to do anything else.
+            return;
+        }
     
-        this.setupWebserver();
+
+        await this.registerCommands(userId, localpart, displayName);
     
         if (!this.conference.isCreated) {
             await this.client.sendHtmlNotice(this.config.managementRoom, "" +
@@ -158,13 +174,8 @@ export class ConferenceBot {
             );
         }
     
-        // Load the previous room scoreboards. This has to happen before we start syncing, otherwise
-        // new scoreboard changes will get lost. The `MatrixClient` resumes syncing from where it left
-        // off, so events will only be missed if the bot dies while processing them.
-        await this.scoreboard.load();
     
         await this.scheduler.prepare();
-        await this.client.start();
     
         // Needs to happen after the sync loop has started
         // Note that the IRC bridge will cause a crash if wrongly configured, so be cautious that it's not
