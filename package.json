@@ -11,7 +11,7 @@
   },
   "private": true,
   "scripts": {
-    "start:bot": "yarn build:jsonschema && yarn build:ts && node lib/index.js",
+    "start:bot": "yarn build:jsonschema && yarn build:ts && node --enable-source-maps lib/index.js",
     "start:web": "webpack serve",
     "watch:web": "webpack --watch",
     "build": "yarn build:jsonschema && yarn build:ts && yarn build:web",
