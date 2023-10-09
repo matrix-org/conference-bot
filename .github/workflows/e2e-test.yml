@@ -111,10 +111,3 @@ jobs:
           yarn --strict-semver --frozen-lockfile
           HOMERUNNER_SPAWN_HS_TIMEOUT_SECS=100 ../homerunner &
           bash -ic 'yarn test:e2e'
-      - name: Archive trace logs
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: e2e-traces
-          path: |
-            conference-bot/.e2e-traces
