@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { LogLevel } from "matrix-bot-sdk";
+import { LogLevel, LogService } from "matrix-bot-sdk";
 import { RS_3PID_PERSON_ID } from "./models/room_state";
 import { logMessage } from "./LogProxy";
 import { IPerson } from "./models/schedule";
@@ -30,6 +30,10 @@ export interface ResolvedPersonIdentifier {
 
 async function resolveBatch(client: ConferenceMatrixClient, batch: IPerson[]): Promise<ResolvedPersonIdentifier[]> {
     if (batch.length <= 0) return [];
+    if (!client.identityClient) {
+        LogService.warn("invites", "No identity client configured, returning empty");
+        return [];
+    }
     const results = await client.identityClient.lookup(batch.map(p => ({address: p.email, kind: "email"})));
     const resolved: ResolvedPersonIdentifier[] = [];
     for (let i = 0; i < results.length; i++) {
@@ -81,6 +85,11 @@ export async function invitePersonToRoom(client: ConferenceMatrixClient, resolve
 
     if (!resolvedPerson.emails) {
         throw new Error(`No e-mail addresses for resolved person ${resolvedPerson.person.id}.`);
+    }
+
+    if (!client.identityClient) {
+        throw new Error(`No identity client configured, cannot make email invite.`);
+
     }
 
     for (const email of resolvedPerson.emails) {

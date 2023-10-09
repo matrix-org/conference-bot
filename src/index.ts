@@ -18,7 +18,7 @@ limitations under the License.
 // TODO: Timezones!! (Europe-Brussels)
 // TODO: Start webserver
 
-import { LogLevel, LogService, MatrixClient, SimpleFsStorageProvider, UserID } from "matrix-bot-sdk";
+import { LogLevel, LogService, SimpleFsStorageProvider, UserID } from "matrix-bot-sdk";
 import * as path from "path";
 import runtimeConfig, { IConfig, IPentaScheduleBackendConfig } from "./config";
 import { ICommand } from "./commands/ICommand";
@@ -62,19 +62,23 @@ import { JoinCommand } from "./commands/JoinRoomCommand";
 import { StatusCommand } from "./commands/StatusCommand";
 import { CachingBackend } from "./backends/CachingBackend";
 import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
+import { Server } from "http";
+import { DummyScheduleBackend } from "./backends/dummy/backend";
 
 LogService.setLogger(new CustomLogger());
 LogService.setLevel(LogLevel.DEBUG);
 LogService.info("index", "Bot starting...");
 
 export class ConferenceBot {
+    private webServer?: Server;
     private static async loadBackend(config: IConfig) {
         switch (config.conference.schedule.backend) {
             case "penta":
-                const pentaCfg: IPentaScheduleBackendConfig = config.conference.schedule;
                 return await CachingBackend.new(() => PentaBackend.new(config), path.join(config.dataPath, "penta_cache.json"));
             case "json":
                 return await JsonScheduleBackend.new(config.dataPath, config.conference.schedule);
+            case "dummy":
+                return new DummyScheduleBackend();
             default:
                 throw new Error(`Unknown scheduling backend: choose penta or json!`)
         }
@@ -96,7 +100,7 @@ export class ConferenceBot {
         }
     
     
-        return new ConferenceBot(config, backend, client, conference, scoreboard, scheduler, ircBridge, checkins);
+        return new ConferenceBot(config, backend, client, conference, scoreboard, scheduler, ircBridge);
     }
 
     private constructor(
@@ -106,8 +110,7 @@ export class ConferenceBot {
         public readonly conference: Conference,
         public readonly scoreboard: Scoreboard,
         public readonly scheduler: Scheduler,
-        private readonly ircBridge: IRCBridge|null,
-        private readonly checkins: CheckInMap) {
+        private readonly ircBridge: IRCBridge|null) {
 
     }
 
@@ -193,7 +196,7 @@ export class ConferenceBot {
         app.get('/healthz', renderHealthz);
         app.get('/scoreboard/:roomId', (rq, rs) => renderScoreboard(rq, rs, this.scoreboard, this.conference));
         app.get('/make_hybrid', (req, res) =>  makeHybridWidget(req, res, this.client, this.config.livestream.widgetAvatar, this.config.webserver.publicBaseUrl));
-        app.listen(this.config.webserver.port, this.config.webserver.address, () => {
+        this.webServer = app.listen(this.config.webserver.port, this.config.webserver.address, () => {
             LogService.info("web", `Webserver running at http://${this.config.webserver.address}:${this.config.webserver.port}`);
         });
     }
@@ -270,17 +273,26 @@ export class ConferenceBot {
             return await this.client.replyNotice(roomId, event, `Unknown command. Try ${prefixUsed.trim()} help`);
         });
     }
+
+    public async stop() {
+        // TODO: Wait for pending tasks
+        this.client.stop();
+        this.webServer?.close();
+    }
 }
 
 if (require.main === module) {
     (async function () {
+        const conf = await ConferenceBot.start(runtimeConfig);
         process.on('SIGINT', () => {
-            // Die immediately
-            // TODO: Wait for pending tasks
-            process.exit();
+            conf.stop().then(() => {
+                process.exit(0);
+            }).catch(ex => {
+                LogService.warn("index", "Failed to exit gracefully", ex);
+                process.exit(1);
+            })
         });
         
-        const conf = await ConferenceBot.start(runtimeConfig);
         return conf.main();
     })().catch((ex) => {
         LogService.error("index", "Fatal error", ex);

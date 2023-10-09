@@ -15,11 +15,7 @@ limitations under the License.
 */
 
 import * as config from "config";
-import { MatrixClient } from "matrix-bot-sdk";
-import { Conference } from "./Conference";
-import { IRCBridge, IRCBridgeOpts } from "./IRCBridge";
-import { Scheduler } from "./Scheduler";
-import { CheckInMap } from "./CheckInMap";
+import { IRCBridgeOpts } from "./IRCBridge";
 
 export interface IConfig {
     homeserverUrl: string;
@@ -115,7 +111,12 @@ export interface IPentaScheduleBackendConfig {
     database: IPentaDbConfig;
 }
 
-export type ScheduleBackendConfig = IJsonScheduleBackendConfig | IPentaScheduleBackendConfig;
+export interface IDummyScheduleBackendConfig {
+    backend: "dummy";
+}
+
+
+export type ScheduleBackendConfig = IJsonScheduleBackendConfig | IPentaScheduleBackendConfig | IDummyScheduleBackendConfig;
 
 export interface IPentaDbConfig {
     host: string;

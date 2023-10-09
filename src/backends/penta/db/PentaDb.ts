@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { Pool } from "pg";
-import { IConfig, IPentaDbConfig } from "../../../config";
+import { IConfig, IPentaDbConfig, IPentaScheduleBackendConfig } from "../../../config";
 import { dbPersonToPerson, IDbPerson } from "./DbPerson";
 import { LogService, UserID } from "matrix-bot-sdk";
 import { objectFastClone } from "../../../utils";
@@ -36,7 +36,9 @@ export class PentaDb {
     pentaConfig: IPentaDbConfig;
 
     constructor(private readonly config: IConfig) {
-        this.pentaConfig = config.conference.schedule.database as IPentaDbConfig;
+        // TODO: Make generic
+        const scheduleConfig = config.conference.schedule as IPentaScheduleBackendConfig;
+        this.pentaConfig = scheduleConfig.database;
         this.client = new Pool({
             host: this.pentaConfig.host,
             port: this.pentaConfig.port,
@@ -72,36 +74,36 @@ export class PentaDb {
     public async findPeopleWithId(personId: string): Promise<IPerson[]> {
         const numericPersonId = Number(personId);
         if (Number.isSafeInteger(numericPersonId)) {
-            const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.config.conference.schedule.database?.tblPeople} ${this.config.conference.schedule.database?.tblPeople} WHERE person_id = $1 OR person_id = $2`, [personId, numericPersonId]);
+            const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.pentaConfig.tblPeople} ${this.pentaConfig.tblPeople} WHERE person_id = $1 OR person_id = $2`, [personId, numericPersonId]);
             return this.sanitizeRecords(result.rows).map(dbPersonToPerson);
         } else {
-            const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.config.conference.schedule.database?.tblPeople} WHERE person_id = $1`, [personId]);
+            const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.pentaConfig.tblPeople} WHERE person_id = $1`, [personId]);
             return this.sanitizeRecords(result.rows).map(dbPersonToPerson);
         }
     }
 
     public async findAllPeople(): Promise<IPerson[]> {
-        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.config.conference.schedule.database?.tblPeople}`);
+        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.pentaConfig.tblPeople}`);
         return this.sanitizeRecords(result.rows).map(dbPersonToPerson);
     }
 
     public async findAllPeopleForAuditorium(auditoriumId: string): Promise<IPerson[]> {
-        const result = await this.client.query<IDbPerson>(`${NONEVENT_PEOPLE_SELECT} ${this.config.conference.schedule.database?.tblPeople} WHERE conference_room = $1`, [auditoriumId]);
+        const result = await this.client.query<IDbPerson>(`${NONEVENT_PEOPLE_SELECT} ${this.pentaConfig.tblPeople} WHERE conference_room = $1`, [auditoriumId]);
         return this.sanitizeRecords(result.rows).map(dbPersonToPerson);
     }
 
     public async findAllPeopleForTalk(talkId: string): Promise<IPerson[]> {
-        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.config.conference.schedule.database?.tblPeople} WHERE event_id = $1`, [talkId]);
+        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.pentaConfig.tblPeople} WHERE event_id = $1`, [talkId]);
         return this.sanitizeRecords(result.rows).map(dbPersonToPerson);
     }
 
     public async findAllPeopleWithRole(role: Role): Promise<IPerson[]> {
-        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.config.conference.schedule.database?.tblPeople} WHERE event_role = $1`, [role]);
+        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.pentaConfig.tblPeople} WHERE event_role = $1`, [role]);
         return this.sanitizeRecords(result.rows).map(dbPersonToPerson);
     }
 
     public async findAllPeopleWithRemark(remark: string): Promise<IPerson[]> {
-        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.config.conference.schedule.database?.tblPeople} WHERE remark = $1`, [remark]);
+        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.pentaConfig.tblPeople} WHERE remark = $1`, [remark]);
         return this.sanitizeRecords(result.rows).map(dbPersonToPerson);
     }
 
@@ -150,7 +152,7 @@ export class PentaDb {
      */
     public async getTalk(talkId: string): Promise<IDbTalk | null> {
         const result = await this.client.query(
-            `${SCHEDULE_SELECT} ${this.config.conference.schedule.database?.tblSchedule} WHERE event_id::text = $2`,
+            `${SCHEDULE_SELECT} ${this.pentaConfig.tblSchedule} WHERE event_id::text = $2`,
             [this.config.conference.timezone, talkId]);
         return result.rowCount > 0 ? this.postprocessDbTalk(result.rows[0]) : null;
     }
@@ -158,7 +160,7 @@ export class PentaDb {
     private async getTalksWithin(timeQuery: string, inNextMinutes: number, minBefore: number): Promise<IDbTalk[]> {
         const now = "NOW() AT TIME ZONE 'UTC'";
         const result = await this.client.query(
-            `${SCHEDULE_SELECT} ${this.config.conference.schedule.database?.tblSchedule} WHERE ${timeQuery} >= (${now} - MAKE_INTERVAL(mins => $2)) AND ${timeQuery} <= (${now} + MAKE_INTERVAL(mins => $3))`,
+            `${SCHEDULE_SELECT} ${this.pentaConfig.tblSchedule} WHERE ${timeQuery} >= (${now} - MAKE_INTERVAL(mins => $2)) AND ${timeQuery} <= (${now} + MAKE_INTERVAL(mins => $3))`,
             [this.config.conference.timezone, minBefore, inNextMinutes]);
         return this.postprocessDbTalks(result.rows);
     }
