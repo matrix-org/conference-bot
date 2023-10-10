@@ -145,6 +145,7 @@ export class Scheduler {
     private inAuditoriums: string[] = [];
     private pending: { [taskId: string]: ITask } = {};
     private lock = new AwaitLock();
+    private nextTaskTimeout?: NodeJS.Timeout;
 
     constructor(private readonly client: ConferenceMatrixClient,
         private readonly conference: Conference,
@@ -300,7 +301,7 @@ export class Scheduler {
         } catch (e) {
             LogService.error("Scheduler", e);
         }
-        setTimeout(() => this.runTasks(), RUN_INTERVAL_MS);
+        this.nextTaskTimeout = setTimeout(() => this.runTasks(), RUN_INTERVAL_MS);
     }
 
     /**
@@ -601,6 +602,9 @@ export class Scheduler {
     public async stop() {
         await this.lock.acquireAsync();
         LogService.warn("Scheduler", "Stopping scheduler...");
+        if (this.nextTaskTimeout) {
+            clearTimeout(this.nextTaskTimeout);
+        }
         try {
             this.pending = {};
             this.inAuditoriums = [];

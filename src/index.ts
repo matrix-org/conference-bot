@@ -276,6 +276,7 @@ export class ConferenceBot {
 
     public async stop() {
         // TODO: Wait for pending tasks
+        await this.scheduler.stop();
         this.client.stop();
         this.webServer?.close();
     }
