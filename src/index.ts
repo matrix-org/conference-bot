@@ -275,7 +275,6 @@ export class ConferenceBot {
     }
 
     public async stop() {
-        // TODO: Wait for pending tasks
         await this.scheduler.stop();
         this.client.stop();
         this.webServer?.close();
@@ -293,8 +292,7 @@ if (require.main === module) {
                 process.exit(1);
             })
         });
-        
-        return conf.main();
+        await conf.main();
     })().catch((ex) => {
         LogService.error("index", "Fatal error", ex);
         process.exit(1);
