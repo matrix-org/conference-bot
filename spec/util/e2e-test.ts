@@ -1,4 +1,4 @@
-import { ComplementHomeServer, createHS } from "./homerunner";
+import { ComplementHomeServer, createHS, destroyHS } from "./homerunner";
 import { MatrixClient, PowerLevelsEventContent } from "matrix-bot-sdk";
 import dns from 'node:dns';
 import { mkdtemp, rm } from "node:fs/promises";
@@ -181,6 +181,7 @@ export class E2ETestEnv {
     public async tearDown(): Promise<void> {
         await this.confBot.stop();
         this.homeserver.users.forEach(u => u.client.stop());
+        await destroyHS(this.homeserver.id);
         await rm(this.dataDir, { recursive: true, force: true })
     }
 }
