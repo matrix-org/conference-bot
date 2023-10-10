@@ -179,8 +179,8 @@ export class E2ETestEnv {
     }
 
     public async tearDown(): Promise<void> {
-        await Promise.all(this.homeserver.users.map(u => u.client.stop()));
-        this.confBot.stop();
+        await this.confBot.stop();
+        this.homeserver.users.forEach(u => u.client.stop());
         await rm(this.dataDir, { recursive: true, force: true })
     }
 }
