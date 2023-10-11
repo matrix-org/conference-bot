@@ -43,5 +43,6 @@ describe('Basic test setup', () => {
         });
         await testEnv.sendAdminCommand('!conference build');
         await waitForFinish;
+        // TODO: Now test that all the expected rooms are there.
     }, 7000);
 });
