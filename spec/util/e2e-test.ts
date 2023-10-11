@@ -11,6 +11,7 @@ import { ConferenceBot } from "../../src/index";
 dns.setDefaultResultOrder('ipv4first');
 
 const WAIT_EVENT_TIMEOUT = 10000;
+export const E2ESetupTestTimeout = 60000;
 
 interface Opts {
     matrixLocalparts?: string[];

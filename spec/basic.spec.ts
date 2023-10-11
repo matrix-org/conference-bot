@@ -1,4 +1,4 @@
-import { E2ETestEnv } from "./util/e2e-test";
+import { E2ESetupTestTimeout, E2ETestEnv } from "./util/e2e-test";
 import { describe, it, beforeEach, afterEach } from "@jest/globals";
 
 
@@ -9,10 +9,10 @@ describe('Basic test setup', () => {
             matrixLocalparts: ['alice'],
         });
         await testEnv.setUp();
-    }, 90000);
+    }, E2ESetupTestTimeout);
     afterEach(() => {
         return testEnv?.tearDown();
-    }, 50000);
+    });
     it('should start up successfully', async () => {
         //
     });
