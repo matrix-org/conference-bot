@@ -63,7 +63,6 @@ import { StatusCommand } from "./commands/StatusCommand";
 import { CachingBackend } from "./backends/CachingBackend";
 import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
 import { Server } from "http";
-import { DummyScheduleBackend } from "./backends/dummy/backend";
 
 LogService.setLogger(new CustomLogger());
 LogService.setLevel(LogLevel.DEBUG);
@@ -77,8 +76,6 @@ export class ConferenceBot {
                 return await CachingBackend.new(() => PentaBackend.new(config), path.join(config.dataPath, "penta_cache.json"));
             case "json":
                 return await JsonScheduleBackend.new(config.dataPath, config.conference.schedule);
-            case "dummy":
-                return new DummyScheduleBackend();
             default:
                 throw new Error(`Unknown scheduling backend: choose penta or json!`)
         }

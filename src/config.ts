@@ -111,12 +111,7 @@ export interface IPentaScheduleBackendConfig {
     database: IPentaDbConfig;
 }
 
-export interface IDummyScheduleBackendConfig {
-    backend: "dummy";
-}
-
-
-export type ScheduleBackendConfig = IJsonScheduleBackendConfig | IPentaScheduleBackendConfig | IDummyScheduleBackendConfig;
+export type ScheduleBackendConfig = IJsonScheduleBackendConfig | IPentaScheduleBackendConfig;
 
 export interface IPentaDbConfig {
     host: string;

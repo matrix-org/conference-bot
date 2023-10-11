@@ -1,9 +1,11 @@
 import { ComplementHomeServer, createHS, destroyHS } from "./homerunner";
-import { MatrixClient, PowerLevelsEventContent } from "matrix-bot-sdk";
+import { MatrixClient, PowerLevelsEventContent, RoomEvent, TextualMessageEventContent } from "matrix-bot-sdk";
 import dns from 'node:dns';
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { IConfig } from "../../src/config";
 import { ConferenceBot } from "../../src/index";
+import path from "node:path";
+import { JSONSchedule } from "../../src/backends/json/jsontypes/JsonSchedule.schema";
 
 // Needed to make tests work on GitHub actions. Node 17+ defaults
 // to IPv6, and the homerunner domain resolves to IPv6, but the
@@ -15,6 +17,7 @@ export const E2ESetupTestTimeout = 60000;
 
 interface Opts {
     matrixLocalparts?: string[];
+    fixture: string;
     timeout?: number;
     config?: Partial<IConfig>,
     traceToFile?: boolean,
@@ -137,23 +140,57 @@ export class E2ETestMatrixClient extends MatrixClient {
 }
 
 export class E2ETestEnv {
-    static async createTestEnv(opts: Opts = {}): Promise<E2ETestEnv> {
+    static async createTestEnv(opts): Promise<E2ETestEnv> {
         const workerID = parseInt(process.env.JEST_WORKER_ID ?? '0');
         const { matrixLocalparts, config: providedConfig  } = opts;
         const tmpDir = await mkdtemp('confbot-test');
-        const homeserver = await createHS(["conf_bot", ...matrixLocalparts || []], workerID);
+
+        // Configure homeserver and bots
+        const homeserver = await createHS(["conf_bot", "admin", "modbot", ...matrixLocalparts || []], workerID);
         const confBotOpts = homeserver.users.find(u => u.userId === `@conf_bot:${homeserver.domain}`);
         if (!confBotOpts) {
             throw Error('No conf_bot setup on homeserver');
         }
-        const mgmntRoom = await confBotOpts.client.createRoom();
+        const adminUser = homeserver.users.find(u => u.userId === `@admin:${homeserver.domain}`);
+        if (!adminUser) {
+            throw Error('No admin setup on homeserver');
+        }
+        const mgmntRoom = await confBotOpts.client.createRoom({ invite: [adminUser.userId]});
+        await adminUser.client.joinRoom(mgmntRoom);
+
+        // Configure JSON schedule
+        const scheduleDefinition = path.resolve(__dirname, '..', 'fixtures', opts.fixture + ".json");
+
         const config = {
             ...providedConfig,
             conference: {
+                id: 'test-conf',
+                name: 'Test Conf',
+                supportRooms: {
+                    speakers: `#speakers:${homeserver.domain}`,
+                    coordinators: `#coordinators:${homeserver.domain}`,
+                    specialInterest: `#specialInterest:${homeserver.domain}`,
+                },
+                prefixes: {
+                    auditoriumRooms: ["D."],
+                    interestRooms: ["S.", "B."],
+                    aliases: "",
+                    displayNameSuffixes: {},
+                    suffixes: {},
+                },
                 schedule: {
-                    backend: 'dummy',
+                    backend: 'json',
+                    scheduleDefinition,
+                },
+                subspaces: {
+                    mysubspace: {
+                        displayName: 'My Subspace',
+                        alias: 'mysubspace',
+                        prefixes: []
+                    }
                 },
             },
+            moderatorUserId: `@modbot:${homeserver.domain}`,
             webserver: {
                 additionalAssetsPath: '/dev/null'
             },
@@ -165,14 +202,16 @@ export class E2ETestEnv {
             managementRoom: mgmntRoom,
         } as IConfig;
         const conferenceBot = await ConferenceBot.start(config);
-        return new E2ETestEnv(homeserver, conferenceBot, opts, tmpDir);
+        return new E2ETestEnv(homeserver, conferenceBot, adminUser.client, opts, tmpDir, config);
     }
 
     private constructor(
         public readonly homeserver: ComplementHomeServer,
         public confBot: ConferenceBot,
+        public readonly adminClient: MatrixClient,
         public readonly opts: Opts,
         private readonly dataDir: string,
+        private readonly config: IConfig,
     ) { }
 
     public async setUp(): Promise<void> {
@@ -184,5 +223,19 @@ export class E2ETestEnv {
         this.homeserver.users.forEach(u => u.client.stop());
         await destroyHS(this.homeserver.id);
         await rm(this.dataDir, { recursive: true, force: true })
+    }
+
+    public async sendAdminCommand(cmd: string) {
+        const response = new Promise<{roomId: string, event: RoomEvent<TextualMessageEventContent>}>((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error("Timed out waiting for admin response")), 5000);
+            this.adminClient.on('room.message', (roomId, event) => {
+                if (event.sender === this.config.userId) {
+                    resolve({roomId, event: new RoomEvent(event)});
+                    clearTimeout(timeout);
+                }
+            });
+        });
+        await this.adminClient.sendText(this.config.managementRoom, cmd);
+        return response;
     }
 }
