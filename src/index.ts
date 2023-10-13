@@ -62,6 +62,7 @@ import { CachingBackend } from "./backends/CachingBackend";
 import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
 import { Server } from "http";
 import { collectDefaultMetrics, register } from "prom-client";
+import { PretalxScheduleBackend } from "./backends/pretalx/PretalxBackend";
 
 LogService.setLogger(new CustomLogger());
 LogService.setLevel(LogLevel.DEBUG);
@@ -74,6 +75,8 @@ export class ConferenceBot {
                 return await CachingBackend.new(() => PentaBackend.new(config), path.join(config.dataPath, "penta_cache.json"));
             case "json":
                 return await JsonScheduleBackend.new(config.dataPath, config.conference.schedule);
+            case "pretalx":
+                return await PretalxScheduleBackend.new(config.dataPath, config.conference.schedule);
             default:
                 throw new Error(`Unknown scheduling backend: choose penta or json!`)
         }

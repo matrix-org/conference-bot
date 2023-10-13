@@ -125,7 +125,16 @@ export interface IPentaScheduleBackendConfig {
     database: IPentaDbConfig;
 }
 
-export type ScheduleBackendConfig = IJsonScheduleBackendConfig | IPentaScheduleBackendConfig;
+export interface IPretalxScheduleBackendConfig {
+    backend: "pretalx";
+    /**
+     * HTTP(S) URL to schedule XML.
+     */
+    scheduleDefinition: string;
+}
+
+
+export type ScheduleBackendConfig = IJsonScheduleBackendConfig | IPentaScheduleBackendConfig | IPretalxScheduleBackendConfig;
 
 export interface IPentaDbConfig {
     host: string;
