@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import * as parser from 'fast-xml-parser';
+import { XMLParser } from "fast-xml-parser";
 import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from "../../models/schedule";
 import moment from "moment";
 import { RoomKind } from "../../models/room_kinds";
@@ -133,11 +133,13 @@ export class PentabarfParser {
     public readonly interestRooms: IInterestRoom[];
 
     constructor(rawXml: string, prefixConfig: IPrefixConfig) {
-        this.parsed = parser.parse(rawXml, {
-            attrNodeName: "attr",
+        const parser = new XMLParser({
+            attributesGroupName: "attr",
+            attributeNamePrefix : "@_",
             textNodeName: "#text",
             ignoreAttributes: false,
         });
+        this.parsed = parser.parse(rawXml);
 
         this.auditoriums = [];
         this.talks = [];
