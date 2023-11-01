@@ -22,10 +22,12 @@ import { IPerson, Role } from "../models/schedule";
 export class DevCommand implements ICommand {
     public readonly prefixes = ["dev"];
 
-    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
+    constructor(private readonly client: MatrixClient, private readonly conference: Conference) {}
+
+    public async run(roomId: string, event: any, args: string[]) {
         let people: IPerson[] = [];
-        for (const aud of conference.storedAuditoriums) {
-            const inviteTargets = await conference.getInviteTargetsForAuditorium(aud, true);
+        for (const aud of this.conference.storedAuditoriums) {
+            const inviteTargets = await this.conference.getInviteTargetsForAuditorium(aud, true);
             people.push(...inviteTargets.filter(i => i.role === Role.Coordinator));
         }
         const newPeople: IPerson[] = [];
@@ -34,6 +36,6 @@ export class DevCommand implements ICommand {
                 newPeople.push(p);
             }
         });
-        await client.sendNotice(roomId, `Total people: ${newPeople.length}`);
+        await this.client.sendNotice(roomId, `Total people: ${newPeople.length}`);
     }
 }

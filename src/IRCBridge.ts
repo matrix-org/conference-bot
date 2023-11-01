@@ -18,8 +18,8 @@ import { MatrixClient, MatrixEvent } from "matrix-bot-sdk";
 import * as irc from "irc-upd";
 import { Auditorium } from "./models/Auditorium";
 import { InterestRoom } from "./models/InterestRoom";
-import config from "./config";
 import { makeLocalpart } from "./utils/aliases";
+import { IConfig } from "./config";
 
 export interface IRCBridgeOpts {
     botNick: string;
@@ -45,10 +45,16 @@ export class IRCBridge {
 
     private botRoomId?: string;
     private ircClient: any;
-    constructor(private readonly config: IRCBridgeOpts, private readonly mxClient: MatrixClient) {
-        if (!config.botNick || !config.botUserId || !config.channelPrefix || !config.port || !config.serverName) {
+    private readonly config: IRCBridgeOpts;
+    constructor(private readonly rootConfig: IConfig, private readonly mxClient: MatrixClient) {
+        if (!rootConfig.ircBridge) {
+            throw Error('Missing IRC bridge config');
+        }
+        this.config = rootConfig.ircBridge;
+        if (!this.config.botNick || !this.config.botUserId || !this.config.channelPrefix || !this.config.port || !this.config.serverName) {
             throw Error('Missing configuration options for IRC bridge');
         }
+
     }
 
     public get botUserId() {
@@ -64,7 +70,7 @@ export class IRCBridge {
     }
 
     public async deriveChannelNameSI(interest: InterestRoom) {
-        const name = makeLocalpart(await interest.getName(), await interest.getId());
+        const name = makeLocalpart(await interest.getName(), this.rootConfig.conference.prefixes.suffixes, await interest.getId());
         if (!name) {
             throw Error('Special interest name is empty');
         }

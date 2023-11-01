@@ -19,7 +19,7 @@ import { LogService, MatrixClient, Permalinks, UserID } from "matrix-bot-sdk";
 import AwaitLock from "await-lock";
 import {promises as fs} from "fs";
 import * as path from "path";
-import config from "./config";
+import { IConfig } from "./config";
 import { isEmojiVariant } from "./utils";
 
 export interface RoomMessage {
@@ -77,7 +77,7 @@ export class Scoreboard {
     private domain: string;
     private lock = new AwaitLock();
 
-    constructor(private conference: Conference, private client: MatrixClient) {
+    constructor(private conference: Conference, private client: MatrixClient, config: IConfig) {
         this.path = path.join(config.dataPath, 'scoreboard.json');
 
         // We expect the `MatrixClient` to only start / resume syncing after

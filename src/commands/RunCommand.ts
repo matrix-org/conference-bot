@@ -17,23 +17,24 @@ limitations under the License.
 import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
-import config from "../config";
-import { ScheduledTaskType } from "../Scheduler";
+import { Scheduler } from "../Scheduler";
 
 export class RunCommand implements ICommand {
     public readonly prefixes = ["run"];
 
-    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
+    constructor(private readonly client: MatrixClient, private readonly conference: Conference, private readonly scheduler: Scheduler) {}
+
+    public async run(roomId: string, event: any, args: string[]) {
         const audId = args[0];
         if (audId === "all") {
-            await config.RUNTIME.scheduler.addAuditorium("all");
+            await this.scheduler.addAuditorium("all");
         } else {
-            const aud = conference.getAuditorium(audId);
-            if (!aud) return await client.replyHtmlNotice(roomId, event, "Unknown auditorium");
+            const aud = this.conference.getAuditorium(audId);
+            if (!aud) return await this.client.replyHtmlNotice(roomId, event, "Unknown auditorium");
 
-            await config.RUNTIME.scheduler.addAuditorium(await aud.getId());
+            await this.scheduler.addAuditorium(await aud.getId());
         }
 
-        await client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
+        await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
     }
 }

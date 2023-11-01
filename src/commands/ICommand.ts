@@ -14,10 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MatrixClient } from "matrix-bot-sdk";
-import { Conference } from "../Conference";
-
 export interface ICommand {
     prefixes: string[];
-    run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]);
+    run(roomId: string, event: any, args: string[]);
 }

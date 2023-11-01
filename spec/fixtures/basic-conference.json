@@ -1,0 +1,19 @@
+{
+    "title": "Testing Conference",
+    "streams": [{
+        "stream_name": "Main Stream",
+        "talks": [{
+            "id": 1,
+            "title": "Main Talk 1",
+            "description": "First talk",
+            "start": "2019-10-12T07:20:50.52Z",
+            "end": "2019-10-12T07:21:50.52Z",
+            "tracks": ["main_track"],
+            "speakers": [{
+                "display_name": "Alice",
+                "matrix_id": "@alice:example.com",
+                "email": "@alice:example.com"
+            }]
+        }]
+    }]
+}

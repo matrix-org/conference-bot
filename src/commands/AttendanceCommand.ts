@@ -20,12 +20,15 @@ import { Conference } from "../Conference";
 import { resolveIdentifiers } from "../invites";
 import { COLOR_GREEN, COLOR_RED } from "../models/colors";
 import { IPerson } from "../models/schedule";
+import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
 export class AttendanceCommand implements ICommand {
     public readonly prefixes = ["attendance"];
 
-    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
-        await client.sendNotice(roomId, "Calculating...");
+    constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference) {}
+
+    public async run(roomId: string, event: any, args: string[]) {
+        await this.client.sendNotice(roomId, "Calculating...");
 
         let totalEmails = 0;
         let totalJoined = 0;
@@ -46,9 +49,9 @@ export class AttendanceCommand implements ICommand {
 
         let html = "<ul>";
         const append = async (invitePeople: IPerson[], bsPeople: IPerson[] | null, name: string, roomId: string, bsRoomId: string | null, withHtml: boolean) => {
-            const inviteTargets = await resolveIdentifiers(invitePeople);
+            const inviteTargets = await resolveIdentifiers(this.client, invitePeople);
 
-            const joinedMembers = await client.getJoinedRoomMembers(roomId);
+            const joinedMembers = await this.client.getJoinedRoomMembers(roomId);
 
             const emailInvites = inviteTargets.filter(i => !i.mxid).length;
             const joined = inviteTargets.filter(i => i.mxid && joinedMembers.includes(i.mxid)).length;
@@ -66,8 +69,8 @@ export class AttendanceCommand implements ICommand {
                 if (!bsPeople) {
                     throw new Error("bsRoomId set but bsPeople isn't!");
                 }
-                const bsInviteTargets = await resolveIdentifiers(bsPeople);
-                const bsJoinedMembers = await client.getJoinedRoomMembers(bsRoomId);
+                const bsInviteTargets = await resolveIdentifiers(this.client, bsPeople);
+                const bsJoinedMembers = await this.client.getJoinedRoomMembers(bsRoomId);
                 const bsEmailInvites = bsInviteTargets.filter(i => !i.mxid).length;
                 const bsJoined = bsInviteTargets.filter(i => i.mxid && bsJoinedMembers.includes(i.mxid)).length;
                 const bsAcceptedPct = Math.round((bsJoined / bsInviteTargets.length) * 100);
@@ -82,16 +85,16 @@ export class AttendanceCommand implements ICommand {
 
             if (withHtml) html += "</li>";
         };
-        for (const auditorium of conference.storedAuditoriums) {
+        for (const auditorium of this.conference.storedAuditoriums) {
             const doAppend = !!targetAudId && (targetAudId === "all" || targetAudId === await auditorium.getId());
-            const bs = conference.getAuditoriumBackstage(await auditorium.getId());
-            const inviteTargets = await conference.getInviteTargetsForAuditorium(auditorium);
-            const bsInviteTargets = await conference.getInviteTargetsForAuditorium(auditorium, true);
+            const bs = this.conference.getAuditoriumBackstage(await auditorium.getId());
+            const inviteTargets = await this.conference.getInviteTargetsForAuditorium(auditorium);
+            const bsInviteTargets = await this.conference.getInviteTargetsForAuditorium(auditorium, true);
             await append(inviteTargets, bsInviteTargets, await auditorium.getId(), auditorium.roomId, bs.roomId, doAppend);
         }
-        for (const spiRoom of conference.storedInterestRooms) {
+        for (const spiRoom of this.conference.storedInterestRooms) {
             const doAppend = !!targetAudId && (targetAudId === "all" || targetAudId === await spiRoom.getId());
-            const inviteTargets = await conference.getInviteTargetsForInterest(spiRoom);
+            const inviteTargets = await this.conference.getInviteTargetsForInterest(spiRoom);
             await append(inviteTargets, null, await spiRoom.getId(), spiRoom.roomId, null, doAppend);
         }
         html += "</ul>";
@@ -105,6 +108,6 @@ export class AttendanceCommand implements ICommand {
 
         html = `<b>Summary:</b> ${htmlNum(acceptedPct)} have joined, ${htmlNum(emailPct, true)} have pending emails. ${targetAudId ? '<hr />' : ''}${html}`;
 
-        await client.replyHtmlNotice(roomId, event, html);
+        await this.client.replyHtmlNotice(roomId, event, html);
     }
 }

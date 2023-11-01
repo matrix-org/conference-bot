@@ -30,12 +30,6 @@ const prefixConfig: IPrefixConfig = {
     },
 };
 
-const backendConfig: IPentaScheduleBackendConfig = {
-    backend: "penta",
-    database: {} as any as IPentaDbConfig,
-    scheduleDefinition: "xyz.xml"
-};
-
 const actualUtils = jest.requireActual("../../../utils") as any;
 jest.mock("../../../utils");
 
@@ -70,7 +64,7 @@ test("the cache should restore the same talks that were saved", async () => {
     } as any as PentaDb;
 
     async function newPentaBackend(): Promise<PentaBackend> {
-        const b = new PentaBackend(backendConfig, parser, fakeDb);
+        const b = new PentaBackend(parser, fakeDb);
         await b.init();
         return b;
     }

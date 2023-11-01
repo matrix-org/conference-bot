@@ -17,14 +17,16 @@ limitations under the License.
 import { Conference } from "./Conference";
 import AwaitLock from "await-lock";
 import { logMessage } from "./LogProxy";
-import config from "./config";
-import { LogLevel, LogService, MatrixClient, MentionPill } from "matrix-bot-sdk";
+import { LogLevel, LogService, MentionPill } from "matrix-bot-sdk";
 import { makeRoomPublic } from "./utils";
 import { Scoreboard } from "./Scoreboard";
 import { LiveWidget } from "./models/LiveWidget";
 import { ResolvedPersonIdentifier, resolveIdentifiers } from "./invites";
 import { ITalk, Role } from "./models/schedule";
 import { Talk } from "./models/Talk";
+import { CheckInMap } from "./CheckInMap";
+import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
+import { IConfig } from "./config";
 
 export enum ScheduledTaskType {
     TalkStart = "talk_start",
@@ -143,8 +145,13 @@ export class Scheduler {
     private inAuditoriums: string[] = [];
     private pending: { [taskId: string]: ITask } = {};
     private lock = new AwaitLock();
+    private nextTaskTimeout?: NodeJS.Timeout;
 
-    constructor(private client: MatrixClient, private conference: Conference, private scoreboard: Scoreboard) {
+    constructor(private readonly client: ConferenceMatrixClient,
+        private readonly conference: Conference,
+        private readonly scoreboard: Scoreboard,
+        private readonly checkins: CheckInMap,
+        private readonly config: IConfig) {
     }
 
     public async prepare() {
@@ -156,7 +163,7 @@ export class Scheduler {
         this.inAuditoriums.push(...(schedulerData?.inAuditoriums || []));
 
         if (this.inAuditoriums.length) {
-            await this.client.sendNotice(config.managementRoom, `Running schedule in auditoriums: ${this.inAuditoriums.join(', ')}`);
+            await this.client.sendNotice(this.config.managementRoom, `Running schedule in auditoriums: ${this.inAuditoriums.join(', ')}`);
         }
 
         await this.runTasks();
@@ -190,7 +197,7 @@ export class Scheduler {
             await this.lock.acquireAsync();
             LogService.info("Scheduler", "Scheduling tasks");
             try {
-                const minVar = config.conference.lookaheadMinutes;
+                const minVar = this.config.conference.lookaheadMinutes;
                 try {
                     // Refresh upcoming parts of our schedule to ensure it's really up to date.
                     // Rationale: Sometimes schedules get changed at short notice, so we try our best to accommodate that.
@@ -237,7 +244,7 @@ export class Scheduler {
             } catch (e) {
                 LogService.error("Scheduler", e);
                 try {
-                    await logMessage(LogLevel.ERROR, "Scheduler", `Error scheduling tasks: ${e?.message || 'unknown error'}`);
+                    await logMessage(LogLevel.ERROR, "Scheduler", `Error scheduling tasks: ${e?.message || 'unknown error'}`, this.client);
                 } catch (e) {
                     LogService.error("Scheduler", e);
                 }
@@ -273,7 +280,7 @@ export class Scheduler {
                         await this._execute(task);
                     } catch (e) {
                         LogService.error("Scheduler", e);
-                        await logMessage(LogLevel.ERROR, "Scheduler", `Error running task ${taskId}: ${e?.message || 'unknown error'}`);
+                        await logMessage(LogLevel.ERROR, "Scheduler", `Error running task ${taskId}: ${e?.message || 'unknown error'}`, this.client);
                     }
                     delete this.pending[taskId];
                     this.completedIds.push(taskId);
@@ -283,7 +290,7 @@ export class Scheduler {
             } catch (e) {
                 LogService.error("Scheduler", e);
                 try {
-                    await logMessage(LogLevel.ERROR, "Scheduler", `Error running tasks: ${e?.message || 'unknown error'}`);
+                    await logMessage(LogLevel.ERROR, "Scheduler", `Error running tasks: ${e?.message || 'unknown error'}`, this.client);
                 } catch (e) {
                     LogService.error("Scheduler", e);
                 }
@@ -294,7 +301,7 @@ export class Scheduler {
         } catch (e) {
             LogService.error("Scheduler", e);
         }
-        setTimeout(() => this.runTasks(), RUN_INTERVAL_MS);
+        this.nextTaskTimeout = setTimeout(() => this.runTasks(), RUN_INTERVAL_MS);
     }
 
     /**
@@ -379,9 +386,9 @@ export class Scheduler {
         } else if (task.type === ScheduledTaskType.TalkEnd) {
             if (confTalk !== undefined) {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk has ended - opening up this room to all attendees.</h3><p>@room - They won't see the history in this room.</p>`);
-                const widget = await LiveWidget.forTalk(confTalk, this.client);
+                const widget = await LiveWidget.forTalk(confTalk, this.client, this.config.livestream.widgetAvatar, this.config.webserver.publicBaseUrl);
                 const layout = await LiveWidget.layoutForTalk(widget, null);
-                const scoreboard = await LiveWidget.scoreboardForTalk(confTalk, this.client);
+                const scoreboard = await LiveWidget.scoreboardForTalk(confTalk, this.client, this.conference, this.config.livestream.widgetAvatar, this.config.webserver.publicBaseUrl);
                 await this.client.sendStateEvent(confTalk.roomId, widget.type, widget.state_key, widget.content);
                 await this.client.sendStateEvent(confTalk.roomId, scoreboard.type, scoreboard.state_key, {});
                 await this.client.sendStateEvent(confTalk.roomId, layout.type, layout.state_key, layout.content);
@@ -401,8 +408,8 @@ export class Scheduler {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 1 hour</h3><p>Please say something (anything) in this room to check in.</p>`);
 
                 const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
-                const resolved = (await resolveIdentifiers(userIds)).filter(p => p.mxid).map(p => p.mxid!);
-                await config.RUNTIME.checkins.expectCheckinFrom(resolved);
+                const resolved = (await resolveIdentifiers(this.client, userIds)).filter(p => p.mxid).map(p => p.mxid!);
+                await this.checkins.expectCheckinFrom(resolved);
             }
         } else if (task.type === ScheduledTaskType.TalkStart5M && confTalk !== undefined) {
             if (!task.talk.prerecorded) {
@@ -444,7 +451,7 @@ export class Scheduler {
 
             if (!task.talk.prerecorded) return;
             const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
-            const resolved = await resolveIdentifiers(userIds);
+            const resolved = await resolveIdentifiers(this.client, userIds);
             const speakers = resolved.filter(p => p.person.role === Role.Speaker);
             const hosts = resolved.filter(p => p.person.role === Role.Host);
             const coordinators = resolved.filter(p => p.person.role === Role.Coordinator);
@@ -454,10 +461,10 @@ export class Scheduler {
             for (const person of required) {
                 if (!person.mxid) {
                     missing.push(person);
-                } else if (!config.RUNTIME.checkins.isCheckedIn(person.mxid)) {
+                } else if (!this.checkins.isCheckedIn(person.mxid)) {
                     missing.push(person);
                 } else {
-                    await config.RUNTIME.checkins.extendCheckin(person.mxid);
+                    await this.checkins.extendCheckin(person.mxid);
                 }
             }
             if (missing.length > 0) {
@@ -473,15 +480,15 @@ export class Scheduler {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 45 minutes</h3><p>${pills.join(', ')} - Please say something (anything) in this room to check in.</p>`);
 
                 const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
-                const resolved = (await resolveIdentifiers(userIds)).filter(p => p.mxid).map(p => p.mxid!);
-                await config.RUNTIME.checkins.expectCheckinFrom(resolved);
+                const resolved = (await resolveIdentifiers(this.client, userIds)).filter(p => p.mxid).map(p => p.mxid!);
+                await this.checkins.expectCheckinFrom(resolved);
             }
         } else if (task.type === ScheduledTaskType.TalkCheckin30M && confTalk !== undefined) {
             // TODO This is skipped entirely for physical talks, but do we want to ensure coordinators are checked-in?
 
             if (!task.talk.prerecorded) return;
             const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
-            const resolved = await resolveIdentifiers(userIds);
+            const resolved = await resolveIdentifiers(this.client, userIds);
             const speakers = resolved.filter(p => p.person.role === Role.Speaker);
             const hosts = resolved.filter(p => p.person.role === Role.Host);
             const coordinators = resolved.filter(p => p.person.role === Role.Coordinator);
@@ -491,10 +498,10 @@ export class Scheduler {
             for (const person of required) {
                 if (!person.mxid) {
                     missing.push(person);
-                } else if (!config.RUNTIME.checkins.isCheckedIn(person.mxid)) {
+                } else if (!this.checkins.isCheckedIn(person.mxid)) {
                     missing.push(person);
                 } else {
-                    await config.RUNTIME.checkins.extendCheckin(person.mxid);
+                    await this.checkins.extendCheckin(person.mxid);
                 }
             }
             if (missing.length > 0) {
@@ -510,15 +517,15 @@ export class Scheduler {
                 await this.client.sendHtmlText(confAudBackstage.roomId, `<h3>Required persons not checked in for upcoming talk</h3><p>Please track down the speakers for <b>${await confTalk.getName()}</b>.</p><p>Missing: ${pills.join(', ')}</p>`);
 
                 const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
-                const resolved = (await resolveIdentifiers(userIds)).filter(p => p.mxid).map(p => p.mxid!);
-                await config.RUNTIME.checkins.expectCheckinFrom(resolved);
+                const resolved = (await resolveIdentifiers(this.client, userIds)).filter(p => p.mxid).map(p => p.mxid!);
+                await this.checkins.expectCheckinFrom(resolved);
             } // else no complaints
         } else if (task.type === ScheduledTaskType.TalkCheckin15M && confTalk !== undefined) {
             // TODO This is skipped entirely for physical talks, but do we want to ensure coordinators are checked-in?
 
             if (!task.talk.prerecorded) return;
             const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
-            const resolved = await resolveIdentifiers(userIds);
+            const resolved = await resolveIdentifiers(this.client, userIds);
             const speakers = resolved.filter(p => p.person.role === Role.Speaker);
             const hosts = resolved.filter(p => p.person.role === Role.Host);
             const coordinators = resolved.filter(p => p.person.role === Role.Coordinator);
@@ -528,10 +535,10 @@ export class Scheduler {
             for (const person of required) {
                 if (!person.mxid) {
                     missing.push(person);
-                } else if (!config.RUNTIME.checkins.isCheckedIn(person.mxid)) {
+                } else if (!this.checkins.isCheckedIn(person.mxid)) {
                     missing.push(person);
                 } else {
-                    await config.RUNTIME.checkins.extendCheckin(person.mxid);
+                    await this.checkins.extendCheckin(person.mxid);
                 }
             }
             if (missing.length > 0) {
@@ -544,16 +551,16 @@ export class Scheduler {
                     }
                 }
                 const roomPill = await MentionPill.forRoom(confTalk.roomId, this.client);
-                await this.client.sendHtmlText(config.managementRoom, `<h3>Talk is missing speakers</h3><p>${roomPill.html} is missing one or more speakers: ${pills.join(', ')}</p><p>The talk starts in about 15 minutes.</p>`);
+                await this.client.sendHtmlText(this.config.managementRoom, `<h3>Talk is missing speakers</h3><p>${roomPill.html} is missing one or more speakers: ${pills.join(', ')}</p><p>The talk starts in about 15 minutes.</p>`);
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>@room - please check in.</h3><p>${pills.join(', ')} - It does not appear as though you are present for your talk. Please say something in this room. The conference staff have been notified.</p>`);
                 await this.client.sendHtmlText(confAudBackstage.roomId, `<h3>Required persons not checked in for upcoming talk</h3><p>Please track down the speakers for <b>${await confTalk.getName()}</b>. The conference staff have been notified.</p><p>Missing: ${pills.join(', ')}</p>`);
 
                 const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
-                const resolved = (await resolveIdentifiers(userIds)).filter(p => p.mxid).map(p => p.mxid!);
-                await config.RUNTIME.checkins.expectCheckinFrom(resolved);
+                const resolved = (await resolveIdentifiers(this.client, userIds)).filter(p => p.mxid).map(p => p.mxid!);
+                await this.checkins.expectCheckinFrom(resolved);
             } // else no complaints
         } else {
-            await logMessage(LogLevel.WARN, "Scheduler", `Unknown task type for execute(): ${task.type}`);
+            await logMessage(LogLevel.WARN, "Scheduler", `Unknown task type for execute(): ${task.type}`, this.client);
         }
     }
 
@@ -595,6 +602,9 @@ export class Scheduler {
     public async stop() {
         await this.lock.acquireAsync();
         LogService.warn("Scheduler", "Stopping scheduler...");
+        if (this.nextTaskTimeout) {
+            clearTimeout(this.nextTaskTimeout);
+        }
         try {
             this.pending = {};
             this.inAuditoriums = [];

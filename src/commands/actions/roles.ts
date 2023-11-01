@@ -17,8 +17,9 @@ limitations under the License.
 import { doAuditoriumResolveAction, doInterestResolveAction, IAction } from "./people";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../../Conference";
+import { ConferenceMatrixClient } from "../../ConferenceMatrixClient";
 
-export async function runRoleCommand(action: IAction, conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[], isInvite = true) {
+export async function runRoleCommand(action: IAction, conference: Conference, client: ConferenceMatrixClient, roomId: string, event: any, args: string[], isInvite = true) {
     const backstageOnly = args.includes("backstage");
     const skipTalks = args.includes("notalks");
 

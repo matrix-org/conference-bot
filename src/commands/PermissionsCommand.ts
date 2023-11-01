@@ -19,20 +19,23 @@ import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { ResolvedPersonIdentifier } from "../invites";
 import { runRoleCommand } from "./actions/roles";
+import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
 export class PermissionsCommand implements ICommand {
     public readonly prefixes = ["permissions", "perms"];
 
-    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
-        await client.replyNotice(roomId, event, "Updating member permissions. This might take a while.");
+    constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference) {}
+
+    public async run(roomId: string, event: any, args: string[]) {
+        await this.client.replyNotice(roomId, event, "Updating member permissions. This might take a while.");
 
         // Much like the invite command, we iterate over pretty much every room and promote anyone
         // we think should be promoted. We don't remove people from power levels (that's left to the
         // existing room moderators/admins to deal with).
 
-        await runRoleCommand(PermissionsCommand.ensureModerator, conference, client, roomId, event, args, false);
+        await runRoleCommand(PermissionsCommand.ensureModerator, this.conference, this.client, roomId, event, args, false);
 
-        await client.sendNotice(roomId, "Member permissions updated");
+        await this.client.sendNotice(roomId, "Member permissions updated");
     }
 
     public static async ensureModerator(client: MatrixClient, roomId: string, people: ResolvedPersonIdentifier[]) {

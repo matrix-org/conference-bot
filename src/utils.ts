@@ -28,10 +28,10 @@ import {
 import { logMessage } from "./LogProxy";
 import * as htmlEscape from "escape-html";
 import * as crypto from "crypto";
-import config from "./config";
 import { readFile, writeFile, rename } from "fs";
+import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
 
-export async function replaceRoomIdsWithPills(client: MatrixClient, text: string, roomIds: string[] | string, msgtype: MessageType = "m.text"): Promise<TextualMessageEventContent> {
+export async function replaceRoomIdsWithPills(client: ConferenceMatrixClient, text: string, roomIds: string[] | string, msgtype: MessageType = "m.text"): Promise<TextualMessageEventContent> {
     if (!Array.isArray(roomIds)) roomIds = [roomIds];
 
     const content: TextualMessageEventContent = {
@@ -52,7 +52,7 @@ export async function replaceRoomIdsWithPills(client: MatrixClient, text: string
             alias = (await client.getPublishedAlias(roomId)) || roomId;
         } catch (e) {
             // This is a recursive call, so tell the function not to try and call us
-            await logMessage(LogLevel.WARN, "utils", `Failed to resolve room alias for ${roomId} - see console for details`, null, true);
+            await logMessage(LogLevel.WARN, "utils", `Failed to resolve room alias for ${roomId} - see console for details`, client, null, true);
             LogService.warn("utils", e);
         }
         const regexRoomId = new RegExp(escapeRegex(roomId), "g");
@@ -187,19 +187,6 @@ export function applySuffixRules(
     }
     return str;
 }
-
-/**
- * Formats the display name for a room according to the config.
- * @param name The base name of the room.
- * @param identifier The identifier of the room.
- * @returns The formatted display name for the room.
- */
-export function makeDisplayName(name: string, identifier: string): string {
-    return applySuffixRules(
-        name, identifier, config.conference.prefixes.displayNameSuffixes
-    );
-}
-
 
 /**
  * Reads a JSON file from disk.

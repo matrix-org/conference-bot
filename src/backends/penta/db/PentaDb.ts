@@ -15,36 +15,40 @@ limitations under the License.
 */
 
 import { Pool } from "pg";
-import config, { IPentaDbConfig } from "../../../config";
+import { IConfig, IPentaDbConfig, IPentaScheduleBackendConfig } from "../../../config";
 import { dbPersonToPerson, IDbPerson } from "./DbPerson";
 import { LogService, UserID } from "matrix-bot-sdk";
 import { objectFastClone } from "../../../utils";
 import { IDbTalk, IRawDbTalk } from "./DbTalk";
 import { IPerson, Role } from "../../../models/schedule";
 
-const PEOPLE_SELECT = "SELECT event_id::text, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text, remark::text FROM " + config.conference.schedule.database?.tblPeople;
-const NONEVENT_PEOPLE_SELECT = "SELECT DISTINCT 'ignore' AS event_id, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM " + config.conference.schedule.database?.tblPeople;
+const PEOPLE_SELECT = "SELECT event_id::text, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text, remark::text FROM ";
+const NONEVENT_PEOPLE_SELECT = "SELECT DISTINCT 'ignore' AS event_id, person_id::text, event_role::text, name::text, email::text, matrix_id::text, conference_room::text FROM ";
 
 const START_QUERY = "start_datetime AT TIME ZONE $1 AT TIME ZONE 'UTC'";
 const QA_START_QUERY = "(start_datetime + presentation_length) AT TIME ZONE $1 AT TIME ZONE 'UTC'";
 const END_QUERY = "(start_datetime + duration) AT TIME ZONE $1 AT TIME ZONE 'UTC'";
-const SCHEDULE_SELECT = `SELECT DISTINCT event_id::text, conference_room::text, EXTRACT(EPOCH FROM ${START_QUERY}) * 1000 AS start_datetime, EXTRACT(EPOCH FROM duration) AS duration_seconds, EXTRACT(EPOCH FROM presentation_length) AS presentation_length_seconds, EXTRACT(EPOCH FROM ${END_QUERY}) * 1000 AS end_datetime, EXTRACT(EPOCH FROM ${QA_START_QUERY}) * 1000 AS qa_start_datetime, prerecorded FROM ` + config.conference.schedule.database?.tblSchedule;
+const SCHEDULE_SELECT = `SELECT DISTINCT event_id::text, conference_room::text, EXTRACT(EPOCH FROM ${START_QUERY}) * 1000 AS start_datetime, EXTRACT(EPOCH FROM duration) AS duration_seconds, EXTRACT(EPOCH FROM presentation_length) AS presentation_length_seconds, EXTRACT(EPOCH FROM ${END_QUERY}) * 1000 AS end_datetime, EXTRACT(EPOCH FROM ${QA_START_QUERY}) * 1000 AS qa_start_datetime, prerecorded FROM `;
 
 export class PentaDb {
     private client: Pool;
     private isConnected = false;
+    pentaConfig: IPentaDbConfig;
 
-    constructor(private readonly config: IPentaDbConfig) {
+    constructor(private readonly config: IConfig) {
+        // TODO: Make generic
+        const scheduleConfig = config.conference.schedule as IPentaScheduleBackendConfig;
+        this.pentaConfig = scheduleConfig.database;
         this.client = new Pool({
-            host: this.config.host,
-            port: this.config.port,
-            user: this.config.username,
-            password: this.config.password,
-            database: this.config.database,
+            host: this.pentaConfig.host,
+            port: this.pentaConfig.port,
+            user: this.pentaConfig.username,
+            password: this.pentaConfig.password,
+            database: this.pentaConfig.database,
 
             // sslmode parsing is largely interpreted from pg-connection-string handling
-            ssl: this.config.sslmode === 'disable' ? false : {
-                rejectUnauthorized: this.config.sslmode === 'no-verify',
+            ssl: this.pentaConfig.sslmode === 'disable' ? false : {
+                rejectUnauthorized: this.pentaConfig.sslmode === 'no-verify',
             },
         });
     }
@@ -70,36 +74,36 @@ export class PentaDb {
     public async findPeopleWithId(personId: string): Promise<IPerson[]> {
         const numericPersonId = Number(personId);
         if (Number.isSafeInteger(numericPersonId)) {
-            const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} WHERE person_id = $1 OR person_id = $2`, [personId, numericPersonId]);
+            const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.pentaConfig.tblPeople} ${this.pentaConfig.tblPeople} WHERE person_id = $1 OR person_id = $2`, [personId, numericPersonId]);
             return this.sanitizeRecords(result.rows).map(dbPersonToPerson);
         } else {
-            const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} WHERE person_id = $1`, [personId]);
+            const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.pentaConfig.tblPeople} WHERE person_id = $1`, [personId]);
             return this.sanitizeRecords(result.rows).map(dbPersonToPerson);
         }
     }
 
     public async findAllPeople(): Promise<IPerson[]> {
-        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT}`);
+        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.pentaConfig.tblPeople}`);
         return this.sanitizeRecords(result.rows).map(dbPersonToPerson);
     }
 
     public async findAllPeopleForAuditorium(auditoriumId: string): Promise<IPerson[]> {
-        const result = await this.client.query<IDbPerson>(`${NONEVENT_PEOPLE_SELECT} WHERE conference_room = $1`, [auditoriumId]);
+        const result = await this.client.query<IDbPerson>(`${NONEVENT_PEOPLE_SELECT} ${this.pentaConfig.tblPeople} WHERE conference_room = $1`, [auditoriumId]);
         return this.sanitizeRecords(result.rows).map(dbPersonToPerson);
     }
 
     public async findAllPeopleForTalk(talkId: string): Promise<IPerson[]> {
-        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} WHERE event_id = $1`, [talkId]);
+        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.pentaConfig.tblPeople} WHERE event_id = $1`, [talkId]);
         return this.sanitizeRecords(result.rows).map(dbPersonToPerson);
     }
 
     public async findAllPeopleWithRole(role: Role): Promise<IPerson[]> {
-        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} WHERE event_role = $1`, [role]);
+        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.pentaConfig.tblPeople} WHERE event_role = $1`, [role]);
         return this.sanitizeRecords(result.rows).map(dbPersonToPerson);
     }
 
     public async findAllPeopleWithRemark(remark: string): Promise<IPerson[]> {
-        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} WHERE remark = $1`, [remark]);
+        const result = await this.client.query<IDbPerson>(`${PEOPLE_SELECT} ${this.pentaConfig.tblPeople} WHERE remark = $1`, [remark]);
         return this.sanitizeRecords(result.rows).map(dbPersonToPerson);
     }
 
@@ -148,21 +152,21 @@ export class PentaDb {
      */
     public async getTalk(talkId: string): Promise<IDbTalk | null> {
         const result = await this.client.query(
-            `${SCHEDULE_SELECT} WHERE event_id::text = $2`,
-            [config.conference.timezone, talkId]);
+            `${SCHEDULE_SELECT} ${this.pentaConfig.tblSchedule} WHERE event_id::text = $2`,
+            [this.config.conference.timezone, talkId]);
         return result.rowCount > 0 ? this.postprocessDbTalk(result.rows[0]) : null;
     }
 
     private async getTalksWithin(timeQuery: string, inNextMinutes: number, minBefore: number): Promise<IDbTalk[]> {
         const now = "NOW() AT TIME ZONE 'UTC'";
         const result = await this.client.query(
-            `${SCHEDULE_SELECT} WHERE ${timeQuery} >= (${now} - MAKE_INTERVAL(mins => $2)) AND ${timeQuery} <= (${now} + MAKE_INTERVAL(mins => $3))`,
-            [config.conference.timezone, minBefore, inNextMinutes]);
+            `${SCHEDULE_SELECT} ${this.pentaConfig.tblSchedule} WHERE ${timeQuery} >= (${now} - MAKE_INTERVAL(mins => $2)) AND ${timeQuery} <= (${now} + MAKE_INTERVAL(mins => $3))`,
+            [this.config.conference.timezone, minBefore, inNextMinutes]);
         return this.postprocessDbTalks(result.rows);
     }
 
     private postprocessDbTalk(talk: IRawDbTalk): IDbTalk {
-        const qaStartDatetime = talk.qa_start_datetime + this.config.schedulePreBufferSeconds * 1000;
+        const qaStartDatetime = talk.qa_start_datetime + this.pentaConfig.schedulePreBufferSeconds * 1000;
         let livestreamStartDatetime: number;
         if (talk.prerecorded) {
             // For prerecorded talks, a preroll is shown, followed by the talk recording, then an
@@ -170,9 +174,9 @@ export class PentaDb {
             livestreamStartDatetime = qaStartDatetime;
         } else {
             // For live talks, both the preroll and interroll are shown, followed by the live talk.
-            livestreamStartDatetime = talk.start_datetime + this.config.schedulePreBufferSeconds * 1000;
+            livestreamStartDatetime = talk.start_datetime + this.pentaConfig.schedulePreBufferSeconds * 1000;
         }
-        const livestreamEndDatetime = talk.end_datetime - this.config.schedulePostBufferSeconds * 1000;
+        const livestreamEndDatetime = talk.end_datetime - this.pentaConfig.schedulePostBufferSeconds * 1000;
 
         return {
             ...talk,

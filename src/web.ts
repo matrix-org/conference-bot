@@ -16,26 +16,27 @@ limitations under the License.
 
 import { Response, Request } from "express";
 import * as template from "string-template";
-import config from "./config";
 import { base32 } from "rfc4648";
-import { LogService } from "matrix-bot-sdk";
+import { LogService, MatrixClient } from "matrix-bot-sdk";
 import { sha256 } from "./utils";
 import * as dns from "dns";
 import { Scoreboard } from "./Scoreboard";
 import { LiveWidget } from "./models/LiveWidget";
 import { IDbTalk } from "./backends/penta/db/DbTalk";
+import { Conference } from "./Conference";
+import { IConfig } from "./config";
 
-export function renderAuditoriumWidget(req: Request, res: Response) {
+export function renderAuditoriumWidget(req: Request, res: Response, conference: Conference, auditoriumUrl: string) {
     const audId = req.query?.['auditoriumId'] as string;
     if (!audId || Array.isArray(audId)) {
         return res.sendStatus(404);
     }
 
-    if (!config.RUNTIME.conference.getAuditorium(audId)) {
+    if (!conference.getAuditorium(audId)) {
         return res.sendStatus(404);
     }
 
-    const streamUrl = template(config.livestream.auditoriumUrl, {
+    const streamUrl = template(auditoriumUrl, {
         id: audId.toLowerCase(),
         sId: audId.toLowerCase().replace(/[^a-z0-9]/g, ''),
     });
@@ -60,11 +61,11 @@ const dbTalksCache: {
  * @param talkId The talk ID.
  * @returns The database record for the talk, if it exists; `null` otherwise.
  */
-async function getDbTalk(talkId: string): Promise<IDbTalk | null> {
+async function getDbTalk(talkId: string, conference: Conference): Promise<IDbTalk | null> {
     const now = Date.now();
     if (!(talkId in dbTalksCache) ||
         now - dbTalksCache[talkId].cachedAt > TALK_CACHE_DURATION) {
-        const db = await config.RUNTIME.conference.getPentaDb();
+        const db = await conference.getPentaDb();
         if (db === null) return null;
 
         dbTalksCache[talkId] = {
@@ -76,7 +77,7 @@ async function getDbTalk(talkId: string): Promise<IDbTalk | null> {
     return dbTalksCache[talkId].talk;
 }
 
-export async function renderTalkWidget(req: Request, res: Response) {
+export async function renderTalkWidget(req: Request, res: Response, conference: Conference, talkUrl: string, jitsiDomain: string) {
     const audId = req.query?.['auditoriumId'] as string;
     if (!audId || Array.isArray(audId)) {
         return res.sendStatus(404);
@@ -86,12 +87,12 @@ export async function renderTalkWidget(req: Request, res: Response) {
         return res.sendStatus(404);
     }
 
-    const aud = config.RUNTIME.conference.getAuditorium(audId);
+    const aud = conference.getAuditorium(audId);
     if (!aud) {
         return res.sendStatus(404);
     }
 
-    const talk = config.RUNTIME.conference.getTalk(talkId);
+    const talk = conference.getTalk(talkId);
     if (!talk) {
         return res.sendStatus(404);
     }
@@ -102,9 +103,9 @@ export async function renderTalkWidget(req: Request, res: Response) {
 
     // Fetch the corresponding talk from Pentabarf. We cache the `IDbTalk` to avoid hitting the
     // Pentabarf database for every visiting attendee once talk rooms are opened to the public.
-    const dbTalk = await getDbTalk(talkId);
+    const dbTalk = await getDbTalk(talkId, conference);
 
-    const streamUrl = template(config.livestream.talkUrl, {
+    const streamUrl = template(talkUrl, {
         audId: audId.toLowerCase(),
         slug: (await talk.getDefinition()).slug.toLowerCase(),
         jitsi: base32.stringify(Buffer.from(talk.roomId), { pad: false }).toLowerCase(),
@@ -114,20 +115,20 @@ export async function renderTalkWidget(req: Request, res: Response) {
         theme: req.query?.['theme'] === 'dark' ? 'dark' : 'light',
         videoUrl: streamUrl,
         roomName: await talk.getName(),
-        conferenceDomain: config.livestream.jitsiDomain,
+        conferenceDomain: jitsiDomain,
         conferenceId: base32.stringify(Buffer.from(talk.roomId), { pad: false }).toLowerCase(),
         livestreamStartTime: dbTalk?.livestream_start_datetime ?? "",
         livestreamEndTime: dbTalk?.livestream_end_datetime ?? "",
     });
 }
 
-export async function renderHybridWidget(req: Request, res: Response) {
+export async function renderHybridWidget(req: Request, res: Response, hybridUrl: string, jitsiDomain: string) {
     const roomId = req.query?.['roomId'] as string;
     if (!roomId || Array.isArray(roomId)) {
         return res.sendStatus(404);
     }
 
-    const streamUrl = template(config.livestream.hybridUrl, {
+    const streamUrl = template(hybridUrl, {
         jitsi: base32.stringify(Buffer.from(roomId), { pad: false }).toLowerCase(),
     });
 
@@ -135,18 +136,18 @@ export async function renderHybridWidget(req: Request, res: Response) {
         theme: req.query?.['theme'] === 'dark' ? 'dark' : 'light',
         videoUrl: streamUrl,
         roomName: "Livestream / Q&A",
-        conferenceDomain: config.livestream.jitsiDomain,
+        conferenceDomain: jitsiDomain,
         conferenceId: base32.stringify(Buffer.from(roomId), { pad: false }).toLowerCase(),
     });
 }
 
-export async function makeHybridWidget(req: Request, res: Response) {
+export async function makeHybridWidget(req: Request, res: Response, client: MatrixClient, avatar: string, url: string) {
     const roomId = req.query?.['roomId'] as string;
     if (!roomId || Array.isArray(roomId)) {
         return res.sendStatus(404);
     }
 
-    const widget = await LiveWidget.hybridForRoom(roomId, config.RUNTIME.client);
+    const widget = await LiveWidget.hybridForRoom(roomId, client, avatar, url);
     const layout = LiveWidget.layoutForHybrid(widget);
 
     res.send({
@@ -156,9 +157,9 @@ export async function makeHybridWidget(req: Request, res: Response) {
     });
 }
 
-export async function rtmpRedirect(req: Request, res: Response) {
+export async function rtmpRedirect(req: Request, res: Response, conference: Conference, cfg: IConfig["livestream"]["onpublish"]) {
     // Check auth (salt must match known salt)
-    if (req.query?.['auth'] !== config.livestream.onpublish.salt) {
+    if (req.query?.['auth'] !== cfg.salt) {
         return res.sendStatus(200); // fake a 'no mapping' response for security
     }
 
@@ -169,17 +170,17 @@ export async function rtmpRedirect(req: Request, res: Response) {
         const mxRoomId = Buffer.from(base32.parse(confName, {loose: true})).toString();
 
         // Try to find a talk with that room ID
-        const talk = config.RUNTIME.conference.storedTalks.find(t => t.roomId === mxRoomId);
+        const talk = conference.storedTalks.find(t => t.roomId === mxRoomId);
         if (!talk) return res.sendStatus(200); // Annoying thing of nginx wanting "no mapping" to be 200 OK
 
         // Redirect to RTMP URL
-        const hostname = template(config.livestream.onpublish.rtmpHostnameTemplate, {
+        const hostname = template(cfg.rtmpHostnameTemplate, {
             squishedAudId: (await talk.getAuditoriumId()).replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
         });
         const ip = await dns.promises.resolve(hostname);
-        const uri = template(config.livestream.onpublish.rtmpUrlTemplate, {
+        const uri = template(cfg.rtmpUrlTemplate, {
             hostname: ip,
-            saltedHash: sha256((await talk.getId()) + '.' + config.livestream.onpublish.salt),
+            saltedHash: sha256((await talk.getId()) + '.' + cfg.salt),
         });
         return res.redirect(uri);
     } catch (e) {
@@ -192,13 +193,13 @@ export function renderHealthz(req: Request, res: Response) {
     return res.sendStatus(200);
 }
 
-export async function renderScoreboardWidget(req: Request, res: Response) {
+export async function renderScoreboardWidget(req: Request, res: Response, conference: Conference) {
     const audId = req.query?.['auditoriumId'] as string;
     if (!audId || Array.isArray(audId)) {
         return res.sendStatus(404);
     }
 
-    const aud = config.RUNTIME.conference.getAuditorium(audId);
+    const aud = conference.getAuditorium(audId);
     if (!aud) {
         return res.sendStatus(404);
     }
@@ -214,7 +215,7 @@ export async function renderScoreboardWidget(req: Request, res: Response) {
             return res.sendStatus(404);
         }
 
-        const talk = config.RUNTIME.conference.getTalk(talkId);
+        const talk = conference.getTalk(talkId);
         if (!talk) {
             return res.sendStatus(404);
         }
@@ -231,11 +232,11 @@ export async function renderScoreboardWidget(req: Request, res: Response) {
     });
 }
 
-export function renderScoreboard(req: Request, res: Response, scoreboard: Scoreboard) {
+export function renderScoreboard(req: Request, res: Response, scoreboard: Scoreboard, conference: Conference) {
     const roomId = req.params['roomId'];
     if (!roomId) return res.sendStatus(400);
 
-    const auditorium = config.RUNTIME.conference.storedAuditoriums.find(a => a.roomId === roomId);
+    const auditorium = conference.storedAuditoriums.find(a => a.roomId === roomId);
     if (!auditorium) return res.sendStatus(404);
 
     let sb = scoreboard.getScoreboard(auditorium.roomId);

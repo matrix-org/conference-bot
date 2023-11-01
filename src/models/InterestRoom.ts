@@ -19,7 +19,7 @@ import { Conference } from "../Conference";
 import { MatrixRoom } from "./MatrixRoom";
 import { decodePrefix } from "../backends/penta/PentabarfParser";
 import { PhysicalRoom } from "./PhysicalRoom";
-import config from "../config";
+import { IPrefixConfig } from "../config";
 
 /**
  * Represents an interest room.
@@ -31,11 +31,11 @@ export class InterestRoom extends MatrixRoom implements PhysicalRoom {
     private id: string;
     private name: string;
 
-    constructor(roomId: string, client: MatrixClient, conference: Conference, id: string) {
+    constructor(roomId: string, client: MatrixClient, conference: Conference, id: string, prefixes: IPrefixConfig) {
         super(roomId, client, conference);
 
         this.id = id;
-        this.name = decodePrefix(id, config.conference.prefixes)!.name;
+        this.name = decodePrefix(id, prefixes)!.name;
     }
 
     public async getName(): Promise<string> {
