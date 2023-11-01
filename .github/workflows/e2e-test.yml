@@ -56,9 +56,6 @@ jobs:
           path: homerunner
           key: ${{ runner.os }}-homerunner-${{ needs.build-synapse.outputs.homerunnersha }}
           fail-on-cache-miss: true # Shouldn't happen, we build this in the needs step.
-      - name: Load images
-        run: |
-          docker load --input /tmp/img-synapse.tar
       - name: Checkout conference-bot
         uses: actions/checkout@v3
         with:
