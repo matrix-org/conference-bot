@@ -72,6 +72,7 @@ jobs:
           HOMERUNNER_SPAWN_HS_TIMEOUT_SECS: 100
           NODE_OPTIONS: --dns-result-order ipv4first
         run: |
+          docker pull $HOMERUNNER_IMAGE
           cd conference-bot
           yarn --strict-semver --frozen-lockfile
           ../homerunner &
