@@ -20,35 +20,36 @@ import { Conference } from "../Conference";
 import { IRCBridge } from "../IRCBridge";
 import { logMessage } from "../LogProxy";
 import { KickPowerLevel } from "../models/room_kinds";
+import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
 const PLUMB_WAIT_MS = 1000;
 
 export class IrcPlumbCommand implements ICommand {
     public readonly prefixes = ["plumb-irc"];
 
-    constructor(private readonly ircBridge: IRCBridge) {
+    constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference, private readonly ircBridge: IRCBridge) {
     }
 
-    private async plumbAll(conference: Conference, client: MatrixClient, roomId: string) {
-        for (const auditorium of conference.storedAuditoriums) {
+    private async plumbAll(roomId: string) {
+        for (const auditorium of this.conference.storedAuditoriums) {
             const channelName = await this.ircBridge.deriveChannelName(auditorium);
             try {
-                await this.plumbOne(client, channelName, auditorium.roomId);
+                await this.plumbOne(this.client, channelName, auditorium.roomId);
                 // Wait before plumbing the next one so as to not overwhelm the poor bridge.
                 await new Promise(r => setTimeout(r, PLUMB_WAIT_MS));
             } catch (ex) {
-                await logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel ${channelName} to ${auditorium.roomId}`);
+                await logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel ${channelName} to ${auditorium.roomId}`, this.client);
                 LogService.warn("IrcPlumbCommand", `Could not plumb channel ${channelName} to ${auditorium.roomId}:`, ex);
             }
         }
-        for (const interest of conference.storedInterestRooms) {
+        for (const interest of this.conference.storedInterestRooms) {
             const channelName = await this.ircBridge.deriveChannelNameSI(interest);
             try {
-                await this.plumbOne(client, channelName, interest.roomId);
+                await this.plumbOne(this.client, channelName, interest.roomId);
                 // Wait before plumbing the next one so as to not overwhelm the poor bridge.
                 await new Promise(r => setTimeout(r, PLUMB_WAIT_MS));
             } catch (ex) {
-                await logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel ${channelName} to ${interest.roomId}`);
+                await logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel ${channelName} to ${interest.roomId}`, this.client);
                 LogService.warn("IrcPlumbCommand", `Could not plumb channel ${channelName} to ${interest.roomId}:`, ex);
             }
         }
@@ -66,7 +67,7 @@ export class IrcPlumbCommand implements ICommand {
             await this.ircBridge.plumbChannelToRoom(channel, resolvedRoomId);
         } catch (ex) {
             LogService.warn("IrcPlumbCommand", ex);
-            return logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel to room ${resolvedRoomId}`);
+            return logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel to room ${resolvedRoomId}`, this.client);
         }
 
         try {
@@ -74,39 +75,39 @@ export class IrcPlumbCommand implements ICommand {
             await client.setUserPowerLevel(this.ircBridge.botUserId, resolvedRoomId, KickPowerLevel);
         } catch (ex) {
             LogService.warn("IrcPlumbCommand", ex);
-            return logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel to room ${resolvedRoomId}: could not set AS power level`);
+            return logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel to room ${resolvedRoomId}: could not set AS power level`, this.client);
         }
 
-        logMessage(LogLevel.INFO,"IrcPlumbCommand", `Plumbed channel ${channel} to ${resolvedRoomId}`);
+        logMessage(LogLevel.INFO,"IrcPlumbCommand", `Plumbed channel ${channel} to ${resolvedRoomId}`, this.client);
     }
 
-    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
-        await client.sendReadReceipt(roomId, event['event_id']);
+    public async run(roomId: string, event: any, args: string[]) {
+        await this.client.sendReadReceipt(roomId, event['event_id']);
         const [channel, requestedRoomIdOrAlias] = args;
         if (channel === 'all') {
             try {
-                await this.plumbAll(conference, client, roomId);
+                await this.plumbAll(roomId);
             } catch (ex) {
-                return client.sendNotice(roomId, "Failed to bridge all rooms, see logs");
+                return this.client.sendNotice(roomId, "Failed to bridge all rooms, see logs");
             }
-            await client.sendNotice(roomId, "Rooms bridged to IRC");
+            await this.client.sendNotice(roomId, "Rooms bridged to IRC");
             return;
         }
         if (!this.ircBridge.isChannelAllowed(channel)) {
-            return client.sendNotice(roomId, "Sorry, that channel is not allowed");
+            return this.client.sendNotice(roomId, "Sorry, that channel is not allowed");
         }
         let resolvedRoomId: string;
         try {
-            resolvedRoomId = await client.resolveRoom(requestedRoomIdOrAlias);
+            resolvedRoomId = await this.client.resolveRoom(requestedRoomIdOrAlias);
         } catch (ex) {
-            return client.sendNotice(roomId, "Sorry, that alias could not be resolved");
+            return this.client.sendNotice(roomId, "Sorry, that alias could not be resolved");
         }
         try {
-            await client.joinRoom(requestedRoomIdOrAlias);
+            await this.client.joinRoom(requestedRoomIdOrAlias);
         } catch (ex) {
-            return client.sendNotice(roomId, "Could not join that room, is the bot invited?");
+            return this.client.sendNotice(roomId, "Could not join that room, is the bot invited?");
         }
 
-        return this.plumbOne(client, resolvedRoomId, channel);
+        return this.plumbOne(this.client, resolvedRoomId, channel);
     }
 }

@@ -16,9 +16,10 @@ limitations under the License.
 
 import { LogLevel, LogService, MatrixClient, UserID } from "matrix-bot-sdk";
 import { logMessage } from "../LogProxy";
-import config from "../config";
 import { applySuffixRules } from "../utils";
 import { setDifference } from "./sets";
+import { IConfig } from "../config";
+import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
 export interface ICanonicalAliasContent {
     alias: string | null;
@@ -35,7 +36,7 @@ export async function getCanonicalAliasInfo(client: MatrixClient, roomId: string
     }
 }
 
-export async function safeAssignAlias(client: MatrixClient, roomId: string, localpart: string): Promise<void> {
+export async function safeAssignAlias(client: ConferenceMatrixClient, roomId: string, localpart: string): Promise<void> {
     try {
         // yes, we reuse the variable despite the contents changing. This is to make sure that the log message
         // gives a sense of what request failed.
@@ -53,22 +54,22 @@ export async function safeAssignAlias(client: MatrixClient, roomId: string, loca
         aliasInfo.alt_aliases.push(localpart);
         await client.sendStateEvent(roomId, "m.room.canonical_alias", "", aliasInfo);
     } catch (e) {
-        await logMessage(LogLevel.WARN, "utils/alias", `Non-fatal error trying to assign '${localpart}' as an alias to ${roomId} - ${e.message}`);
+        await logMessage(LogLevel.WARN, "utils/alias", `Non-fatal error trying to assign '${localpart}' as an alias to ${roomId} - ${e.message}`, client)
     }
 }
 
-export function makeLocalpart(localpart: string, identifier?: string): string {
+export function makeLocalpart(localpart: string, suffixes: IConfig["conference"]["prefixes"]["suffixes"], identifier?: string): string {
     if (!identifier) {
         return localpart;
     }
 
-    return applySuffixRules(localpart, identifier, config.conference.prefixes.suffixes);
+    return applySuffixRules(localpart, identifier, suffixes);
 }
 
-export async function assignAliasVariations(client: MatrixClient, roomId: string, origLocalparts: string[], identifier?: string): Promise<void> {
+export async function assignAliasVariations(client: ConferenceMatrixClient, roomId: string, origLocalparts: string[], suffixes: IConfig["conference"]["prefixes"]["suffixes"], identifier?: string): Promise<void> {
     const localparts = new Set<string>();
     for (const origLocalpart of origLocalparts) {
-        for (const localpart of calculateAliasVariations(origLocalpart, identifier)) {
+        for (const localpart of calculateAliasVariations(origLocalpart, suffixes, identifier)) {
             localparts.add(localpart);
         }
     }
@@ -89,8 +90,8 @@ export async function assignAliasVariations(client: MatrixClient, roomId: string
  * @param identifier optionally, an identifier for evaluating suffix rules; see `applySuffixRules`.
  * @returns set of variations
  */
-export function calculateAliasVariations(localpart: string, identifier?: string): Set<string> {
-    localpart = makeLocalpart(localpart, identifier);
+export function calculateAliasVariations(localpart: string, suffixes: IConfig["conference"]["prefixes"]["suffixes"], identifier?: string): Set<string> {
+    localpart = makeLocalpart(localpart, suffixes, identifier);
     return new Set([localpart, localpart.toLowerCase(), localpart.toUpperCase()]);
 }
 
@@ -133,7 +134,7 @@ async function listManagedAliasLocalpartsInRoom(client: MatrixClient, roomId: st
     return presentLocalparts;
 }
 
-export async function addAndDeleteManagedAliases(client: MatrixClient, roomId: string, desiredLocalparts: Set<string>): Promise<void> {
+export async function addAndDeleteManagedAliases(client: ConferenceMatrixClient, roomId: string, desiredLocalparts: Set<string>): Promise<void> {
     const presentLocalparts: Set<string> = await listManagedAliasLocalpartsInRoom(client, roomId);
 
     const localpartsToBeAdded = setDifference(desiredLocalparts, presentLocalparts);

@@ -26,22 +26,24 @@ import { IPerson } from "../models/schedule";
 export class VerifyCommand implements ICommand {
     public readonly prefixes = ["verify", "v"];
 
-    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
+    constructor(private readonly client: MatrixClient, private readonly conference: Conference) {}
+
+    public async run(roomId: string, event: any, args: string[]) {
         const audId = args[0];
 
-        let aud: PhysicalRoom = conference.getAuditorium(audId);
+        let aud: PhysicalRoom = this.conference.getAuditorium(audId);
         if (args.includes("backstage")) {
-            aud = conference.getAuditoriumBackstage(audId);
+            aud = this.conference.getAuditoriumBackstage(audId);
         }
 
         if (!aud) {
-            aud = conference.getInterestRoom(audId);
+            aud = this.conference.getInterestRoom(audId);
             if (!aud) {
-                return await client.replyNotice(roomId, event, "Unknown auditorium/interest room");
+                return await this.client.replyNotice(roomId, event, "Unknown auditorium/interest room");
             }
         }
 
-        await client.replyNotice(roomId, event, "Calculating list of people...");
+        await this.client.replyNotice(roomId, event, "Calculating list of people...");
 
         let html = `<h1>${await aud.getName()} (${await aud.getId()})</h1>`;
 
@@ -57,18 +59,18 @@ export class VerifyCommand implements ICommand {
         let audToMod: IPerson[];
 
         if (aud instanceof Auditorium) {
-            audToInvite = await conference.getInviteTargetsForAuditorium(aud);
-            audBackstageToInvite = await conference.getInviteTargetsForAuditorium(aud, true);
-            audToMod = await conference.getModeratorsForAuditorium(aud);
+            audToInvite = await this.conference.getInviteTargetsForAuditorium(aud);
+            audBackstageToInvite = await this.conference.getInviteTargetsForAuditorium(aud, true);
+            audToMod = await this.conference.getModeratorsForAuditorium(aud);
         } else if (aud instanceof InterestRoom) {
-            audToInvite = await conference.getInviteTargetsForInterest(aud);
+            audToInvite = await this.conference.getInviteTargetsForInterest(aud);
             audBackstageToInvite = [];
-            audToMod = await conference.getModeratorsForInterest(aud);
+            audToMod = await this.conference.getModeratorsForInterest(aud);
         } else {
-            return await client.replyNotice(roomId, event, "Unknown room kind");
+            return await this.client.replyNotice(roomId, event, "Unknown room kind");
         }
 
-        const publicAud = conference.getAuditorium(audId);
+        const publicAud = this.conference.getAuditorium(audId);
         if (publicAud || !(aud instanceof Auditorium)) {
             html += "<b>Public-facing room:</b><ul>";
             appendPeople(audToInvite, audToMod);
@@ -79,10 +81,10 @@ export class VerifyCommand implements ICommand {
             appendPeople(audBackstageToInvite, audToMod);
             html += "</ul>";
 
-            const talks = await asyncFilter(conference.storedTalks, async t => (await t.getAuditoriumId()) === (await aud.getId()));
+            const talks = await asyncFilter(this.conference.storedTalks, async t => (await t.getAuditoriumId()) === (await aud.getId()));
             for (const talk of talks) {
-                const talkToInvite = await conference.getInviteTargetsForTalk(talk);
-                const talkToMod = await conference.getModeratorsForTalk(talk);
+                const talkToInvite = await this.conference.getInviteTargetsForTalk(talk);
+                const talkToMod = await this.conference.getModeratorsForTalk(talk);
                 if (talkToMod.length || talkToInvite.length) {
                     html += `<b>Talk: ${await talk.getName()} (${await talk.getId()})</b><ul>`;
                     appendPeople(talkToInvite, talkToMod);
@@ -91,6 +93,6 @@ export class VerifyCommand implements ICommand {
             }
         }
 
-        await client.sendHtmlNotice(roomId, html);
+        await this.client.sendHtmlNotice(roomId, html);
     }
 }

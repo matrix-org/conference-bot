@@ -15,23 +15,27 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { LogLevel, MatrixClient } from "matrix-bot-sdk";
+import { LogLevel } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { logMessage } from "../LogProxy";
+import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
 export class InviteMeCommand implements ICommand {
+
+    constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference) {}
+
     public readonly prefixes = ["inviteme", "inviteto"];
 
-    private async inviteTo(client: MatrixClient, invitee: string, room: string): Promise<void> {
-        const members = await client.getJoinedRoomMembers(room);
+    private async inviteTo(invitee: string, room: string): Promise<void> {
+        const members = await this.client.getJoinedRoomMembers(room);
         if (members.includes(invitee)) return;
-        await client.inviteUser(invitee, room);
+        await this.client.inviteUser(invitee, room);
     }
 
     /**
      * Returns a map of room 'groups'. These are named groups of rooms corresponding to various roles.
      */
-    public async roomGroups(conference: Conference): Promise<Map<string, Set<string>>> {
+    public async roomGroups(): Promise<Map<string, Set<string>>> {
         const groups: Map<string, Set<string>> = new Map();
 
         function addToGroup(groupName: string, roomId: string) {
@@ -41,7 +45,7 @@ export class InviteMeCommand implements ICommand {
             groups.get(groupName)!.add(roomId);
         }
 
-        for (const aud of conference.storedAuditoriums) {
+        for (const aud of this.conference.storedAuditoriums) {
             addToGroup("auditorium", aud.roomId);
             const audSlug = await aud.getSlug();
             addToGroup(audSlug + ":*", aud.roomId);
@@ -58,7 +62,7 @@ export class InviteMeCommand implements ICommand {
             addToGroup("*", space.roomId);
         }
 
-        for (const audBack of conference.storedAuditoriumBackstages) {
+        for (const audBack of this.conference.storedAuditoriumBackstages) {
             addToGroup("auditorium_backstage", audBack.roomId);
             const audSlug = await audBack.getSlug();
             addToGroup(audSlug + ":*", audBack.roomId);
@@ -67,9 +71,9 @@ export class InviteMeCommand implements ICommand {
             addToGroup("*", audBack.roomId);
         }
 
-        for (const talk of conference.storedTalks) {
+        for (const talk of this.conference.storedTalks) {
             addToGroup("talk", talk.roomId);
-            const audSlug = await conference.getAuditorium(await talk.getAuditoriumId()).getSlug();
+            const audSlug = await this.conference.getAuditorium(await talk.getAuditoriumId()).getSlug();
             addToGroup(audSlug + ":talk", talk.roomId);
             addToGroup(audSlug + ":*", talk.roomId);
             addToGroup(audSlug + ":private", talk.roomId);
@@ -77,7 +81,7 @@ export class InviteMeCommand implements ICommand {
             addToGroup("*", talk.roomId);
         }
 
-        for (const spi of conference.storedInterestRooms) {
+        for (const spi of this.conference.storedInterestRooms) {
             addToGroup("interest", spi.roomId);
             addToGroup("public", spi.roomId);
             addToGroup("*", spi.roomId);
@@ -110,32 +114,32 @@ export class InviteMeCommand implements ICommand {
         }).join("\n") + "</ul>";
     }
 
-    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
-        const roomGroups = await this.roomGroups(conference);
+    public async run(roomId: string, event: any, args: string[]) {
+        const roomGroups = await this.roomGroups();
 
         if (!args.length) {
-            return client.replyHtmlNotice(roomId, event, "Please specify a room ID or alias, or one of the room groups:\n" + this.prettyGroupNameList(roomGroups));
+            return this.client.replyHtmlNotice(roomId, event, "Please specify a room ID or alias, or one of the room groups:\n" + this.prettyGroupNameList(roomGroups));
         }
         const userId = args[1] || event['sender'];
 
         if (roomGroups.has(args[0])) {
             const group = roomGroups.get(args[0])!;
-            await client.unstableApis.addReactionToEvent(roomId, event['event_id'], 'Joining ' + group.size);
+            await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], 'Joining ' + group.size);
 
             for (const roomId of group) {
                 try {
-                    await this.inviteTo(client, userId, roomId);
+                    await this.inviteTo(userId, roomId);
                 } catch (e) {
-                    await logMessage(LogLevel.WARN, "InviteMeCommand", `Error inviting ${userId} to ${roomId}: ${e?.message || e?.body?.message}`);
+                    await logMessage(LogLevel.WARN, "InviteMeCommand", `Error inviting ${userId} to ${roomId}: ${e?.message || e?.body?.message}`, this.client);
                 }
             }
 
-            await client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
+            await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
         } else {
             // Invite to one particular room.
-            const targetRoomId = await client.resolveRoom(args[0]);
-            await client.inviteUser(userId, targetRoomId);
-            await client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
+            const targetRoomId = await this.client.resolveRoom(args[0]);
+            await this.client.inviteUser(userId, targetRoomId);
+            await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
         }
     }
 }

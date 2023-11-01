@@ -20,6 +20,7 @@ import { Auditorium } from "../../models/Auditorium";
 import { Conference } from "../../Conference";
 import { asyncFilter } from "../../utils";
 import { InterestRoom } from "../../models/InterestRoom";
+import { ConferenceMatrixClient } from "../../ConferenceMatrixClient";
 
 export interface IAction {
     (client: MatrixClient, roomId: string, people: ResolvedPersonIdentifier[]): Promise<void>;
@@ -27,7 +28,7 @@ export interface IAction {
 
 export async function doAuditoriumResolveAction(
     action: IAction,
-    client: MatrixClient,
+    client: ConferenceMatrixClient,
     aud: Auditorium,
     conference: Conference,
     backstageOnly = false,
@@ -41,14 +42,14 @@ export async function doAuditoriumResolveAction(
         ? await conference.getInviteTargetsForAuditorium(aud, true)
         : await conference.getModeratorsForAuditorium(aud);
     LogService.info("backstagePeople", `${backstagePeople}`);
-    const resolvedBackstagePeople = await resolveIdentifiers(backstagePeople);
+    const resolvedBackstagePeople = await resolveIdentifiers(client, backstagePeople);
     const backstage = conference.getAuditoriumBackstage(audId);
 
     LogService.info("resolvedBackstagePeople", `${resolvedBackstagePeople}`);
 
     const allPossiblePeople = isInvite
         ? resolvedBackstagePeople
-        : await resolveIdentifiers(await conference.getInviteTargetsForAuditorium(aud, true));
+        : await resolveIdentifiers(client, await conference.getInviteTargetsForAuditorium(aud, true));
 
     await action(client, backstage.roomId, resolvedBackstagePeople);
 
@@ -87,11 +88,11 @@ export async function doAuditoriumResolveAction(
     }
 }
 
-export async function doInterestResolveAction(action: IAction, client: MatrixClient, int: InterestRoom, conference: Conference, isInvite = true): Promise<void> {
+export async function doInterestResolveAction(action: IAction, client: ConferenceMatrixClient, int: InterestRoom, conference: Conference, isInvite = true): Promise<void> {
     // We know that everyone should be in the backstage room, so resolve that list of people
     // to make the identity server lookup efficient.
     const people = isInvite
         ? await conference.getInviteTargetsForInterest(int)
         : await conference.getModeratorsForInterest(int);
-    await action(client, int.roomId, await resolveIdentifiers(people));
+    await action(client, int.roomId, await resolveIdentifiers(client, people));
 }

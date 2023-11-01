@@ -15,13 +15,9 @@ limitations under the License.
 */
 
 import * as config from "config";
-import { MatrixClient } from "matrix-bot-sdk";
-import { Conference } from "./Conference";
-import { IRCBridge, IRCBridgeOpts } from "./IRCBridge";
-import { Scheduler } from "./Scheduler";
-import { CheckInMap } from "./CheckInMap";
+import { IRCBridgeOpts } from "./IRCBridge";
 
-interface IConfig {
+export interface IConfig {
     homeserverUrl: string;
     accessToken: string;
     userId: string;
@@ -74,14 +70,6 @@ interface IConfig {
         };
     };
     ircBridge: IRCBridgeOpts | null;
-
-    RUNTIME: {
-        client: MatrixClient;
-        conference: Conference;
-        scheduler: Scheduler;
-        ircBridge: IRCBridge | null;
-        checkins: CheckInMap;
-    };
 }
 
 export interface IPrefixConfig {

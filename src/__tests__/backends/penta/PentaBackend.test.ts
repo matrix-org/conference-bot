@@ -27,12 +27,6 @@ const prefixConfig: IPrefixConfig = {
     },
 };
 
-const backendConfig: IPentaScheduleBackendConfig = {
-    backend: "penta",
-    database: {} as any as IPentaDbConfig,
-    scheduleDefinition: "xyz.xml"
-};
-
 jest.mock('../../../backends/penta/db/PentaDb');
 
 test("talks should be rehydrated from the database", async () => {
@@ -65,7 +59,7 @@ test("talks should be rehydrated from the database", async () => {
         findAllPeopleForTalk: jest.fn(PentaDb.prototype.findAllPeopleForTalk).mockResolvedValue([]),
     } as any as PentaDb;
 
-    const b = new PentaBackend(backendConfig, parser, fakeDb);
+    const b = new PentaBackend(parser, fakeDb);
     await b.init();
 
     const talk = b.talks.get("E002")!;

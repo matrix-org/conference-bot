@@ -16,10 +16,9 @@ limitations under the License.
 
 import { LogService, MatrixClient } from "matrix-bot-sdk";
 import AwaitLock from "await-lock";
-import { Conference } from "./Conference";
 import {promises as fs} from "fs";
 import * as path from "path";
-import config from "./config";
+import { IConfig } from "./config";
 
 interface ICheckin {
     expires: number;
@@ -31,7 +30,7 @@ export class CheckInMap {
     private checkedIn: { [userId: string]: ICheckin } = {};
     private lock = new AwaitLock();
 
-    constructor(private client: MatrixClient, private conference: Conference) {
+    constructor(client: MatrixClient, private readonly config: IConfig) {
         client.on('room.event', async (roomId: string, event: any) => {
             if (!this.checkedIn[event['sender']]) return;
 
@@ -49,13 +48,13 @@ export class CheckInMap {
     }
 
     private async persist() {
-        await fs.writeFile(path.join(config.dataPath, "checkins.json"), JSON.stringify(this.checkedIn), "utf-8");
+        await fs.writeFile(path.join(this.config.dataPath, "checkins.json"), JSON.stringify(this.checkedIn), "utf-8");
     }
 
     private async load() {
         try {
             await this.lock.acquireAsync();
-            const str = await fs.readFile(path.join(config.dataPath, "checkins.json"), "utf-8");
+            const str = await fs.readFile(path.join(this.config.dataPath, "checkins.json"), "utf-8");
             this.checkedIn = JSON.parse(str || "{}");
         } catch (e) {
             LogService.error("CheckInMap", e);

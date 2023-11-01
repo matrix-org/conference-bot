@@ -21,7 +21,9 @@ import { Conference } from "../Conference";
 export class HelpCommand implements ICommand {
     public readonly prefixes = ["help", "?"];
 
-    public async run(conference: Conference, client: MatrixClient, roomId: string, event: any, args: string[]) {
+    constructor(private readonly client: MatrixClient) { }
+
+    public async run(roomId: string, event: any, args: string[]) {
         const htmlHelp = "" +
             "<h1>Conference bot help</h1>" +
             "Hint: For all commands, instead of !conference you can also use a tab-completed mention pill of the bot's name!\n" +
@@ -64,6 +66,6 @@ export class HelpCommand implements ICommand {
             "!conference widgets &lt;aud&gt;           - Creates all widgets for the auditorium and its talks.\n" +
             "</code></pre>" +
             "";
-        return client.replyHtmlNotice(roomId, event, htmlHelp);
+        return this.client.replyHtmlNotice(roomId, event, htmlHelp);
     }
 }
