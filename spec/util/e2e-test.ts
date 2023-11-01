@@ -1,16 +1,10 @@
 import { ComplementHomeServer, createHS, destroyHS } from "./homerunner";
 import { MatrixClient, PowerLevelsEventContent, RoomEvent, TextualMessageEventContent } from "matrix-bot-sdk";
 import dns from 'node:dns';
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { IConfig } from "../../src/config";
 import { ConferenceBot } from "../../src/index";
 import path from "node:path";
-import { JSONSchedule } from "../../src/backends/json/jsontypes/JsonSchedule.schema";
-
-// Needed to make tests work on GitHub actions. Node 17+ defaults
-// to IPv6, and the homerunner domain resolves to IPv6, but the
-// runtime doesn't actually support IPv6 🤦
-dns.setDefaultResultOrder('ipv4first');
 
 const WAIT_EVENT_TIMEOUT = 10000;
 export const E2ESetupTestTimeout = 60000;
