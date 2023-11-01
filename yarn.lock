@@ -4729,10 +4729,10 @@ map-visit@^1.0.0:
     request-promise "^4.2.6"
     sanitize-html "^2.8.0"
 
-matrix-widget-api@^0.1.0-beta.11:
-  version "0.1.0-beta.18"
-  resolved "https://registry.yarnpkg.com/matrix-widget-api/-/matrix-widget-api-0.1.0-beta.18.tgz#4efd30edec3eeb4211285985464c062fcab59795"
-  integrity sha512-kCpcs6rrB94Mmr2/1gBJ+6auWyZ5UvOMOn5K2VFafz2/NDMzZg9OVWj9KFYnNAuwwBE5/tCztYEj6OQ+hgbwOQ==
+matrix-widget-api@^1.6.0:
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/matrix-widget-api/-/matrix-widget-api-1.6.0.tgz#f0075411edffc6de339580ade7e6e6e6edb01af4"
+  integrity sha512-VXIJyAZ/WnBmT4C7ePqevgMYGneKMCP/0JuCOqntSsaNlCRHJvwvTxmqUU+ufOpzIF5gYNyIrAjbgrEbK3iqJQ==
   dependencies:
     "@types/events" "^3.0.0"
     events "^3.2.0"

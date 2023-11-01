@@ -35,7 +35,7 @@
     "jsrsasign": "^10.1.4",
     "liquidjs": "^9.19.0",
     "matrix-bot-sdk": "npm:@vector-im/matrix-bot-sdk@^0.6.7-element.1",
-    "matrix-widget-api": "^0.1.0-beta.11",
+    "matrix-widget-api": "^1.6.0",
     "moment": "^2.29.4",
     "node-fetch": "^2.6.1",
     "pg": "^8.9.0",
