@@ -48,7 +48,6 @@ export class AttendanceCommand implements ICommand {
 
         let html = "<ul>";
         const append = async (invitePeople: IPerson[], bsPeople: IPerson[] | null, name: string, roomId: string, bsRoomId: string | null, withHtml: boolean) => {
-
             const inviteTargets = await resolveIdentifiers(this.client, invitePeople);
 
             const joinedMembers = await this.client.getJoinedRoomMembers(roomId);
