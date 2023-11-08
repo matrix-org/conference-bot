@@ -121,17 +121,24 @@ conference:
   # The name of the conference.
   name: "FOSDEM 2021"
 
-  # The URL to the XML which is updated with conference information.
-  # This is read and parsed by the bot during the early stages of
-  # setting up the conference.
-  # Should be commented out if a JSON schedule is in use.
-  pentabarfDefinition: "https://fosdem.org/2021/schedule/xml"
 
-  # Local path or https URL to a JSON conference schedule.
-  # See src/backends/jsonschemas/JsonSchedule.schema.json for the JSON schema
-  # of the JSON schedule format.
-  # Should be commented out if a Pentabarf schedule is in use.
-  #jsonDefinition: "path/to/local/file"
+  schedule:
+    # the backend to pull the schedule from - this can either be a JSON schedule file, or a URL to pull XML from
+    # Possible values are "json" or "penta". If JSON is chosen, the path to the file must be provided via the
+    # `scheduleDefinition`, and you must ensure that the `database` option below is set to `null`.
+    backend: "json"
+    # Local path or https URL to a JSON conference schedule. See src/backends/jsonschemas/JsonSchedule.schema.json for
+    # the JSON schema of the JSON schedule format.
+    scheduleDefinition: "path/to/local/file"
+
+  # sample schedule configuration for using the penta backend. When using this configuration ensure that the json
+  # example above is commented out
+  # schedule:
+    # backend: "penta"
+    # The URL to the XML which is updated with conference information.
+    # This is read and parsed by the bot during the early stages of
+    # setting up the conference.
+    # scheduleDefinition: "https://fosdem.org/2021/schedule/xml"
 
   # The timezone that the the bot's database is operating off of.
   timezone: "Europe/Brussels"
