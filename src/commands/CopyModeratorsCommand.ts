@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { MatrixClient, MembershipEvent } from "matrix-bot-sdk";
+import {MatrixClient, MembershipEvent, PowerLevelsEventContent} from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 
 export class CopyModeratorsCommand implements ICommand {
@@ -30,19 +30,20 @@ export class CopyModeratorsCommand implements ICommand {
         const fromRoomId = await this.client.resolveRoom(args[0]);
         const toRoomId = await this.client.resolveRoom(args[1]);
 
-        let fromPl: { "users"?: Record<string, any> } = {}
+        let fromPl: PowerLevelsEventContent = {}
         try {
             fromPl = await this.client.getRoomStateEvent(fromRoomId, "m.room.power_levels", "");
         }
         catch (error) {
-            throw Error(`Error fetching or processing power level event from room ${fromRoomId}: ${error.toString()}`)
+            throw Error(`Error fetching or processing power level event from room ${fromRoomId}:`, {cause: error})
         }
 
+        let toPl: PowerLevelsEventContent;
         try {
-            var toPl = await this.client.getRoomStateEvent(toRoomId, "m.room.power_levels", "");
+            toPl = await this.client.getRoomStateEvent(toRoomId, "m.room.power_levels", "");
         }
         catch (error) {
-            throw Error(`Error fetching or processing power level event from room ${toRoomId}: ${error.toString()}`)
+            throw Error(`Error fetching or processing power level event from room ${toRoomId}`, {cause: error})
         }
 
         if (!toPl) toPl = {};
@@ -59,7 +60,7 @@ export class CopyModeratorsCommand implements ICommand {
             await this.client.sendStateEvent(toRoomId, "m.room.power_levels", "", toPl);
         }
         catch (error) {
-            throw Error(`Error sending new power level event into room ${toRoomId}: ${error.toString()}`)
+            throw Error(`Error sending new power level event into room ${toRoomId}`, {cause: error})
         }
 
         let state: any[] = []
@@ -67,7 +68,7 @@ export class CopyModeratorsCommand implements ICommand {
             state = await this.client.getRoomState(toRoomId);
         }
         catch (error) {
-            throw Error(`Error getting room state from room ${toRoomId}: ${error.toString()}`)
+            throw Error(`Error getting room state from room ${toRoomId}`, {cause: error})
         }
         const members = state.filter(s => s.type === "m.room.member").map(s => new MembershipEvent(s));
         const effectiveJoinedUserIds = members.filter(m => m.effectiveMembership === "join").map(m => m.membershipFor);
@@ -77,7 +78,7 @@ export class CopyModeratorsCommand implements ICommand {
                     await this.client.inviteUser(userId, toRoomId);
                 }
                 catch (error) {
-                    throw Error(`Error inviting user ${userId} to room ${toRoomId}: ${error.toString()}`)
+                    throw Error(`Error inviting user ${userId} to room ${toRoomId}`, {cause: error})
                 }
             }
         }
