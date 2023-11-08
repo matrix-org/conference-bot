@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { resolveIdentifiers } from "../invites";
 import { COLOR_GREEN, COLOR_RED } from "../models/colors";
@@ -67,7 +66,7 @@ export class AttendanceCommand implements ICommand {
 
             if (bsRoomId) {
                 if (!bsPeople) {
-                    throw new Error("bsRoomId set but bsPeople isn't!");
+                    throw new Error(`the auditorium ${name} has a backstage room id but no backstage people set!`);
                 }
                 const bsInviteTargets = await resolveIdentifiers(this.client, bsPeople);
                 const bsJoinedMembers = await this.client.getJoinedRoomMembers(bsRoomId);
@@ -90,12 +89,22 @@ export class AttendanceCommand implements ICommand {
             const bs = this.conference.getAuditoriumBackstage(await auditorium.getId());
             const inviteTargets = await this.conference.getInviteTargetsForAuditorium(auditorium);
             const bsInviteTargets = await this.conference.getInviteTargetsForAuditorium(auditorium, true);
-            await append(inviteTargets, bsInviteTargets, await auditorium.getId(), auditorium.roomId, bs.roomId, doAppend);
+            try {
+                await append(inviteTargets, bsInviteTargets, await auditorium.getId(), auditorium.roomId, bs.roomId, doAppend);
+            }
+            catch (error) {
+                throw new Error(`Error calculating invite acceptance in auditorium ${auditorium}`, {cause: error})
+            }
         }
         for (const spiRoom of this.conference.storedInterestRooms) {
             const doAppend = !!targetAudId && (targetAudId === "all" || targetAudId === await spiRoom.getId());
             const inviteTargets = await this.conference.getInviteTargetsForInterest(spiRoom);
-            await append(inviteTargets, null, await spiRoom.getId(), spiRoom.roomId, null, doAppend);
+            try {
+                await append(inviteTargets, null, await spiRoom.getId(), spiRoom.roomId, null, doAppend);
+            }
+            catch (error) {
+                throw new Error(`Error calculating invite acceptance in special interest room ${spiRoom}`, {cause:error})
+            }
         }
         html += "</ul>";
 
