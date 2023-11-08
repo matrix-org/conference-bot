@@ -93,7 +93,7 @@ export class AttendanceCommand implements ICommand {
                 await append(inviteTargets, bsInviteTargets, await auditorium.getId(), auditorium.roomId, bs.roomId, doAppend);
             }
             catch (error) {
-                throw new Error(`Error calculating invite acceptance in auditorium ${auditorium}: ${error.toString()}`)
+                throw new Error(`Error calculating invite acceptance in auditorium ${auditorium}`, {cause: error})
             }
         }
         for (const spiRoom of this.conference.storedInterestRooms) {
@@ -103,7 +103,7 @@ export class AttendanceCommand implements ICommand {
                 await append(inviteTargets, null, await spiRoom.getId(), spiRoom.roomId, null, doAppend);
             }
             catch (error) {
-                throw new Error(`Error calculating invite acceptance in special interest room ${spiRoom}: ${error.toString()}`)
+                throw new Error(`Error calculating invite acceptance in special interest room ${spiRoom}`, {cause:error})
             }
         }
         html += "</ul>";
