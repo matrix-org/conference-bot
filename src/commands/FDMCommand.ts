@@ -29,9 +29,30 @@ export class FDMCommand implements ICommand {
 
     public async run(roomId: string, event: any, args: string[]) {
         const spi = this.conference.getInterestRoom("I.infodesk");
-        const infBackstage = await this.client.resolveRoom("#infodesk-backstage:fosdem.org");
-        const vol = await this.client.resolveRoom("#volunteers:fosdem.org");
-        const volBackstage = await this.client.resolveRoom("#volunteers-backstage:fosdem.org");
+
+        let infBackstage;
+        try {
+            infBackstage = await this.client.resolveRoom("#infodesk-backstage:fosdem.org");
+        }
+        catch (error) {
+            throw Error(`Error resolving the roomID for room #infodesk-backstage:fosdem.org`, {cause: error})
+        }
+
+        let vol;
+        try {
+            vol = await this.client.resolveRoom("#volunteers:fosdem.org");
+        }
+        catch (error) {
+            throw Error(`Error resolving the roomID for room #volunteers:fosdem.org`, {cause: error})
+        }
+
+        let volBackstage;
+        try {
+            volBackstage = await this.client.resolveRoom("#volunteers-backstage:fosdem.org");
+        }
+        catch (error) {
+            throw Error(`Error resolving the roomID for room #volunteers-backstage:fosdem.org`, {cause: error})
+        }
 
         const db = await this.conference.getPentaDb();
         if (db === null) {
@@ -39,7 +60,14 @@ export class FDMCommand implements ICommand {
             return;
         }
 
-        let volunteers = await db.findAllPeopleWithRemark("volunteer");
+        let volunteers;
+        try {
+            volunteers = await db.findAllPeopleWithRemark("volunteer");
+        }
+        catch (error) {
+            throw Error('There was an error fetching volunteers from the database', {cause:error})
+        }
+
         const dedupe: IPerson[] = [];
         for (const volunteer of volunteers) {
             if (!dedupe.some(p => p.id === volunteer.id)) {
@@ -58,9 +86,32 @@ export class FDMCommand implements ICommand {
         } else if (args[0] === 'invite') {
             const infodesk = await this.conference.getInviteTargetsForInterest(spi);
             const infodeskResolved = await resolveIdentifiers(this.client, infodesk);
-            const inBsJoined = await this.client.getJoinedRoomMembers(infBackstage);
-            const volJoined = await this.client.getJoinedRoomMembers(vol);
-            const volBsJoined = await this.client.getJoinedRoomMembers(volBackstage);
+
+            let inBsJoined;
+            try {
+                inBsJoined = await this.client.getJoinedRoomMembers(infBackstage);
+            }
+            catch (error) {
+                throw Error(`Error fetching the members of the room #infodesk-backstage:fosdem.org`, {cause: error})
+            }
+
+            let volJoined;
+            try {
+                volJoined = await this.client.getJoinedRoomMembers(vol);
+            }
+            catch (error) {
+                throw Error(`Error fetching the members of the room #volunteers:fosdem.org`, {cause:error})
+            }
+
+            let volBsJoined;
+            try {
+                volBsJoined = await this.client.getJoinedRoomMembers(volBackstage);
+            }
+            catch (error) {
+                throw Error("Error fetching members of the room #volunteers-backstage:fosdem.org", {cause:error})
+            }
+
+
             for (const person of infodeskResolved) {
                 try {
                     if (person.mxid && inBsJoined.includes(person.mxid)) continue;
