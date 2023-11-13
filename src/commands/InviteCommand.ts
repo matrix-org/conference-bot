@@ -33,7 +33,13 @@ export class InviteCommand implements ICommand {
     private async createInvites(people: IPerson[], alias: string) {
         const resolved = await resolveIdentifiers(this.client, people);
 
-        const targetRoomId = await this.client.resolveRoom(alias);
+        let targetRoomId;
+        try {
+            targetRoomId = await this.client.resolveRoom(alias);
+        }
+        catch (error) {
+            throw Error(`Error resolving room id for ${alias}`, {cause: error})
+        }
         await this.ensureInvited(targetRoomId, resolved);
     }
 
@@ -94,7 +100,13 @@ export class InviteCommand implements ICommand {
     public async ensureInvited(roomId: string, people: ResolvedPersonIdentifier[]) {
         // We don't want to invite anyone we have already invited or that has joined though, so
         // avoid those people. We do this by querying the room state and filtering.
-        const state = await this.client.getRoomState(roomId);
+        let state;
+        try {
+            state = await this.client.getRoomState(roomId);
+        }
+        catch (error) {
+            throw Error(`Error fetching state for room ${roomId}`, {cause: error})
+        }
         const emailInvitePersonIds = state.filter(s => s.type === "m.room.third_party_invite").map(s => s.content?.[RS_3PID_PERSON_ID]).filter(i => !!i);
         const members = state.filter(s => s.type === "m.room.member").map(s => new MembershipEvent(s));
         const effectiveJoinedUserIds = members.filter(m => m.effectiveMembership === "join").map(m => m.membershipFor);
