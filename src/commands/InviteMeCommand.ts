@@ -27,7 +27,13 @@ export class InviteMeCommand implements ICommand {
     public readonly prefixes = ["inviteme", "inviteto"];
 
     private async inviteTo(invitee: string, room: string): Promise<void> {
-        const members = await this.client.getJoinedRoomMembers(room);
+        let members;
+        try {
+            members = await this.client.getJoinedRoomMembers(room);
+        }
+        catch (error) {
+            throw Error(`Error getting joined members from room ${room}`, {cause:error})
+        }
         if (members.includes(invitee)) return;
         await this.client.inviteUser(invitee, room);
     }
@@ -137,8 +143,19 @@ export class InviteMeCommand implements ICommand {
             await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
         } else {
             // Invite to one particular room.
-            const targetRoomId = await this.client.resolveRoom(args[0]);
-            await this.client.inviteUser(userId, targetRoomId);
+            let targetRoomId;
+            try {
+                targetRoomId = await this.client.resolveRoom(args[0]);
+            }
+            catch (error) {
+                throw Error(`Error resolving room ${args[0]}`, {cause:error})
+            }
+            try {
+                await this.client.inviteUser(userId, targetRoomId);
+            }
+            catch (error) {
+                throw Error(`Error inviting ${userId} to ${targetRoomId}`, {cause:error})
+            }
             await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
         }
     }
