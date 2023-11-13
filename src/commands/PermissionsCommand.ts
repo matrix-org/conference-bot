@@ -39,12 +39,25 @@ export class PermissionsCommand implements ICommand {
     }
 
     public static async ensureModerator(client: MatrixClient, roomId: string, people: ResolvedPersonIdentifier[]) {
-        const powerLevels = await client.getRoomStateEvent(roomId, "m.room.power_levels", "");
+        let powerLevels;
+        try {
+             powerLevels = await client.getRoomStateEvent(roomId, "m.room.power_levels", "");
+        }
+        catch (error) {
+            throw Error(`Error fetching power levels for room ${roomId}`, {cause:error})
+        }
+
         for (const person of people) {
             if (!person.mxid) continue;
             if (powerLevels['users'][person.mxid]) continue;
             powerLevels['users'][person.mxid] = 50;
         }
-        await client.sendStateEvent(roomId, "m.room.power_levels", "", powerLevels);
+
+        try {
+            await client.sendStateEvent(roomId, "m.room.power_levels", "", powerLevels);
+        }
+        catch (error) {
+            throw Error(`Error sending powerlevels event into room ${roomId}`, {cause:error})
+        }
     }
 }
