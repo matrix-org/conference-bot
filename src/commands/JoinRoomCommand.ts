@@ -32,7 +32,12 @@ export class JoinCommand implements ICommand {
 
         await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '⌛️');
 
-        await this.client.joinRoom(args[0], []);
+        try {
+            await this.client.joinRoom(args[0], []);
+        }
+        catch (error) {
+            throw Error(`Error joining room ${args[0]}`, {cause:error})
+        }
 
         await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
     }
