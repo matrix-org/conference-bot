@@ -81,7 +81,7 @@ export class ConferenceBot {
     }
 
     public static async start(config: IConfig): Promise<ConferenceBot> {
-        if (!config.mode[config.mode]) {
+        if (!RunMode[config.mode]) {
             throw Error(`Incorrect mode '${config.mode}'`);
         }
         const storage = new SimpleFsStorageProvider(path.join(config.dataPath, "bot.json"));
