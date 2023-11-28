@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import * as qs from 'querystring';
+import * as qs from 'qs';
 
 export const urlParams = (new URL(window.location.href)).searchParams;
 export const widgetId = urlParams.get("widgetId");

@@ -30,13 +30,22 @@ module.exports = {
         rules: [
             {
                 test: /\.ts$/,
-                use: 'ts-loader',
+                use: {
+                    loader: 'ts-loader',
+                    options: {
+                        configFile: 'tsconfig.web.json',
+                    },
+                },
                 exclude: /node_modules/,
             },
             {
-                test: /\.scss$/,
-                use: ["style-loader", "css-loader", "postcss-loader"],
-            },
+                test: /\.scss$/i,
+                use: [
+                    "style-loader",
+                    "css-loader",
+                    "sass-loader",
+                ],
+            }
         ],
     },
     resolve: {

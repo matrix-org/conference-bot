@@ -18,7 +18,7 @@ limitations under the License.
 
 import { LogLevel, LogService, TextualMessageEventContent } from "matrix-bot-sdk";
 import { replaceRoomIdsWithPills } from "./utils";
-import * as htmlEscape from "escape-html";
+import { escapeHtml } from "xss";
 import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
 
 const levelToFn = {
@@ -41,7 +41,7 @@ export async function logMessage(level: LogLevel, module: string, message: strin
 
         let evContent: TextualMessageEventContent = {
             body: message,
-            formatted_body: htmlEscape(message),
+            formatted_body: escapeHtml(message),
             msgtype: "m.notice",
             format: "org.matrix.custom.html",
         };

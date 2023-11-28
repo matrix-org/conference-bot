@@ -26,7 +26,7 @@ import {
     UserID
 } from "matrix-bot-sdk";
 import { logMessage } from "./LogProxy";
-import * as htmlEscape from "escape-html";
+import { escapeHtml } from "xss";
 import * as crypto from "crypto";
 import { readFile, writeFile, rename } from "fs";
 import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
@@ -36,7 +36,7 @@ export async function replaceRoomIdsWithPills(client: ConferenceMatrixClient, te
 
     const content: TextualMessageEventContent = {
         body: text,
-        formatted_body: htmlEscape(text),
+        formatted_body: escapeHtml(text),
         msgtype: msgtype,
         format: "org.matrix.custom.html",
     };

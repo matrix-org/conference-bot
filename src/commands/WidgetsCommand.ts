@@ -33,18 +33,53 @@ export class WidgetsCommand implements ICommand {
         const audWidget = await LiveWidget.forAuditorium(aud, this.client, avatar, baseUrl);
         const audLayout = LiveWidget.layoutForAuditorium(audWidget);
         const audSchedule = await LiveWidget.scheduleForAuditorium(aud, this.client, avatar, baseUrl);
-        await this.client.sendStateEvent(aud.roomId, audWidget.type, audWidget.state_key, audWidget.content);
-        await this.client.sendStateEvent(aud.roomId, audSchedule.type, audSchedule.state_key, audSchedule.content);
-        await this.client.sendStateEvent(aud.roomId, audLayout.type, audLayout.state_key, audLayout.content);
+
+        try {
+            await this.client.sendStateEvent(aud.roomId, audWidget.type, audWidget.state_key, audWidget.content);
+        }
+        catch (error) {
+            throw Error(`Error sending state event for auditorium widget into room ${aud.roomId}`, {cause:error})
+        }
+
+        try {
+            await this.client.sendStateEvent(aud.roomId, audSchedule.type, audSchedule.state_key, audSchedule.content);
+        }
+        catch (error) {
+            throw Error(`Error sending state event for schedule widget into room ${aud.roomId}`, {cause:error})
+        }
+
+        try {
+            await this.client.sendStateEvent(aud.roomId, audLayout.type, audLayout.state_key, audLayout.content);
+        }
+        catch (error) {
+            throw Error(`Error sending state event for layout widget into room ${aud.roomId}`, {cause:error})
+        }
 
         const talks = await asyncFilter(this.conference.storedTalks, async t => (await t.getAuditoriumId()) === (await aud.getId()));
         for (const talk of talks) {
             const talkWidget = await LiveWidget.forTalk(talk, this.client, avatar, baseUrl);
             const scoreboardWidget = await LiveWidget.scoreboardForTalk(talk, this.client, this.conference, avatar, baseUrl);
             const talkLayout = LiveWidget.layoutForTalk(talkWidget, scoreboardWidget);
-            await this.client.sendStateEvent(talk.roomId, talkWidget.type, talkWidget.state_key, talkWidget.content);
-            await this.client.sendStateEvent(talk.roomId, scoreboardWidget.type, scoreboardWidget.state_key, scoreboardWidget.content);
-            await this.client.sendStateEvent(talk.roomId, talkLayout.type, talkLayout.state_key, talkLayout.content);
+            try {
+                await this.client.sendStateEvent(talk.roomId, talkWidget.type, talkWidget.state_key, talkWidget.content);
+            }
+            catch (error) {
+                throw Error(`Error sending state event for talk widget into room ${talk.roomId}`, {cause:error})
+            }
+            
+            try {
+                await this.client.sendStateEvent(talk.roomId, scoreboardWidget.type, scoreboardWidget.state_key, scoreboardWidget.content);
+            }
+            catch (error) {
+                throw Error(`Error sending state event for scoreboard widget into room ${talk.roomId}`, {cause:error})
+            }
+            
+            try {
+                await this.client.sendStateEvent(talk.roomId, talkLayout.type, talkLayout.state_key, talkLayout.content);
+            }
+            catch (error) {
+                throw Error(`Error sending state event for talk layout into room ${talk.roomId}`, {cause:error})
+            }
         }
 
         if ((await aud.getDefinition()).isPhysical) {
@@ -54,8 +89,20 @@ export class WidgetsCommand implements ICommand {
             const backstage = this.conference.getAuditoriumBackstage(await aud.getId());
             const audScoreboardWidget = await LiveWidget.scoreboardForAuditorium(aud, this.client, avatar, baseUrl);
             const backstageLayout = LiveWidget.layoutForPhysicalAudBackstage(audScoreboardWidget);
-            await this.client.sendStateEvent(backstage.roomId, audScoreboardWidget.type, audScoreboardWidget.state_key, audScoreboardWidget.content);
-            await this.client.sendStateEvent(backstage.roomId, backstageLayout.type, backstageLayout.state_key, backstageLayout.content);
+            
+            try {
+                await this.client.sendStateEvent(backstage.roomId, audScoreboardWidget.type, audScoreboardWidget.state_key, audScoreboardWidget.content);
+            }
+            catch (error) {
+                throw Error(`Error sending state event for backstage scoreboard widget into room ${backstage.roomId}`, {cause:error})
+            }
+            
+            try {
+                await this.client.sendStateEvent(backstage.roomId, backstageLayout.type, backstageLayout.state_key, backstageLayout.content);
+            }
+            catch (error) {
+                throw Error(`Error sending state event for layout widget into room ${backstage.roomId}`, {cause:error})
+            }
         }
     }
 
