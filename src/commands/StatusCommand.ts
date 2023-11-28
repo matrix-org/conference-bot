@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { MatrixClient } from "matrix-bot-sdk";
+import {LogService, MatrixClient} from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { Scheduler } from "../Scheduler";
 
@@ -36,14 +36,18 @@ export class StatusCommand implements ICommand {
             // Try to refresh the schedule first, to ensure we don't miss any updates.
             await backend.refresh();
             scheduleRefreshOk = true;
-        } catch (error) {}
+        } catch (error) {
+            LogService.error(`StatusCommand`, `Error refreshing the backend: ${error}`)
+        }
 
         let roomStateBotResetOk = false;
         try {
             // Try to reset our view of the state first, to ensure we don't miss anything (e.g. if we got invited to a room since bot startup).
             await this.conference.construct();
             roomStateBotResetOk = true;
-        } catch (error) {}
+        } catch (error) {
+            LogService.error(`StatusCommand`, `Error constructing the conference: ${error}`)
+        }
 
         ////////////////////////////////////////
         html += "<h5>Schedule</h5><ul>";

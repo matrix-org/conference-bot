@@ -39,7 +39,7 @@ export class VerifyCommand implements ICommand {
         if (!aud) {
             aud = this.conference.getInterestRoom(audId);
             if (!aud) {
-                return await this.client.replyNotice(roomId, event, "Unknown auditorium/interest room");
+                return await this.client.replyNotice(roomId, event, `Unknown auditorium/interest room: ${audId}`);
             }
         }
 
@@ -67,7 +67,7 @@ export class VerifyCommand implements ICommand {
             audBackstageToInvite = [];
             audToMod = await this.conference.getModeratorsForInterest(aud);
         } else {
-            return await this.client.replyNotice(roomId, event, "Unknown room kind");
+            return await this.client.replyNotice(roomId, event, `Unknown room kind: ${aud}`);
         }
 
         const publicAud = this.conference.getAuditorium(audId);
