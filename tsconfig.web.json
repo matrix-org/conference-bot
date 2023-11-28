@@ -1,0 +1,16 @@
+{
+  "extends": "@tsconfig/node18",
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "noImplicitAny": false,
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "useUnknownInCatchVariables": false,
+    "sourceMap": true,
+    "lib": ["DOM", "ES2019"]
+  },
+  "include": [
+    "./web/**/*"
+  ]
+}

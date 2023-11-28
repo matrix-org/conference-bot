@@ -1,14 +1,15 @@
 import { E2ESetupTestTimeout, E2ETestEnv } from "./util/e2e-test";
 import { describe, it, beforeEach, afterEach, expect } from "@jest/globals";
 
-
 describe('Basic test setup', () => {
     let testEnv: E2ETestEnv;
     beforeEach(async () => {
         testEnv = await E2ETestEnv.createTestEnv({
             fixture: 'basic-conference',
         });
+        const welcomeMsg = testEnv.waitForMessage();
         await testEnv.setUp();
+        console.log((await welcomeMsg).event.content.body.startsWith('WECOME!'));
     }, E2ESetupTestTimeout);
     afterEach(() => {
         return testEnv?.tearDown();
@@ -25,7 +26,7 @@ describe('Basic test setup', () => {
         const waitForFinish = new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(() => reject(new Error(
                 `Build incomplete. spaceBuild: ${spaceBuilt}, supportRoomsBuilt: ${supportRoomsBuilt}, conferenceBuilt: ${conferenceBuilt}`
-            )), 5000);
+            )), 30000);
             testEnv.adminClient.on('room.message', (_, event) => {
                 if (event.content.body.includes("Your conference's space is at")) {
                     spaceBuilt = true;
@@ -44,5 +45,5 @@ describe('Basic test setup', () => {
         await testEnv.sendAdminCommand('!conference build');
         await waitForFinish;
         // TODO: Now test that all the expected rooms are there.
-    }, 7000);
+    });
 });

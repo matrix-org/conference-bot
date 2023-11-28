@@ -20,7 +20,7 @@ import { sha256 } from "../utils";
 import { Auditorium } from "./Auditorium";
 import { MatrixClient } from "matrix-bot-sdk";
 import { Talk } from "./Talk";
-import * as template from "string-template";
+import template from "../utils/template";
 import { Conference } from "../Conference";
 
 export interface ILayout {

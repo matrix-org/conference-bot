@@ -306,3 +306,6 @@ ircBridge: null
 
   # The allowed channel prefix of the bot
   #channelPrefix: '#conference-'
+
+templatesPath: ./srv
+runMode: normal

@@ -17,14 +17,19 @@ limitations under the License.
 import * as config from "config";
 import { IRCBridgeOpts } from "./IRCBridge";
 
+export enum RunMode {
+    normal = "normal",
+    webserver = "webserver",
+}
+
 export interface IConfig {
     homeserverUrl: string;
     accessToken: string;
     userId: string;
     dataPath: string;
     managementRoom: string;
-    idServerDomain: string;
-    idServerBrand: string;
+    idServerDomain?: string;
+    idServerBrand?: string;
     moderatorUserId: string;
     livestream: {
         auditoriumUrl: string;
@@ -70,6 +75,10 @@ export interface IConfig {
         };
     };
     ircBridge: IRCBridgeOpts | null;
+
+    templatesPath: string;
+
+    mode: RunMode;
 }
 
 export interface IPrefixConfig {
@@ -126,4 +135,10 @@ export interface IPentaDbConfig {
     schedulePostBufferSeconds: number;
 }
 
-export default <IConfig>config;
+const liveConfig: IConfig = {
+    ...config,
+    mode: process.env.CONF_RUN_MODE ?? RunMode.normal,
+    templatesPath: process.env.CONF_TEMPLATES_PATH ?? config.templatesPath,
+}
+
+export default <IConfig>liveConfig;
