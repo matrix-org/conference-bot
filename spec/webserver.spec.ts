@@ -20,7 +20,7 @@ describe('Webserver', () => {
     });
     it('should start up successfully', async () => {
         const serverAddress = testEnv.confBot.webServer?.address() as AddressInfo;
-        const req = await fetch(`http://${serverAddress.address}:${serverAddress.port}/healthz`);
+        const req = await fetch(`http://${serverAddress.address}:${serverAddress.port}/healthz`, {});
         expect(req.status).toBe(200);
     });
 });

@@ -244,8 +244,8 @@ export class E2ETestEnv {
         await rm(this.dataDir, { recursive: true, force: true })
     }
 
-    public async sendAdminCommand(cmd: string) {
-        const response = new Promise<{roomId: string, event: RoomEvent<TextualMessageEventContent>}>((resolve, reject) => {
+    public async waitForMessage() {
+        return new Promise<{roomId: string, event: RoomEvent<TextualMessageEventContent>}>((resolve, reject) => {
             const timeout = setTimeout(() => reject(new Error("Timed out waiting for admin response")), 5000);
             this.adminClient.on('room.message', (roomId, event) => {
                 if (event.sender === this.config.userId) {
@@ -254,6 +254,10 @@ export class E2ETestEnv {
                 }
             });
         });
+    }
+
+    public async sendAdminCommand(cmd: string) {
+        const response = this.waitForMessage();
         await this.adminClient.sendText(this.config.managementRoom, cmd);
         return response;
     }
