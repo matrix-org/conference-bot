@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// TODO: Healthz
 // TODO: Timezones!! (Europe-Brussels)
 
 import { LogLevel, LogService, SimpleFsStorageProvider, UserID } from "matrix-bot-sdk";
@@ -68,7 +67,6 @@ LogService.setLevel(LogLevel.DEBUG);
 LogService.info("index", "Bot starting...");
 
 export class ConferenceBot {
-    private webServer?: Server;
     private static async loadBackend(config: IConfig) {
         switch (config.conference.schedule.backend) {
             case "penta":
@@ -102,6 +100,8 @@ export class ConferenceBot {
         return new ConferenceBot(config, backend, client, conference, scoreboard, scheduler, ircBridge);
     }
 
+    private webServerInstance?: Server;
+
     private constructor(
         private readonly config: IConfig,
         private readonly backend: IScheduleBackend,
@@ -113,6 +113,9 @@ export class ConferenceBot {
 
     }
 
+    public get webServer() {
+        return this.webServerInstance;
+    }
 
     public async main() {
         let localpart;
@@ -204,7 +207,7 @@ export class ConferenceBot {
         app.get('/healthz', renderHealthz);
         app.get('/scoreboard/:roomId', (rq, rs) => renderScoreboard(rq, rs, this.scoreboard, this.conference));
         app.get('/make_hybrid', (req, res) =>  makeHybridWidget(req, res, this.client, this.config.livestream.widgetAvatar, this.config.webserver.publicBaseUrl));
-        this.webServer = app.listen(this.config.webserver.port, this.config.webserver.address, () => {
+        this.webServerInstance = app.listen(this.config.webserver.port, this.config.webserver.address, () => {
             LogService.info("web", `Webserver running at http://${this.config.webserver.address}:${this.config.webserver.port}`);
         });
     }

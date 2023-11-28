@@ -1,7 +1,6 @@
 import { E2ESetupTestTimeout, E2ETestEnv } from "./util/e2e-test";
 import { describe, it, beforeEach, afterEach, expect } from "@jest/globals";
 
-
 describe('Basic test setup', () => {
     let testEnv: E2ETestEnv;
     beforeEach(async () => {

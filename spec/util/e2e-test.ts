@@ -2,7 +2,7 @@ import { ComplementHomeServer, createHS, destroyHS } from "./homerunner";
 import { MatrixClient, PowerLevelsEventContent, RoomEvent, TextualMessageEventContent } from "matrix-bot-sdk";
 import dns from 'node:dns';
 import { mkdtemp, rm } from "node:fs/promises";
-import { IConfig } from "../../src/config";
+import { IConfig, RunMode } from "../../src/config";
 import { ConferenceBot } from "../../src/index";
 import path from "node:path";
 
@@ -134,7 +134,7 @@ export class E2ETestMatrixClient extends MatrixClient {
 }
 
 export class E2ETestEnv {
-    static async createTestEnv(opts): Promise<E2ETestEnv> {
+    static async createTestEnv(opts: Opts): Promise<E2ETestEnv> {
         const workerID = parseInt(process.env.JEST_WORKER_ID ?? '0');
         const { matrixLocalparts, config: providedConfig  } = opts;
         const tmpDir = await mkdtemp('confbot-test');
@@ -155,8 +155,20 @@ export class E2ETestEnv {
         // Configure JSON schedule
         const scheduleDefinition = path.resolve(__dirname, '..', 'fixtures', opts.fixture + ".json");
 
-        const config = {
-            ...providedConfig,
+        const config: IConfig = {
+            livestream: {
+                auditoriumUrl: "https://stream.example.org/conference/hls/{id}.m3u8",
+                talkUrl: "https://stream.example.org/conference-talks/hls/{slug}.m3u8",
+                hybridUrl: "https://stream.example.org/conference-hybrids/hls/{jitsi}.m3u8",
+                scheduleUrl: "https://example.org/?theme=$theme&room={audId}",
+                jitsiDomain: "jitsi.riot.im",
+                widgetAvatar: "mxc://example.org/mediaid",
+                onpublish: {
+                    rtmpHostnameTemplate: "{squishedAudId}.example.org",
+                    rtmpUrlTemplate: "rtmp://{hostname}/stream/{saltedHash}",
+                    salt: "change me",
+                }
+            },
             conference: {
                 id: 'test-conf',
                 name: 'Test Conf',
@@ -165,15 +177,22 @@ export class E2ETestEnv {
                     coordinators: `#coordinators:${homeserver.domain}`,
                     specialInterest: `#specialInterest:${homeserver.domain}`,
                 },
+                timezone: 'Europe/Brussels',
+                lookaheadMinutes: 5,
+                existingInterestRooms: {},
                 prefixes: {
                     auditoriumRooms: ["D."],
                     interestRooms: ["S.", "B."],
                     aliases: "",
                     displayNameSuffixes: {},
                     suffixes: {},
+                    qaAuditoriumRooms: [],
+                    physicalAuditoriumRooms: [],
+                    nameOverrides: {},
                 },
                 schedule: {
                     backend: 'json',
+                    database: undefined,
                     scheduleDefinition,
                 },
                 subspaces: {
@@ -186,6 +205,9 @@ export class E2ETestEnv {
             },
             moderatorUserId: `@modbot:${homeserver.domain}`,
             webserver: {
+                address: '0.0.0.0',
+                port: 0,
+                publicBaseUrl: '/feh',
                 additionalAssetsPath: '/dev/null'
             },
             ircBridge: null,
@@ -194,7 +216,10 @@ export class E2ETestEnv {
             userId: confBotOpts.userId,
             dataPath: tmpDir,
             managementRoom: mgmntRoom,
-        } as IConfig;
+            templatesPath: '/dev/null',
+            mode: RunMode.normal,
+            ...providedConfig,
+        };
         const conferenceBot = await ConferenceBot.start(config);
         return new E2ETestEnv(homeserver, conferenceBot, adminUser.client, opts, tmpDir, config);
     }

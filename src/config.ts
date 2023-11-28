@@ -28,8 +28,8 @@ export interface IConfig {
     userId: string;
     dataPath: string;
     managementRoom: string;
-    idServerDomain: string;
-    idServerBrand: string;
+    idServerDomain?: string;
+    idServerBrand?: string;
     moderatorUserId: string;
     livestream: {
         auditoriumUrl: string;
