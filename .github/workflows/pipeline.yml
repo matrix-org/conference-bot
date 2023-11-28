@@ -17,14 +17,43 @@ jobs:
       - run: yarn test
 
   build:
-    name: Build JSONSchema and TypeScript
+    name: Build JSONSchema, TypeScript and Web
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-      # TODO build:web fails currently, but it'd be good to make that work when possible and then add it here.
       - run: yarn
-      - run: yarn build:jsonschema
-      - run: yarn build:ts
+      - run: yarn build
+
+  build-docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    env:
+      PLATFORMS: linux/amd64
+      DOCKER_NAMESPACE: matrixdotorg
+      # Only push if this is develop, otherwise we just want to build
+      # On a PR github.ref is the target branch, so don't push for that either
+      PUSH: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v2
+
+      - name: Login to Dockerhub
+        uses: docker/login-action@v3
+        if: ${{ env.PUSH == 'true' }}
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: ${{ env.PLATFORMS }}
+          push: ${{ env.PUSH }}
+          tags: |
+            matrixdotorg/conf-bot:latest
