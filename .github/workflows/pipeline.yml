@@ -31,8 +31,6 @@ jobs:
     name: Build Docker Image
     runs-on: ubuntu-latest
     env:
-      PLATFORMS: linux/amd64
-      DOCKER_NAMESPACE: matrixdotorg
       # Only push if this is develop, otherwise we just want to build
       # On a PR github.ref is the target branch, so don't push for that either
       PUSH: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
@@ -57,4 +55,5 @@ jobs:
           platforms: ${{ env.PLATFORMS }}
           push: ${{ env.PUSH }}
           tags: |
-            matrixdotorg/conf-bot:latest
+            ghcr.io/matrix-org/conference-bot:latest
+            ghcr.io/matrix-org/conference-bot:${{ github.sha }}
