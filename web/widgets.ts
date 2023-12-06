@@ -14,11 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import * as qs from 'qs';
-
 export const urlParams = (new URL(window.location.href)).searchParams;
 export const widgetId = urlParams.get("widgetId");
 export const isWidget = widgetId && widgetId !== "$matrix_widget_id";
 
-const widgetQuery = qs.parse(window.location.hash.substring(1));
-export const addlQuery = Object.assign({}, qs.parse(window.location.search.substring(1)), widgetQuery);
+const widgetparams = new URLSearchParams(window.location.hash.substring(1))
+const widgetQuery = {}
+for (const entry of widgetparams.entries()) {
+    widgetQuery[entry[0]] = entry[1]
+}
+
+const searchParams = new URLSearchParams(window.location.search.substring(1))
+const parsedSearch = {}
+for (const entry of searchParams.entries()) {
+    parsedSearch[entry[0]] = entry[1]
+}
+export const addlQuery = Object.assign({}, parsedSearch, widgetQuery);
