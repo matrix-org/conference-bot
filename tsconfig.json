@@ -3,6 +3,7 @@
   "compilerOptions": {
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "lib": ["DOM", "es2022"],
     "noImplicitAny": false,
     "strict": true,
     "strictPropertyInitialization": false,

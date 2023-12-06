@@ -50,6 +50,7 @@ module.exports = {
     },
     resolve: {
         extensions: ['.ts', '.js'],
+        fallback: { "querystring": require.resolve("querystring-es3") }
     },
     plugins: [
         new CleanWebpackPlugin({ cleanStaleWebpackAssets: false }),
