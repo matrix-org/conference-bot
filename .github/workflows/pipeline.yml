@@ -34,7 +34,7 @@ jobs:
     env:
       # Only push if this is develop, otherwise we just want to build
       # On a PR github.ref is the target branch, so don't push for that either
-      PUSH: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
+      PUSH: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
 
     steps:
       - name: Check out
