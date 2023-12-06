@@ -218,6 +218,11 @@ export class E2ETestEnv {
             managementRoom: mgmntRoom,
             templatesPath: '/dev/null',
             mode: RunMode.normal,
+            metrics: {
+                enabled: false,
+                address: '0.0.0.0',
+                port: 0,
+            },
             ...providedConfig,
         };
         const conferenceBot = await ConferenceBot.start(config);

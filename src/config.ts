@@ -50,6 +50,11 @@ export interface IConfig {
         publicBaseUrl: string;
         additionalAssetsPath: string;
     };
+    metrics: {
+        enabled: boolean;
+        address: string;
+        port: number;
+    };
     conference: {
         id: string;
         name: string;

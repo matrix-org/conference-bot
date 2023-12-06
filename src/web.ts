@@ -17,7 +17,7 @@ limitations under the License.
 import { Response, Request } from "express";
 import template from "./utils/template"
 import config from "./config";
-import { base32 } from "rfc4648";
+const { base32 } = require('rfc4648');
 import { LogService, MatrixClient } from "matrix-bot-sdk";
 import { sha256 } from "./utils";
 import * as dns from "dns";
