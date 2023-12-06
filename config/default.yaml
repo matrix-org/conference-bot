@@ -309,3 +309,8 @@ ircBridge: null
 
 templatesPath: ./srv
 runMode: normal
+
+metrics:
+  enabled: false
+  port: 8081
+  address: 127.0.0.1

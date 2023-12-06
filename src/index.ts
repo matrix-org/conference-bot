@@ -61,6 +61,7 @@ import { StatusCommand } from "./commands/StatusCommand";
 import { CachingBackend } from "./backends/CachingBackend";
 import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
 import { Server } from "http";
+import { collectDefaultMetrics, register } from "prom-client";
 
 LogService.setLogger(new CustomLogger());
 LogService.setLevel(LogLevel.DEBUG);
@@ -101,6 +102,7 @@ export class ConferenceBot {
     }
 
     private webServerInstance?: Server;
+    private metricsServerInstance?: Server;
 
     private constructor(
         private readonly config: IConfig,
@@ -139,6 +141,22 @@ export class ConferenceBot {
         // Setup the webserver first.
         await this.setupWebserver();
 
+        // Setup metrics
+        if (this.config.metrics?.enabled) {
+            collectDefaultMetrics();
+            const metricsApp = express();
+            metricsApp.get('/metrics', (_req, res) => {
+                register.metrics().then(
+                    (m) => res.type('text/plain').send((m))
+                ).catch((err) => {
+                    LogService.info("index", "Failed to fetch metrics: ", err);
+                    res.status(500).send('Could not fetch metrics due to an error');
+                });
+            });
+            this.metricsServerInstance = metricsApp.listen(this.config.metrics.port, this.config.metrics.address);
+            LogService.info("index", `Metrics listening on ${this.config.metrics.address}:${this.config.metrics.port}`)
+        }
+
         await this.client.joinRoom(this.config.managementRoom);
         await this.conference.construct();
 
@@ -176,7 +194,6 @@ export class ConferenceBot {
                 "<p>@room ⚠ The bot failed to load the schedule properly and a cached copy is being used.</p>"
             );
         }
-    
     
         await this.scheduler.prepare();
     
@@ -289,6 +306,7 @@ export class ConferenceBot {
         await this.scheduler.stop();
         this.client.stop();
         this.webServer?.close();
+        this.metricsServerInstance?.close();
     }
 }
 
