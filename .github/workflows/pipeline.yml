@@ -17,7 +17,7 @@ jobs:
       - run: yarn test
 
   build:
-    name: Build JSONSchema, TypeScript and Web
+    name: Build JSONSchema and TypeScript
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -25,7 +25,8 @@ jobs:
         with:
           node-version: 18
       - run: yarn
-      - run: yarn build
+      - run: yarn build:jsonschema
+      - run: yarn build:ts
 
   build-docker:
     name: Build Docker Image
