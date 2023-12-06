@@ -17,14 +17,12 @@ jobs:
       - run: yarn test
 
   build:
-    name: Build JSONSchema and TypeScript
+    name: Build JSONSchema, TypeScript and Web
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-      # TODO build:web fails currently, but it'd be good to make that work when possible and then add it here.
       - run: yarn
-      - run: yarn build:jsonschema
-      - run: yarn build:ts
+      - run: yarn build
