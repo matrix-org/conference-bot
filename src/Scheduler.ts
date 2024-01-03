@@ -27,9 +27,9 @@ import { Talk } from "./models/Talk";
 import { CheckInMap } from "./CheckInMap";
 import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
 import { IConfig } from "./config";
-import { Counter } from "prom-client";
+import { Gauge } from "prom-client";
 
-const matrixIdentityApiCallsFailed = new Counter({ name: "confbot_scheduler_last_run", help: "The last time the Scheduler ran its tasks."});
+const schedulerLastRunGauge = new Gauge({ name: "confbot_scheduler_last_run", help: "The last time the Scheduler ran its tasks."});
 
 export enum ScheduledTaskType {
     TalkStart = "talk_start",
@@ -196,7 +196,7 @@ export class Scheduler {
     private async runTasks() {
         try {
             const now = (new Date()).getTime();
-            matrixIdentityApiCallsFailed.inc(now);
+            schedulerLastRunGauge.set(now);
             await this.lock.acquireAsync();
             LogService.info("Scheduler", "Scheduling tasks");
             try {
