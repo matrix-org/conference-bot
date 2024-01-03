@@ -1,7 +1,7 @@
 import { PentaDb } from "../../../backends/penta/db/PentaDb";
 import { test, expect, jest } from "@jest/globals";
 import { PentabarfParser } from "../../../backends/penta/PentabarfParser";
-import { IPentaDbConfig, IPentaScheduleBackendConfig, IPrefixConfig } from "../../../config";
+import { IPrefixConfig } from "../../../config";
 import { PentaBackend } from "../../../backends/penta/PentaBackend";
 import { Role } from "../../../models/schedule";
 import { CachingBackend } from "../../../backends/CachingBackend";
