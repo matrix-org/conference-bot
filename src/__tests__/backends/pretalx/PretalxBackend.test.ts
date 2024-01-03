@@ -88,8 +88,8 @@ describe('PretalxBackend', () => {
     });
     afterEach(async () => {
         pretalxServ.close();
-
     });
+
     test("can parse a standard JSON format", async () => {
         const pretalxServ = await fakePretalxServer();
         const backend = await PretalxScheduleBackend.new("/dev/null", {
