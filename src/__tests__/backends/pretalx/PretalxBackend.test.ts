@@ -96,7 +96,7 @@ describe('PretalxBackend', () => {
             backend: "pretalx",
             scheduleDefinition: path.join(__dirname, 'anyconf.json'),
             pretalxAccessToken: "123456",
-            pretalxApiEndpoint: `http://localhost:${(pretalxServ.address() as AddressInfo).port}`,
+            pretalxApiEndpoint: `http://127.0.0.1:${(pretalxServ.address() as AddressInfo).port}`,
         }, prefixConfig);
         expect(backend.conference.title).toBe('AnyConf 2024');
         expect(backend.conference.auditoriums).toHaveLength(7);
