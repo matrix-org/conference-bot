@@ -19,14 +19,8 @@ export const widgetId = urlParams.get("widgetId");
 export const isWidget = widgetId && widgetId !== "$matrix_widget_id";
 
 const widgetparams = new URLSearchParams(window.location.hash.substring(1))
-const widgetQuery = {}
-for (const entry of widgetparams.entries()) {
-    widgetQuery[entry[0]] = entry[1]
-}
+const widgetQuery = Object.fromEntries(widgetparams.entries());
 
 const searchParams = new URLSearchParams(window.location.search.substring(1))
-const parsedSearch = {}
-for (const entry of searchParams.entries()) {
-    parsedSearch[entry[0]] = entry[1]
-}
-export const addlQuery = Object.assign({}, parsedSearch, widgetQuery);
+const parsedSearch = Object.fromEntries(searchParams.entries());
+export const addlQuery = { ...parsedSearch, ...widgetQuery };
