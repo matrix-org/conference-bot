@@ -1,123 +1,120 @@
-import { IPretalxScheduleBackendConfig } from "../../config";
+import { IPrefixConfig, IPretalxScheduleBackendConfig } from "../../config";
 import { IConference, ITalk, IAuditorium, IInterestRoom } from "../../models/schedule";
 import { AuditoriumId, InterestId, IScheduleBackend, TalkId } from "../IScheduleBackend";
 import * as fetch from "node-fetch";
 import * as path from "path";
 import { LogService } from "matrix-bot-sdk";
-import { PretalxData, PretalxSchema } from "./PretalxSchema";
+import { PretalxSchema as PretalxData, parseFromJSON } from "./PretalxParser";
 import { readFile, writeFile } from "fs/promises";
-import { XMLParser } from "fast-xml-parser";
+import { PretalxApiClient, PretalxSpeaker } from "./PretalxApiClient";
 
 
 export class PretalxScheduleBackend implements IScheduleBackend {
-    data: PretalxSchema;
-    private constructor(private cfg: IPretalxScheduleBackendConfig, private wasFromCache: boolean, public readonly dataPath: string) {
-        
+    private speakerCache = new Map<string, PretalxSpeaker>();
+    private readonly apiClient: PretalxApiClient;
+    private constructor(
+        private readonly cfg: IPretalxScheduleBackendConfig,
+        private readonly prefixCfg: IPrefixConfig,
+        private data: PretalxData,
+        private wasFromCache: boolean,
+        private readonly dataPath: string) {
+        this.apiClient = new PretalxApiClient(cfg.pretalxApiEndpoint, cfg.pretalxAccessToken);
     }
 
     wasLoadedFromCache(): boolean {
         return this.wasFromCache;
     }
 
-    static async parseFromXML(rawXml: string): Promise<PretalxSchema> {
-        const parser = new XMLParser({
-            attributesGroupName: "attr",
-            attributeNamePrefix : "@_",
-            textNodeName: "#text",
-            ignoreAttributes: false,
-        });
-        const { schedule } = parser.parse(rawXml) as PretalxData;
-        const interestRooms = new Map<string, IInterestRoom>();
-        const auditoriums = new Map<string, IAuditorium>();
-        const talks = new Map<string, ITalk>();
-
-        const normaliseToArray = <T>(v: T|undefined|T[]) => v !== undefined ? (Array.isArray(v) ? v : [v]) : [];
-
-        for (const day of normaliseToArray(schedule.day)) {
-            for (const room of normaliseToArray(day.room)) {
-                for (const event of normaliseToArray(room.event)) {
-                    
-                    console.log(event.title);   
-                }                
-            }
-        }
-
-        return {
-            conference: {
-                title: schedule.conference.title["#text"],
-                interestRooms: [],
-                auditoriums: [],
-            },
-            interestRooms,
-            auditoriums,
-            talks,
-        }
-    }
-
-    private static async loadConferenceFromCfg(dataPath: string, cfg: IPretalxScheduleBackendConfig, allowUseCache: boolean): Promise<{data: PretalxSchema, cached: boolean}> {
-        let xmlDesc;
+    private static async loadConferenceFromCfg(dataPath: string, cfg: IPretalxScheduleBackendConfig, prefixCfg: IPrefixConfig, allowUseCache: boolean): Promise<{data: PretalxData, cached: boolean}> {
+        let jsonDesc;
         let cached = false;
 
-        const cachedSchedulePath = path.join(dataPath, 'cached_schedule.xml');
+        const cachedSchedulePath = path.join(dataPath, 'cached_schedule.json');
 
         try {
             if (cfg.scheduleDefinition.startsWith("http")) {
                 // Fetch the JSON track over the network
-                xmlDesc = await fetch(cfg.scheduleDefinition).then(r => r.json());
+                jsonDesc = await fetch(cfg.scheduleDefinition).then(r => r.text());
             } else {
                 // Load the JSON from disk
-                xmlDesc = await readFile(cfg.scheduleDefinition, 'utf-8');
+                jsonDesc = await readFile(cfg.scheduleDefinition, 'utf-8');
             }
 
             // Save a cached copy.
-            await writeFile(cachedSchedulePath, xmlDesc);
+            try {
+                await writeFile(cachedSchedulePath, jsonDesc);
+            } catch (ex) {
+                // Allow this to fail, 
+                LogService.warn("PretalxScheduleBackend", "Failed to cache copy of schedule.", ex);
+            }
         } catch (e) {
             // Fallback to cache — only if allowed
             if (! allowUseCache) throw e;
 
             cached = true;
 
-            LogService.error("JsonScheduleBackend", "Unable to load JSON schedule, will use cached copy if available.", e.body ?? e);
+            LogService.error("PretalxScheduleBackend", "Unable to load XML schedule, will use cached copy if available.", e.body ?? e);
             try {
-                xmlDesc = await readFile(cachedSchedulePath, 'utf-8');
+                jsonDesc = await readFile(cachedSchedulePath, 'utf-8');
             } catch (e) {
                 if (e.code === 'ENOENT') {
                     // No file
-                    LogService.error("JsonScheduleBackend", "Double fault: Unable to load schedule and unable to load cached schedule (cached file doesn't exist)");
+                    LogService.error("PretalxScheduleBackend", "Double fault: Unable to load schedule and unable to load cached schedule (cached file doesn't exist)");
                 } else if (e instanceof SyntaxError) {
-                    LogService.error("JsonScheduleBackend", "Double fault: Unable to load schedule and unable to load cached schedule (cached file has invalid JSON)");
+                    LogService.error("PretalxScheduleBackend", "Double fault: Unable to load schedule and unable to load cached schedule (cached file has invalid JSON)");
                 } else {
-                    LogService.error("JsonScheduleBackend", "Double fault: Unable to load schedule and unable to load cached schedule: ", e);
+                    LogService.error("PretalxScheduleBackend", "Double fault: Unable to load schedule and unable to load cached schedule: ", e);
                 }
 
                 throw "Double fault whilst trying to load JSON schedule";
             }
         }
-        
 
-        let data: PretalxSchema = {
-            interestRooms: new Map(),
-            auditoriums: new Map(),
-            talks: new Map(),
-            conference: {
-                title: 'Hi',
-                auditoriums: [],
-                interestRooms: [],
-            }
-        };
+        const data = await parseFromJSON(jsonDesc, prefixCfg);
 
         return {data, cached};
     }
 
-    static async new(dataPath: string, cfg: IPretalxScheduleBackendConfig): Promise<PretalxScheduleBackend> {
-        const loader = await PretalxScheduleBackend.loadConferenceFromCfg(dataPath, cfg, true);
-        return new PretalxScheduleBackend(cfg, loader.cached, dataPath);
+    static async new(dataPath: string, cfg: IPretalxScheduleBackendConfig, prefixCfg: IPrefixConfig): Promise<PretalxScheduleBackend> {
+        const loader = await PretalxScheduleBackend.loadConferenceFromCfg(dataPath, cfg, prefixCfg, true);
+        const backend = new PretalxScheduleBackend(cfg, prefixCfg, loader.data, loader.cached, dataPath);
+        await backend.hydrateFromApi();
+        return backend;
     }
 
     async refresh(): Promise<void> {
-        this.data = (await PretalxScheduleBackend.loadConferenceFromCfg(this.dataPath, this.cfg, false)).data;
+        this.data = (await PretalxScheduleBackend.loadConferenceFromCfg(this.dataPath, this.cfg, this.prefixCfg, false)).data;
+        await this.hydrateFromApi();
         // If we managed to load anything, this isn't from the cache anymore.
         this.wasFromCache = false;
+    }
+
+    private async hydrateFromApi() {
+        if (this.speakerCache.size === 0) {
+            // Do a full refresh of speaker data.
+            for await (const speaker of await this.apiClient.getAllSpeakers()) {
+                this.speakerCache.set(speaker.code, speaker);
+            }
+        } // else: we just fetch missing speakers on demand.
+
+        // Set emails for all the speakers.
+        for (const talk of this.data.talks.values()) {
+            for (const speaker of talk.speakers) {
+                let cachedSpeaker = this.speakerCache.get(speaker.id);
+                if (!cachedSpeaker) {
+                    LogService.info("PretalxScheduleBackend", `Speaker ${speaker.id} not found in cache, fetching from API`);
+                    try {
+                        const fetchedSpeaker = await this.apiClient.getSpeaker(speaker.id);
+                        this.speakerCache.set(fetchedSpeaker.code, fetchedSpeaker);
+                        cachedSpeaker = fetchedSpeaker;
+                    } catch (ex) {
+                        LogService.warn("PretalxScheduleBackend", `Speaker ${speaker.id} not found in API. This is problematic.`, ex);
+                        continue;
+                    }
+                }
+                speaker.email = cachedSpeaker?.email;
+            }
+        }
     }
 
     async refreshShortTerm(_lookaheadSeconds: number): Promise<void> {
@@ -127,7 +124,11 @@ export class PretalxScheduleBackend implements IScheduleBackend {
     }
 
     get conference(): IConference {
-        return this.data.conference;
+        return {
+            title: this.data.title,
+            interestRooms: [...this.data.interestRooms.values()],
+            auditoriums: [...this.data.auditoriums.values()]
+        };
     };
 
     get talks(): Map<TalkId, ITalk> {
