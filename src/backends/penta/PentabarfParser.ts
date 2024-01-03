@@ -21,15 +21,11 @@ import { RoomKind } from "../../models/room_kinds";
 import { IPrefixConfig } from "../../config";
 import { LogService } from 'matrix-bot-sdk';
 import { slugify } from '../../utils/aliases';
+import { simpleTimeParse } from "../common";
 
 function arrayLike<T>(val: T | T[]): T[] {
     if (Array.isArray(val)) return val;
     return [val];
-}
-
-function simpleTimeParse(str: string): { hours: number, minutes: number } {
-    const parts = str.split(':');
-    return {hours: Number(parts[0]), minutes: Number(parts[1])};
 }
 
 /**
