@@ -131,6 +131,8 @@ export interface IPretalxScheduleBackendConfig {
      * HTTP(S) URL to schedule XML.
      */
     scheduleDefinition: string;
+    pretalxAccessToken: string;
+    pretalxApiEndpoint: string;
 }
 
 
