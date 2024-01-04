@@ -22,33 +22,48 @@ export interface PretalxSpeaker {
     avatar: string,
     answers: [],
     email: string,
-    availabilities: {
-        id: string,
-        start: string,
-        end: string,
-        allDay: boolean
-    }[],
 }
 
-interface PretalxSpeakersResponse {
+interface PretalxResultsResponse<T> {
     count: number;
     next: string;
     previous: string|null,
-    results: [{
-        code: string,
-        name: string,
-        biography: string|null,
-        submissions: string[],
-        avatar: string,
-        answers: [],
-        email: string,
-        availabilities: {
-            id: string,
-            start: string,
-            end: string,
-            allDay: boolean
-        }[],
-    }]
+    results: T[]
+}
+
+export interface PretalxTalk {
+    "code": string,
+    "speakers": Omit<PretalxSpeaker, "submissions">[],
+    "title": string,
+    "submission_type": string,
+    "submission_type_id": number
+    "track": {
+        "en": string,
+    },
+    "track_id": number,
+    "state": "confirmed",
+    "abstract": string,
+    "description": null,
+    "duration": number,
+    "slot_count": number,
+    "do_not_record": boolean,
+    "is_featured": boolean,
+    "content_locale": "en",
+    "slot": {
+        "room_id": string,
+        "room": string,
+        "start": string,
+        "end": string,
+    },
+    "image": string,
+    "resources": {resource: string, description: string}[]
+    "created": string,
+    "pending_state": string|null,
+    answers: unknown[],
+    "notes": string,
+    "internal_notes": string,
+    "tags": string[]
+    "tag_ids": string[]
 }
 
 export class PretalxApiClient {
@@ -84,7 +99,7 @@ export class PretalxApiClient {
             const reason = await req.text();
             throw Error(`Failed to request speakers from Pretalx: ${req.status} ${reason}`);
         }
-        const result = await req.json() as PretalxSpeakersResponse;
+        const result = await req.json() as PretalxResultsResponse<PretalxSpeaker>;
         const nextValue = result.next && new URL(result.next).searchParams.get('offset');
         return {
             speakers: result.results,
@@ -98,6 +113,34 @@ export class PretalxApiClient {
             const { next: newOffset, speakers } = await this.getSpeakers(offset, 100);
             for (const speaker of speakers) {
                 yield speaker;
+            }
+            offset = newOffset
+        } while (offset !== null)
+    }
+
+    async getTalks(offset: number, limit: number) {
+        const url = new URL(this.baseUri + '/talks/');
+        url.searchParams.set('offset', offset.toString());
+        url.searchParams.set('limit', limit.toString());
+        const req = await fetch(url, this.requestInit);
+        if (!req.ok) {
+            const reason = await req.text();
+            throw Error(`Failed to request talks from Pretalx: ${req.status} ${reason}`);
+        }
+        const result = await req.json() as PretalxResultsResponse<PretalxTalk>;
+        const nextValue = result.next && new URL(result.next).searchParams.get('offset');
+        return {
+            talks: result.results,
+            next: nextValue ? parseInt(nextValue) : null,
+        };
+    }
+
+    async *getAllTalks(): AsyncGenerator<PretalxTalk, void, void> {
+        let offset: number|null = 0;
+        do {
+            const { next: newOffset, talks } = await this.getTalks(offset, 100);
+            for (const talk of talks) {
+                yield talk;
             }
             offset = newOffset
         } while (offset !== null)

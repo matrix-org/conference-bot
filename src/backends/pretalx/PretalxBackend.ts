@@ -15,14 +15,14 @@ limitations under the License.
 */
 
 import { IPrefixConfig, IPretalxScheduleBackendConfig } from "../../config";
-import { IConference, ITalk, IAuditorium, IInterestRoom } from "../../models/schedule";
+import { IConference, ITalk, IAuditorium, IInterestRoom, Role } from "../../models/schedule";
 import { AuditoriumId, InterestId, IScheduleBackend, TalkId } from "../IScheduleBackend";
 import * as fetch from "node-fetch";
 import * as path from "path";
 import { LogService } from "matrix-bot-sdk";
 import { PretalxSchema as PretalxData, parseFromJSON } from "./PretalxParser";
 import { readFile, writeFile } from "fs/promises";
-import { PretalxApiClient, PretalxSpeaker } from "./PretalxApiClient";
+import { PretalxApiClient, PretalxSpeaker, PretalxTalk } from "./PretalxApiClient";
 
 export class PretalxScheduleBackend implements IScheduleBackend {
     private speakerCache = new Map<string, PretalxSpeaker>();
@@ -105,30 +105,23 @@ export class PretalxScheduleBackend implements IScheduleBackend {
     }
 
     private async hydrateFromApi() {
-        if (this.speakerCache.size === 0) {
-            // Do a full refresh of speaker data.
-            for await (const speaker of await this.apiClient.getAllSpeakers()) {
-                this.speakerCache.set(speaker.code, speaker);
+        for await (const apiTalk of this.apiClient.getAllTalks()) {
+            if (apiTalk.state !== "confirmed") {
+                continue;
             }
-        } // else: we just fetch missing speakers on demand.
-
-        // Set emails for all the speakers.
-        for (const talk of this.data.talks.values()) {
-            for (const speaker of talk.speakers) {
-                let cachedSpeaker = this.speakerCache.get(speaker.id);
-                if (!cachedSpeaker) {
-                    LogService.info("PretalxScheduleBackend", `Speaker ${speaker.id} not found in cache, fetching from API`);
-                    try {
-                        const fetchedSpeaker = await this.apiClient.getSpeaker(speaker.id);
-                        this.speakerCache.set(fetchedSpeaker.code, fetchedSpeaker);
-                        cachedSpeaker = fetchedSpeaker;
-                    } catch (ex) {
-                        LogService.warn("PretalxScheduleBackend", `Speaker ${speaker.id} not found in API. This is problematic.`, ex);
-                        continue;
-                    }
-                }
-                speaker.email = cachedSpeaker?.email;
+            const localTalk = this.data.talks.get(apiTalk.code);
+            if (!localTalk) {
+                LogService.warn("PretalxScheduleBackend", `Talk missing from public schedule ${apiTalk.code}.`);
+                continue;
             }
+            localTalk.speakers = apiTalk.speakers.map(speaker => ({
+                id: speaker.code,
+                // Set emails for all the speakers.
+                email: speaker.email,
+                matrix_id: '',
+                name: speaker.name,
+                role: Role.Speaker,
+            }));
         }
     }
 
