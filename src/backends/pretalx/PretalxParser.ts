@@ -82,7 +82,6 @@ export interface PretalxSchema {
     title: string;
 }
 
-
 /**
  * This will parse a schedule JSON file and attempt to fill in some of the fields. As the JSON
  * only contains some (public) data, consumers should expect to find additional information through
@@ -93,7 +92,7 @@ export interface PretalxSchema {
 export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig): Promise<PretalxSchema> {
     const { conference } = (JSON.parse(rawJson) as PretalxData).schedule;
     const interestRooms = new Map<string, IInterestRoom>();
-    const auditoriums = new Map<string, IAuditorium>();
+    const auditoriums = new Map<string, IAuditorium&{qaEnabled: boolean}>();
     const talks = new Map<string, ITalk>();
 
     for (const room of conference.rooms) {
@@ -110,14 +109,16 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
             interestRooms.set(spiRoom.id, spiRoom);
         } else if (kind === RoomKind.Auditorium) {
             console.log(kind, description);
-            const isPhysical = prefixConfig.physicalAuditoriumRooms.find(p => room.description.startsWith(p)) !== undefined;
-            let auditorium: IAuditorium = {
+            const isPhysical = prefixConfig.physicalAuditoriumRooms.some(p => room.description.startsWith(p));
+            const qaEnabled = prefixConfig.qaAuditoriumRooms.some(p => auditorium.id.startsWith(p));
+            const auditorium = {
                 id: room.name,
                 slug: slugify(room.name),
                 name: description,
                 kind: kind,
                 talks: new Map(),
-                isPhysical: isPhysical
+                isPhysical: isPhysical,
+                qaEnabled: qaEnabled,
             };
             auditoriums.set(room.name, auditorium);
         }
@@ -131,7 +132,6 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
                 // Skipping event, not mapped to an auditorium.
                 continue;
             }
-            const qaEnabled = auditorium ? prefixConfig.qaAuditoriumRooms.find(p => auditorium.id.startsWith(p)) !== undefined : false;
             for (const event of events) {
                 const eventDate = new Date(event.date);
                 // This assumes your event does not span multiple days
@@ -144,18 +144,17 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
                 
                 if (event.type === 'Talk') {
                     const eventId = event.id.toString();
-                    const talk = {
-                        id: eventId,
+                    const talk: ITalk = {
                         dateTs: dayStart.getTime(),
-                        startTime: eventDate.getTime(),
                         endTime: endTime.getTime(),
-                        // TODO: Unsure if we care about QA?
-                        qa_startTime: null,
-                        // TODO: What is this?
+                        id: eventId,
                         livestream_endTime: 0,
-                        title: event.title,
+                        qa_startTime: auditorium.qaEnabled ? 0 : null,
+                        startTime: eventDate.getTime(),
                         subtitle: event.subtitle,
+                        title: event.title,
                         track: event.track,
+                        prerecorded: false,
                         speakers: event.persons.map(p => ({
                             id: p.code,
                             name: p.public_name,
@@ -166,7 +165,6 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
                             matrix_id: '',
                         })), //event.persons,
                         // TODO: Unsure?
-                        prerecorded: false,
                         auditoriumId: roomName,
                         slug: event.slug,
                     };
