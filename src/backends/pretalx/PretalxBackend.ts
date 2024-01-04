@@ -22,10 +22,10 @@ import * as path from "path";
 import { LogService } from "matrix-bot-sdk";
 import { PretalxSchema as PretalxData, parseFromJSON } from "./PretalxParser";
 import { readFile, writeFile } from "fs/promises";
-import { PretalxApiClient, PretalxSpeaker, PretalxTalk } from "./PretalxApiClient";
+import { PretalxApiClient } from "./PretalxApiClient";
+import { PentabarfParser } from "../penta/PentabarfParser";
 
 export class PretalxScheduleBackend implements IScheduleBackend {
-    private speakerCache = new Map<string, PretalxSpeaker>();
     private readonly apiClient: PretalxApiClient;
     private constructor(
         private readonly cfg: IPretalxScheduleBackendConfig,
@@ -41,7 +41,7 @@ export class PretalxScheduleBackend implements IScheduleBackend {
     }
 
     private static async loadConferenceFromCfg(dataPath: string, cfg: IPretalxScheduleBackendConfig, prefixCfg: IPrefixConfig, allowUseCache: boolean): Promise<{data: PretalxData, cached: boolean}> {
-        let jsonDesc;
+        let jsonOrXMLDesc;
         let cached = false;
 
         const cachedSchedulePath = path.join(dataPath, 'cached_schedule.json');
@@ -49,15 +49,15 @@ export class PretalxScheduleBackend implements IScheduleBackend {
         try {
             if (cfg.scheduleDefinition.startsWith("http")) {
                 // Fetch the JSON track over the network
-                jsonDesc = await fetch(cfg.scheduleDefinition).then(r => r.text());
+                jsonOrXMLDesc = await fetch(cfg.scheduleDefinition).then(r => r.text());
             } else {
                 // Load the JSON from disk
-                jsonDesc = await readFile(cfg.scheduleDefinition, 'utf-8');
+                jsonOrXMLDesc = await readFile(cfg.scheduleDefinition, 'utf-8');
             }
 
             // Save a cached copy.
             try {
-                await writeFile(cachedSchedulePath, jsonDesc);
+                await writeFile(cachedSchedulePath, jsonOrXMLDesc);
             } catch (ex) {
                 // Allow this to fail, 
                 LogService.warn("PretalxScheduleBackend", "Failed to cache copy of schedule.", ex);
@@ -70,7 +70,7 @@ export class PretalxScheduleBackend implements IScheduleBackend {
 
             LogService.error("PretalxScheduleBackend", "Unable to load XML schedule, will use cached copy if available.", e.body ?? e);
             try {
-                jsonDesc = await readFile(cachedSchedulePath, 'utf-8');
+                jsonOrXMLDesc = await readFile(cachedSchedulePath, 'utf-8');
             } catch (e) {
                 if (e.code === 'ENOENT') {
                     // No file
@@ -84,8 +84,21 @@ export class PretalxScheduleBackend implements IScheduleBackend {
                 throw "Double fault whilst trying to load JSON schedule";
             }
         }
-
-        const data = await parseFromJSON(jsonDesc, prefixCfg);
+        let data: PretalxData;
+        // For FOSDEM we prefer to use the pentabarf format as it contains
+        // extra information not found in the JSON format. This may change
+        // in the future.
+        if (cfg.scheduleFormat === "pentabarf") {
+            const pentaData = new PentabarfParser(jsonOrXMLDesc, prefixCfg);
+            data = {
+                talks: new Map(pentaData.talks.map(v => [v.id, v])),
+                auditoriums: new Map(pentaData.auditoriums.map(v => [v.name, v])),
+                interestRooms: new Map(pentaData.interestRooms.map(v => [v.id, v])),
+                title: pentaData.conference.title,
+            }
+        } else {
+            data = await parseFromJSON(jsonOrXMLDesc, prefixCfg);
+        }
 
         return {data, cached};
     }

@@ -92,8 +92,17 @@ export interface PretalxData {
 
 
 export interface PretalxSchema {
+    /**
+     * room.id -> IInterestRoom
+     */
     interestRooms: Map<string, IInterestRoom>;
+    /**
+     * room.name -> IAuditorium
+     */
     auditoriums: Map<string, IAuditorium>;
+    /**
+     * eventId -> ITalk
+     */
     talks: Map<string, ITalk>;
     title: string;
 }

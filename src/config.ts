@@ -128,6 +128,12 @@ export interface IPentaScheduleBackendConfig {
 export interface IPretalxScheduleBackendConfig {
     backend: "pretalx";
     /**
+     * Is the schedule in pentabarf or pretalx format? For legacy reasons
+     * some conferences prefer "pentabarf" which can contain extensions.
+     * Defaults to "pretalx".
+     */
+    scheduleFormat?: "pentabarf"|"pretalx";
+    /**
      * HTTP(S) URL to schedule XML.
      */
     scheduleDefinition: string;
