@@ -104,10 +104,13 @@ export interface IPentabarfSchedule {
             day_change: string;
             timeslot_duration: string;
         };
-        tracks: {
+        /**
+         * This is an extension from FOSDEM.
+         */
+        tracks?: {
             track: [{
                 attr: {
-                    "@online_qa": string;
+                    "@_online_qa": string;
                 };
                 "#text": string;
             }]
@@ -156,8 +159,8 @@ export class PentabarfParser {
         };
         const trackHasOnlineQA = new Map<string, boolean>();
 
-        for (const track of this.parsed.schedule.tracks.track) {
-            trackHasOnlineQA.set(track["#text"], Boolean(track.attr["@online_qa"]));
+        for (const track of this.parsed.schedule.tracks?.track || []) {
+            trackHasOnlineQA.set(track["#text"], Boolean(track.attr["@_online_qa"]));
         }
 
         for (const day of arrayLike(this.parsed.schedule?.day)) {
