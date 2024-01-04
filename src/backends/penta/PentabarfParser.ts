@@ -104,6 +104,14 @@ export interface IPentabarfSchedule {
             day_change: string;
             timeslot_duration: string;
         };
+        tracks: {
+            track: [{
+                attr: {
+                    "@online_qa": string;
+                };
+                "#text": string;
+            }]
+        },
         day: {
             attr: {
                 "@_index": string; // number
@@ -146,6 +154,11 @@ export class PentabarfParser {
             auditoriums: this.auditoriums,
             interestRooms: this.interestRooms,
         };
+        const trackHasOnlineQA = new Map<string, boolean>();
+
+        for (const track of this.parsed.schedule.tracks.track) {
+            trackHasOnlineQA.set(track["#text"], Boolean(track.attr["@online_qa"]));
+        }
 
         for (const day of arrayLike(this.parsed.schedule?.day)) {
             if (!day) continue;
@@ -190,8 +203,9 @@ export class PentabarfParser {
                     this.auditoriums.push(auditorium);
                 }
 
-                const qaEnabled = prefixConfig.qaAuditoriumRooms.find(p => auditorium.id.startsWith(p)) !== undefined;
+                const roomQaEnabled = prefixConfig.qaAuditoriumRooms.find(p => auditorium.id.startsWith(p)) !== undefined;
 
+            
                 for (const pEvent of arrayLike(pRoom.event)) {
                     if (!pEvent) continue;
 
@@ -201,6 +215,9 @@ export class PentabarfParser {
                         LogService.info("PentabarfParser", `Talk '${pEvent.attr?.["@_id"]}' has CANCELLED in prefix of title: ignoring.`)
                         continue;
                     }
+
+                    // The schedule is authorative, but we fall back to the manual list.
+                    let qaEnabled = trackHasOnlineQA.get(pEvent.track) ?? roomQaEnabled;
 
                     const parsedStartTime = simpleTimeParse(pEvent.start);
                     const parsedDuration = simpleTimeParse(pEvent.duration);
