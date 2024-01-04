@@ -118,11 +118,12 @@ export class PretalxScheduleBackend implements IScheduleBackend {
     }
 
     private async hydrateFromApi() {
+        // The schedule data uses ID (1234) and the API uses code ("GK99DE"). Because of this, we have to map on
         for await (const apiTalk of this.apiClient.getAllTalks()) {
             if (apiTalk.state !== "confirmed") {
                 continue;
             }
-            const localTalk = this.data.talks.get(apiTalk.code);
+            const localTalk = this.talks.get(apiTalk.code);
             if (!localTalk) {
                 LogService.warn("PretalxScheduleBackend", `Talk missing from public schedule ${apiTalk.code}.`);
                 continue;

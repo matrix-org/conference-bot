@@ -8,41 +8,43 @@ const pretalxSpeakers = [{
     code: "37RA83",
     name: "AnyConf Staff",
     biography: null,
-    submissions: [],
     avatar: "",
-    answers: [],
     email: "staff@anyconf.example.com",
-    availabilities: [],
 },{
     code: "YT3EFD",
     name: "Alice AnyConf",
     biography: "Alice is a test user with a big robotic brain.",
-    submissions: [],
     avatar: "",
-    answers: [],
     email: "alice@anyconf.example.com",
-    availabilities: [],
+}];
+
+const pretalxTalks = [{
+    "code": "GK99DE",
+    "speakers": pretalxSpeakers,
+}, {
+    "code": "ABCDEF",
+    "speakers": pretalxSpeakers,
 }];
 
 function fakePretalxServer() {
     return new Promise<Server>(resolve => { const server = createServer((req, res) => {
-        if (req.url?.startsWith('/speakers/?')) {
+        if (req.url?.startsWith('/talks/?')) {
             res.writeHead(200);
             res.end(JSON.stringify({
-                count: pretalxSpeakers.length,
+                count: pretalxTalks.length,
                 next: null,
                 previous: null,
-                results: pretalxSpeakers,
+                results: pretalxTalks,
             }));
-        } else if (req.url?.startsWith('/speakers/')) {
-            const speakerCode = req.url.slice('/speakers/'.length);
-            const speaker = pretalxSpeakers.find(s => s.code === speakerCode);
-            if (speaker) {
+        } else if (req.url?.startsWith('/talks/')) {
+            const talkCode = req.url.slice('/talks/'.length);
+            const talk = pretalxTalks.find(s => s.code === talkCode);
+            if (talk) {
                 res.writeHead(200);
-                res.end(speaker);
+                res.end(talk);
             } else {
                 res.writeHead(404);
-                res.end(`Speaker "${speakerCode}" not found`);
+                res.end(`Talk "${talkCode}" not found`);
             }
         } else {
             console.log(req.url);

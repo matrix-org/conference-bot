@@ -60,6 +60,8 @@ export function decodePrefix(id: string, prefixConfig: IPrefixConfig): {kind: Ro
 export interface IPentabarfEvent {
     attr: {
         "@_id": string; // number
+        // Extension from FOSDEM to map to Pretalx codes.
+        "@_code": string; // number
     };
     start: string;
     duration: string;
@@ -210,12 +212,14 @@ export class PentabarfParser {
 
             
                 for (const pEvent of arrayLike(pRoom.event)) {
+                    // Prefer code, which maps to pretalx. If not available then fall back to @_id.
+                    const talkId = pEvent.attr?.["@_code"] ?? pEvent.attr?.["@_id"];
                     if (!pEvent) continue;
 
                     if (pEvent.title.startsWith("CANCELLED ")) {
                         // FOSDEM represents cancelled talks with a title prefix.
                         // There is currently no more 'proper' way to get this information.
-                        LogService.info("PentabarfParser", `Talk '${pEvent.attr?.["@_id"]}' has CANCELLED in prefix of title: ignoring.`)
+                        LogService.info("PentabarfParser", `Talk '${talkId}' has CANCELLED in prefix of title: ignoring.`)
                         continue;
                     }
 
@@ -227,7 +231,7 @@ export class PentabarfParser {
                     const startTime = moment(dateTs).add(parsedStartTime.hours, 'hours').add(parsedStartTime.minutes, 'minutes');
                     const endTime = moment(startTime).add(parsedDuration.hours, 'hours').add(parsedDuration.minutes, 'minutes');
                     let talk: ITalk = {
-                        id: pEvent.attr?.["@_id"],
+                        id: talkId,
                         dateTs: dateTs,
                         startTime: startTime.valueOf(),
                         endTime: endTime.valueOf(),

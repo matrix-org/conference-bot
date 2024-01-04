@@ -133,9 +133,8 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
             };
             interestRooms.set(spiRoom.id, spiRoom);
         } else if (kind === RoomKind.Auditorium) {
-            console.log(kind, description);
             const isPhysical = prefixConfig.physicalAuditoriumRooms.some(p => room.description.startsWith(p));
-            const qaEnabled = prefixConfig.qaAuditoriumRooms.some(p => auditorium.id.startsWith(p));
+            const qaEnabled = prefixConfig.qaAuditoriumRooms.some(p => room.description.startsWith(p));
             const auditorium = {
                 id: room.name,
                 slug: slugify(room.name),
@@ -168,11 +167,16 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
                 );
                 
                 if (event.type === 'Talk') {
-                    const eventId = event.id.toString();
+                    // Tediously, we need the "code" to map to pretalx. The "code"
+                    // is only available via the URL.
+                    const eventCode = event.url.split('/').reverse()[1];
+                    if (!eventCode) {
+                        throw Error('Could not determine code for event');
+                    }
                     const talk: ITalk = {
                         dateTs: dayStart.getTime(),
                         endTime: endTime.getTime(),
-                        id: eventId,
+                        id: eventCode,
                         livestream_endTime: 0,
                         qa_startTime: auditorium.qaEnabled ? 0 : null,
                         startTime: eventDate.getTime(),
@@ -193,8 +197,8 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
                         auditoriumId: roomName,
                         slug: event.slug,
                     };
-                    talks.set(eventId, talk);
-                    auditorium?.talks.set(eventId, talk);
+                    talks.set(eventCode, talk);
+                    auditorium?.talks.set(eventCode, talk);
                 }
             }
         }
