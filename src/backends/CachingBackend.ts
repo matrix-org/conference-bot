@@ -1,6 +1,4 @@
-import { rename } from "fs";
 import { LogService } from "matrix-bot-sdk";
-import { config } from "process";
 import { RoomKind } from "../models/room_kinds";
 import { IConference, ITalk, IAuditorium, IInterestRoom } from "../models/schedule";
 import { jsonReplacerMapToObject, readJsonFileAsync, writeJsonFileAsync } from "../utils";
