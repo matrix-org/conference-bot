@@ -147,8 +147,9 @@ conference:
   # schedule:
     # backend: "pretalx"
     # The format the scheduleDefinition is in. Use "pretalx" if you are loading the
-    # JSON export from pretalx directly, or "penta" if the schema is in penta format.
-    # scheduleFormat: "penta"|"pretalx"
+    # JSON export from pretalx directly, or "fosdem" for the specific pentabarf-xml-format
+    # they use instead.
+    # scheduleFormat: "fosdem"|"pretalx"
     # The URL to the XML which is updated with conference information.
     # This is read and parsed by the bot during the early stages of
     # setting up the conference.
