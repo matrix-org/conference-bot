@@ -67,11 +67,11 @@ export interface PretalxTalk {
 }
 
 export class PretalxApiClient {
-    constructor(private readonly baseUri: string, private readonly token: string) {
+    constructor(protected readonly baseUri: string, private readonly token: string) {
         if (baseUri.endsWith('/')) { this.baseUri = baseUri.slice(0, -1)}
     }
 
-    private get requestInit(): RequestInit {
+    protected get requestInit(): RequestInit {
         return {
             headers: {
                 'Authorization': `Token ${this.token}`

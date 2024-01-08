@@ -132,12 +132,20 @@ export interface IPentabarfSchedule {
     };
 }
 
+export interface IPentabarfTalk extends ITalk {
+    /**
+     * For the FOSDEM extended version of this format,
+     * a "code" is provided.
+     */
+    pretalxCode?: string;
+}
+
 export class PentabarfParser {
     private readonly parsed: IPentabarfSchedule;
 
     public readonly conference: IConference;
     public readonly auditoriums: IAuditorium[];
-    public readonly talks: ITalk[];
+    public readonly talks: IPentabarfTalk[];
     public readonly speakers: IPerson[];
     public readonly interestRooms: IInterestRoom[];
 
@@ -212,9 +220,9 @@ export class PentabarfParser {
 
             
                 for (const pEvent of arrayLike(pRoom.event)) {
-                    // Prefer code, which maps to pretalx. If not available then fall back to @_id.
-                    const talkId = pEvent.attr?.["@_code"] ?? pEvent.attr?.["@_id"];
                     if (!pEvent) continue;
+                    // Prefer code, which maps to pretalx. If not available then fall back to @_id.
+                    const talkId = pEvent.attr?.["@_id"];
 
                     if (pEvent.title.startsWith("CANCELLED ")) {
                         // FOSDEM represents cancelled talks with a title prefix.
@@ -230,7 +238,8 @@ export class PentabarfParser {
                     const parsedDuration = simpleTimeParse(pEvent.duration);
                     const startTime = moment(dateTs).add(parsedStartTime.hours, 'hours').add(parsedStartTime.minutes, 'minutes');
                     const endTime = moment(startTime).add(parsedDuration.hours, 'hours').add(parsedDuration.minutes, 'minutes');
-                    let talk: ITalk = {
+                    let talk: IPentabarfTalk = {
+                        pretalxCode:  pEvent.attr?.["@_code"],
                         id: talkId,
                         dateTs: dateTs,
                         startTime: startTime.valueOf(),
