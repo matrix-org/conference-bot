@@ -125,14 +125,26 @@ export interface IPentaScheduleBackendConfig {
     database: IPentaDbConfig;
 }
 
+export enum PretalxScheduleFormat {
+    /**
+     * Standard pretalx support, uses no custom extensions.
+     */
+    Pretalx = "pretalx",
+    /**
+     * Expects a pentabarf (+ extensions)
+     * format schedule. Extends standard pretalx API client.
+     */
+    FOSDEM = "fosdem",
+}
+
 export interface IPretalxScheduleBackendConfig {
     backend: "pretalx";
     /**
-     * Is the schedule in pentabarf or pretalx format? For legacy reasons
-     * some conferences prefer "pentabarf" which can contain extensions.
+     * Is the schedule in fosdem or pretalx format? For legacy reasons
+     * some conferences prefer "fosdem" which can contain extensions.
      * Defaults to "pretalx".
      */
-    scheduleFormat?: "pentabarf"|"pretalx";
+    scheduleFormat?: PretalxScheduleFormat;
     /**
      * HTTP(S) URL to schedule XML.
      */
