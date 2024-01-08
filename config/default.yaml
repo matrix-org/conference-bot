@@ -122,8 +122,9 @@ conference:
   name: "FOSDEM 2021"
 
 
-  # Schema may either be "json", "penta" or "pretalx". Remember to only
-  # specify one.
+  # You must specifiy a backend for your schedule.
+  # It may either be "json", "penta", or "pretalx". Remember to only
+  # specify *one*.
 
   # sample schedule configuration for using the json backend.
   schedule:

@@ -59,11 +59,33 @@ export interface PretalxTalk {
     "resources": {resource: string, description: string}[]
     "created": string,
     "pending_state": string|null,
-    answers: unknown[],
+    answers: {
+        "id": number,
+        "question": {
+            "id": 1,
+            "question": {
+                "en": string,
+            },
+            "required": false,
+            "target": "submission",
+            "options": {
+                id: string,
+                option: string,
+            }[],
+        },
+        "answer": string,
+        "answer_file": string|null,
+        "submission": string,
+        "person": string|null,
+        "options": {
+            id: string,
+            option: string,
+        }[],
+    }[],
     "notes": string,
     "internal_notes": string,
-    "tags": string[]
-    "tag_ids": string[]
+    "tags": string[],
+    "tag_ids": string[],
 }
 
 export class PretalxApiClient {
