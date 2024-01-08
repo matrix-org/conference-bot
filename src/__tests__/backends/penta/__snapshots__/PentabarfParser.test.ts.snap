@@ -16,6 +16,7 @@ exports[`parsing pentabarf XML: overview: auditoriums 1`] = `
         "id": "E001",
         "livestream_endTime": 0,
         "prerecorded": true,
+        "pretalxCode": undefined,
         "qa_startTime": null,
         "slug": "testcon_opening_remarks",
         "speakers": [
@@ -61,6 +62,7 @@ exports[`parsing pentabarf XML: overview: conference 1`] = `
           "id": "E001",
           "livestream_endTime": 0,
           "prerecorded": true,
+          "pretalxCode": undefined,
           "qa_startTime": null,
           "slug": "testcon_opening_remarks",
           "speakers": [
@@ -122,6 +124,7 @@ exports[`parsing pentabarf XML: overview: talks 1`] = `
     "id": "E001",
     "livestream_endTime": 0,
     "prerecorded": true,
+    "pretalxCode": undefined,
     "qa_startTime": null,
     "slug": "testcon_opening_remarks",
     "speakers": [
@@ -157,6 +160,7 @@ exports[`tracks that set a online qa value correctly apply to talks: talks 1`] =
     "id": "E001",
     "livestream_endTime": 0,
     "prerecorded": true,
+    "pretalxCode": undefined,
     "qa_startTime": 0,
     "slug": "testcon_opening_remarks",
     "speakers": [
@@ -187,6 +191,7 @@ exports[`tracks that set a online qa value correctly apply to talks: talks 1`] =
     "id": "E002",
     "livestream_endTime": 0,
     "prerecorded": true,
+    "pretalxCode": undefined,
     "qa_startTime": 0,
     "slug": "testcon_opening_remarks",
     "speakers": [
@@ -217,6 +222,7 @@ exports[`tracks that set a online qa value correctly apply to talks: talks 1`] =
     "id": "E003",
     "livestream_endTime": 0,
     "prerecorded": true,
+    "pretalxCode": undefined,
     "qa_startTime": null,
     "slug": "testcon_opening_remarks",
     "speakers": [
@@ -247,6 +253,7 @@ exports[`tracks that set a online qa value correctly apply to talks: talks 1`] =
     "id": "E004",
     "livestream_endTime": 0,
     "prerecorded": true,
+    "pretalxCode": undefined,
     "qa_startTime": 0,
     "slug": "testcon_opening_remarks",
     "speakers": [

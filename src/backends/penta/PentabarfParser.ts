@@ -93,6 +93,26 @@ export interface IPentabarfEvent {
     };
 }
 
+interface Track {
+    attr: {
+        "@_online_qa": string;
+    };
+    "#text": string;
+}
+
+interface Day {
+    attr: {
+        "@_index": string; // number
+        "@_date": string;
+    };
+    room: {
+        attr: {
+            "@_name": string;
+        };
+        event: IPentabarfEvent[];
+    }[];
+}
+
 export interface IPentabarfSchedule {
     schedule: {
         conference: {
@@ -110,25 +130,9 @@ export interface IPentabarfSchedule {
          * This is an extension from FOSDEM.
          */
         tracks?: {
-            track: [{
-                attr: {
-                    "@_online_qa": string;
-                };
-                "#text": string;
-            }]
+            track: Track|Track[];
         },
-        day: {
-            attr: {
-                "@_index": string; // number
-                "@_date": string;
-            };
-            room: {
-                attr: {
-                    "@_name": string;
-                };
-                event: IPentabarfEvent[];
-            }[];
-        }[];
+        day: Day|Day[];
     };
 }
 
@@ -169,7 +173,7 @@ export class PentabarfParser {
         };
         const trackHasOnlineQA = new Map<string, boolean>();
 
-        for (const track of this.parsed.schedule.tracks?.track || []) {
+        for (const track of arrayLike(this.parsed.schedule.tracks?.track ?? [])) {
             trackHasOnlineQA.set(track["#text"], Boolean(track.attr["@_online_qa"]));
         }
 
