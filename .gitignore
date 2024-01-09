@@ -5,6 +5,8 @@ config/*
 storage/
 lib/
 srv/
+/.devenv
+/.direnv
 
 # Derived from /src/parsers/jsonschemas
 /src/backends/jsontypes
