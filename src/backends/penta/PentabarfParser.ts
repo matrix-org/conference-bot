@@ -14,22 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import * as parser from 'fast-xml-parser';
+import { XMLParser } from "fast-xml-parser";
 import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from "../../models/schedule";
 import moment from "moment";
 import { RoomKind } from "../../models/room_kinds";
 import { IPrefixConfig } from "../../config";
 import { LogService } from 'matrix-bot-sdk';
 import { slugify } from '../../utils/aliases';
+import { simpleTimeParse } from "../common";
 
 function arrayLike<T>(val: T | T[]): T[] {
     if (Array.isArray(val)) return val;
     return [val];
-}
-
-function simpleTimeParse(str: string): { hours: number, minutes: number } {
-    const parts = str.split(':');
-    return {hours: Number(parts[0]), minutes: Number(parts[1])};
 }
 
 /**
@@ -64,6 +60,8 @@ export function decodePrefix(id: string, prefixConfig: IPrefixConfig): {kind: Ro
 export interface IPentabarfEvent {
     attr: {
         "@_id": string; // number
+        // Extension from FOSDEM to map to Pretalx codes.
+        "@_code": string; // number
     };
     start: string;
     duration: string;
@@ -95,6 +93,26 @@ export interface IPentabarfEvent {
     };
 }
 
+interface Track {
+    attr: {
+        "@_online_qa": string;
+    };
+    "#text": string;
+}
+
+interface Day {
+    attr: {
+        "@_index": string; // number
+        "@_date": string;
+    };
+    room: {
+        attr: {
+            "@_name": string;
+        };
+        event: IPentabarfEvent[];
+    }[];
+}
+
 export interface IPentabarfSchedule {
     schedule: {
         conference: {
@@ -108,19 +126,22 @@ export interface IPentabarfSchedule {
             day_change: string;
             timeslot_duration: string;
         };
-        day: {
-            attr: {
-                "@_index": string; // number
-                "@_date": string;
-            };
-            room: {
-                attr: {
-                    "@_name": string;
-                };
-                event: IPentabarfEvent[];
-            }[];
-        }[];
+        /**
+         * This is an extension from FOSDEM.
+         */
+        tracks?: {
+            track: Track|Track[];
+        },
+        day: Day|Day[];
     };
+}
+
+export interface IPentabarfTalk extends ITalk {
+    /**
+     * For the FOSDEM extended version of this format,
+     * a "code" is provided.
+     */
+    pretalxCode?: string;
 }
 
 export class PentabarfParser {
@@ -128,16 +149,18 @@ export class PentabarfParser {
 
     public readonly conference: IConference;
     public readonly auditoriums: IAuditorium[];
-    public readonly talks: ITalk[];
+    public readonly talks: IPentabarfTalk[];
     public readonly speakers: IPerson[];
     public readonly interestRooms: IInterestRoom[];
 
     constructor(rawXml: string, prefixConfig: IPrefixConfig) {
-        this.parsed = parser.parse(rawXml, {
-            attrNodeName: "attr",
+        const parser = new XMLParser({
+            attributesGroupName: "attr",
+            attributeNamePrefix : "@_",
             textNodeName: "#text",
             ignoreAttributes: false,
         });
+        this.parsed = parser.parse(rawXml);
 
         this.auditoriums = [];
         this.talks = [];
@@ -148,6 +171,11 @@ export class PentabarfParser {
             auditoriums: this.auditoriums,
             interestRooms: this.interestRooms,
         };
+        const trackHasOnlineQA = new Map<string, boolean>();
+
+        for (const track of arrayLike(this.parsed.schedule.tracks?.track ?? [])) {
+            trackHasOnlineQA.set(track["#text"], Boolean(track.attr["@_online_qa"]));
+        }
 
         for (const day of arrayLike(this.parsed.schedule?.day)) {
             if (!day) continue;
@@ -192,24 +220,29 @@ export class PentabarfParser {
                     this.auditoriums.push(auditorium);
                 }
 
-                const qaEnabled = prefixConfig.qaAuditoriumRooms.find(p => auditorium.id.startsWith(p)) !== undefined;
-
+                const roomQaEnabled = prefixConfig.qaAuditoriumRooms.find(p => auditorium.id.startsWith(p)) !== undefined;
+            
                 for (const pEvent of arrayLike(pRoom.event)) {
                     if (!pEvent) continue;
+                    const talkId = pEvent.attr?.["@_id"];
 
                     if (pEvent.title.startsWith("CANCELLED ")) {
                         // FOSDEM represents cancelled talks with a title prefix.
                         // There is currently no more 'proper' way to get this information.
-                        LogService.info("PentabarfParser", `Talk '${pEvent.attr?.["@_id"]}' has CANCELLED in prefix of title: ignoring.`)
+                        LogService.info("PentabarfParser", `Talk '${talkId}' has CANCELLED in prefix of title: ignoring.`)
                         continue;
                     }
+
+                    // The schedule is authorative, but we fall back to the manual list.
+                    let qaEnabled = trackHasOnlineQA.get(pEvent.track) ?? roomQaEnabled;
 
                     const parsedStartTime = simpleTimeParse(pEvent.start);
                     const parsedDuration = simpleTimeParse(pEvent.duration);
                     const startTime = moment(dateTs).add(parsedStartTime.hours, 'hours').add(parsedStartTime.minutes, 'minutes');
                     const endTime = moment(startTime).add(parsedDuration.hours, 'hours').add(parsedDuration.minutes, 'minutes');
-                    let talk: ITalk = {
-                        id: pEvent.attr?.["@_id"],
+                    let talk: IPentabarfTalk = {
+                        pretalxCode:  pEvent.attr?.["@_code"],
+                        id: talkId,
                         dateTs: dateTs,
                         startTime: startTime.valueOf(),
                         endTime: endTime.valueOf(),

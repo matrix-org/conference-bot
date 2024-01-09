@@ -1,0 +1,168 @@
+{
+    "_note": "This a snapshot of the FOSDEM 2024 schedule schema, with fake data.",
+    "schedule": {
+      "version": "2024-01-02 20:35",
+      "base_url": "https://pretalx.example.com/conf/schedule/",
+      "conference": {
+        "acronym": "anyconf-2024",
+        "title": "AnyConf 2024",
+        "start": "2024-02-03",
+        "end": "2024-02-04",
+        "daysCount": 2,
+        "timeslot_duration": "00:05",
+        "time_zone_name": "Europe/Brussels",
+        "rooms": [
+          {
+            "name": "janson",
+            "guid": null,
+            "description": "Janson",
+            "capacity": 1415
+          },
+          {
+            "name": "j1106",
+            "guid": null,
+            "description": "J.1.106",
+            "capacity": 70
+          },
+          {
+            "name": "k1105",
+            "guid": null,
+            "description": "K.1.105 (A room)",
+            "capacity": 805
+          },
+          {
+            "name": "h1301",
+            "guid": null,
+            "description": "H.1301 (Another room)",
+            "capacity": 189
+          },
+          {
+            "name": "aw1120",
+            "guid": null,
+            "description": "AW1.120",
+            "capacity": 74
+          },
+          {
+            "name": "ua2114",
+            "guid": null,
+            "description": "UA2.114 (Wow)",
+            "capacity": 207
+          },
+          {
+            "name": "ub2252a",
+            "guid": null,
+            "description": "UB2.252A (More)",
+            "capacity": 532
+          },
+          {
+            "name": "ud2120",
+            "guid": null,
+            "description": "UD2.120 (Rooms)",
+            "capacity": 446
+          },
+          {
+            "name": "a01",
+            "guid": null,
+            "description": "A.01 (Someroom)",
+            "capacity": 175
+          }
+        ],
+        "days": [
+          {
+            "index": 1,
+            "date": "2024-02-03",
+            "day_start": "2024-02-03T04:00:00+01:00",
+            "day_end": "2024-02-04T03:59:00+01:00",
+            "rooms":{
+                "janson": [{
+                  "id": 1234,
+                  "guid": "5bb0aa4e-0c0e-5ccd-9523-0ed1ca679039",
+                  "logo": "",
+                  "date": "2024-02-03T09:00:00+01:00",
+                  "start": "09:00",
+                  "duration": "00:25",
+                  "room": "janson",
+                  "slug": "welcome talk",
+                  "url": "https://pretalx.example.com/conf/talk/GK99DE/",
+                  "title": "Welcome to AnyConf 2024",
+                  "subtitle": "",
+                  "track": "Keynotes",
+                  "type": "Talk",
+                  "language": "en",
+                  "abstract": "AnyConf welcome and opening talk.",
+                  "description": null,
+                  "recording_license": "",
+                  "do_not_record": false,
+                  "persons": [
+                    {
+                      "id": 2,
+                      "code": "37RA83",
+                      "public_name": "AnyConf Staff",
+                      "biography": null,
+                      "answers": []
+                    },
+                    {
+                      "id": 1324,
+                      "code": "YT3EFD",
+                      "public_name": "Alice AnyConf",
+                      "biography": "Alice is a test user with a big robotic brain.",
+                      "answers": []
+                    }
+                  ],
+                  "links": [],
+                  "attachments": [],
+                  "answers": []
+                }]
+            }
+          },
+          {
+            "index": 2,
+            "date": "2024-02-04",
+            "day_start": "2024-02-04T04:00:00+01:00",
+            "day_end": "2024-02-05T03:59:00+01:00",
+            "rooms":{
+                "janson": [{
+                    "id": 1235,
+                    "guid": "b8325b99-84af-45a7-806b-5819c79b6dc5",
+                    "logo": "",
+                    "date": "2024-02-04T09:00:00+01:00",
+                    "start": "09:00",
+                    "duration": "00:25",
+                    "room": "janson",
+                    "slug": "welcome talk",
+                    "url": "https://pretalx.example.com/conf/talk/ABCDEF/",
+                    "title": "Welcome to AnyConf 2024",
+                    "subtitle": "",
+                    "track": "Keynotes",
+                    "type": "Talk",
+                    "language": "en",
+                    "abstract": "AnyConf welcome and opening talk.",
+                    "description": null,
+                    "recording_license": "",
+                    "do_not_record": false,
+                    "persons": [
+                      {
+                        "id": 2,
+                        "code": "37RA83",
+                        "public_name": "AnyConf Staff",
+                        "biography": null,
+                        "answers": []
+                      },
+                      {
+                        "id": 1324,
+                        "code": "YT3EFD",
+                        "public_name": "Alice AnyConf",
+                        "biography": "Alice is a test user with a big robotic brain.",
+                        "answers": []
+                      }
+                    ],
+                    "links": [],
+                    "attachments": [],
+                    "answers": []
+                  }]
+            }
+          }
+        ]
+      }
+    }
+  }

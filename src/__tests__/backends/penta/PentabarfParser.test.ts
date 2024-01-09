@@ -24,12 +24,16 @@ const prefixConfig: IPrefixConfig = {
     },
 };
 
+function getFixture(fixtureFile: string) {
+    return fs.readFileSync(path.join(__dirname, fixtureFile), 'utf8')
+}
+
 /*
  * A somewhat vague test that just loads in a basic file and checks a few things, comparing against the snapshots in
  * __snapshots__.
  */
 test('parsing pentabarf XML: overview', () => {
-    const xml = fs.readFileSync(path.join(__dirname, "pentabarf01_overview.xml"), 'utf8');
+    const xml = getFixture("pentabarf01_overview.xml");
     const p = new PentabarfParser(xml, prefixConfig);
 
     // TODO the auditorium id and slug look dodgy and not id-like or slug-like...
@@ -49,7 +53,7 @@ test('parsing pentabarf XML: overview', () => {
 
 
 test('duplicate events lead to errors', () => {
-    const xml = fs.readFileSync(path.join(__dirname, "pentabarf03_duplicate_talk.xml"), 'utf8');
+    const xml = getFixture("pentabarf03_duplicate_talk.xml");
 
     expect(() => new PentabarfParser(xml, prefixConfig)).toThrow(
         "Auditorium A.01 (Someroom): Talk E001: this talk already exists and is defined a second time."
@@ -57,10 +61,16 @@ test('duplicate events lead to errors', () => {
 });
 
 test("unrecognised prefixes don't create rooms", () => {
-    const xml = fs.readFileSync(path.join(__dirname, "pentabarf04_unrecognised_prefix.xml"), 'utf8');
+    const xml = getFixture("pentabarf04_unrecognised_prefix.xml");
     const p = new PentabarfParser(xml, prefixConfig);
 
     expect(p.auditoriums.length).toEqual(0);
     expect(p.talks.length).toEqual(0);
     expect(p.interestRooms.length).toEqual(0);
+});
+
+test("tracks that set a online qa value correctly apply to talks", () => {
+    const xml = getFixture("pentabarf05_online_qa.xml");
+    const p = new PentabarfParser(xml, prefixConfig);
+    expect(p.talks).toMatchSnapshot("talks");
 });

@@ -1,6 +1,4 @@
-import { rename } from "fs";
 import { LogService } from "matrix-bot-sdk";
-import { config } from "process";
 import { RoomKind } from "../models/room_kinds";
 import { IConference, ITalk, IAuditorium, IInterestRoom } from "../models/schedule";
 import { jsonReplacerMapToObject, readJsonFileAsync, writeJsonFileAsync } from "../utils";
@@ -103,7 +101,7 @@ export class CachingBackend implements IScheduleBackend {
             // It's notable that we don't save any changes to disk.
             // It wouldn't be a bad idea to persist the changes, but introducing a lot of disk I/O into this frequent operation
             // made me uncomfortable.
-            await this.lastUsedBackend.refreshShortTerm(lookaheadSeconds);
+            await this.lastUsedBackend.refreshShortTerm?.(lookaheadSeconds);
         }
     }
 

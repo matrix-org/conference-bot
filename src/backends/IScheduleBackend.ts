@@ -25,8 +25,10 @@ export interface IScheduleBackend {
      *
      * This is an ugly hack to support short-notice changes to the conference schedule, as happens in real life.
      * It is principally expected to be called by the Scheduler when scheduling tasks in the short-term future.
+     * 
+     * This may not be defined if the backend has no way to do short term refreshes.
      */
-    refreshShortTerm(lookaheadSeconds: number): Promise<void>;
+    refreshShortTerm?(lookaheadSeconds: number): Promise<void>;
 
     /**
      * Returns true iff the current schedule was loaded from cache, rather than from the intended source.

@@ -27,7 +27,7 @@
     "await-lock": "^2.1.0",
     "config": "^3.3.3",
     "express": "^4.17.1",
-    "fast-xml-parser": "^3.17.6",
+    "fast-xml-parser": "^4.3.2",
     "hls.js": "^0.14.17",
     "irc-upd": "^0.11.0",
     "js-yaml": "^3.14.1",
