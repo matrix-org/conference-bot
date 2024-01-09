@@ -224,7 +224,6 @@ export class PentabarfParser {
             
                 for (const pEvent of arrayLike(pRoom.event)) {
                     if (!pEvent) continue;
-                    // Prefer code, which maps to pretalx. If not available then fall back to @_id.
                     const talkId = pEvent.attr?.["@_id"];
 
                     if (pEvent.title.startsWith("CANCELLED ")) {
