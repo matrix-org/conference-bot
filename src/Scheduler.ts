@@ -388,7 +388,7 @@ export class Scheduler {
             );
         } else if (task.type === ScheduledTaskType.TalkEnd) {
             if (confTalk !== undefined) {
-                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk has ended - opening up this room to all attendees.</h3><p>@room - They won't see the history in this room.</p>`);
+                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk has ended.</h3>`);
                 const widget = await LiveWidget.forTalk(confTalk, this.client, this.config.livestream.widgetAvatar, this.config.webserver.publicBaseUrl);
                 const layout = await LiveWidget.layoutForTalk(widget, null);
                 const scoreboard = await LiveWidget.scoreboardForTalk(confTalk, this.client, this.conference, this.config.livestream.widgetAvatar, this.config.webserver.publicBaseUrl);
@@ -397,7 +397,7 @@ export class Scheduler {
                 await this.client.sendStateEvent(confTalk.roomId, layout.type, layout.state_key, layout.content);
                 await makeRoomPublic(confTalk.roomId, this.client);
                 const talkPill = await MentionPill.forRoom(confTalk.roomId, this.client);
-                await this.client.sendHtmlText(confAud.roomId, `<h3>The talk will end shortly</h3><p>If the speakers are available, they'll be hanging out in ${talkPill.html}</p>`);
+                await this.client.sendHtmlText(confAud.roomId, `<h3>The talk will end shortly</h3>`);
             } else {
                 await this.client.sendHtmlText(confAud.roomId, `<h3>The talk will end shortly</h3>`);
             }
@@ -442,7 +442,7 @@ export class Scheduler {
             await this.scoreboard.showQACountdown(confAud.roomId, task.talk.qa_startTime!);
         } else if (task.type === ScheduledTaskType.TalkEnd5M) {
             if (confTalk !== undefined) {
-                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 5 minutes</h3><p>The next talk will start automatically after yours. In 5 minutes, this room will be opened up for anyone to join. They will not be able to see history.</p>`);
+                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 5 minutes</h3><p>The next talk will start automatically after yours.</p>`);
             }
             await this.client.sendHtmlText(confAud.roomId, `<h3>This talk ends in about 5 minutes</h3>` + (task.talk.qa_startTime !== null ? `<p>Ask questions here for the speakers!</p>`: ''));
         } else if (task.type === ScheduledTaskType.TalkLivestreamEnd1M && confTalk !== undefined) {
