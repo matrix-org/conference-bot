@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MatrixClient, MatrixEvent } from "matrix-bot-sdk";
+import {LogService, MatrixClient, MatrixEvent} from "matrix-bot-sdk";
 import * as irc from "irc-upd";
 import { Auditorium } from "./models/Auditorium";
 import { InterestRoom } from "./models/InterestRoom";
@@ -128,7 +128,8 @@ export class IRCBridge {
 
     public async plumbChannelToRoom(channel: string, roomId: string) {
         if (await this.shouldInviteBot(roomId)) {
-            await this.mxClient.inviteUser(this.config.botUserId, roomId);
+            //await this.mxClient.inviteUser(this.config.botUserId, roomId);
+            LogService.info("IRCBridge", `Inviting ${this.config.botUserId}`)
         }
         await this.ircClient.join(channel);
         const result = await this.executeCommand(`plumb ${roomId} ${this.config.serverName} ${channel}`);

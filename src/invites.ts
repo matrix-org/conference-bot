@@ -80,7 +80,8 @@ export async function resolveIdentifiers(client: ConferenceMatrixClient, people:
 
 export async function invitePersonToRoom(client: ConferenceMatrixClient, resolvedPerson: ResolvedPersonIdentifier, roomId: string): Promise<void> {
     if (resolvedPerson.mxid) {
-        return await client.inviteUser(resolvedPerson.mxid.trim(), roomId);
+        //return await client.inviteUser(resolvedPerson.mxid.trim(), roomId);
+        LogService.info("invites", `Inviting ${resolvedPerson.mxid}`)
     }    
 
     if (!resolvedPerson.emails) {
@@ -93,16 +94,17 @@ export async function invitePersonToRoom(client: ConferenceMatrixClient, resolve
     }
 
     for (const email of resolvedPerson.emails) {
-        const idInvite = await client.identityClient.makeEmailInvite(email, roomId);
-        const content = {
-            display_name: idInvite.display_name,
-            // XXX: https://github.com/matrix-org/matrix-doc/issues/2948
-            key_validity_url: `${client.identityClient.serverUrl}/_matrix/identity/v2/pubkey/ephemeral/isvalid`,
-            public_key: idInvite.public_key,
-            public_keys: idInvite.public_keys,
-            [RS_3PID_PERSON_ID]: resolvedPerson.person.id,
-        };
-        const stateKey = idInvite.token; // not included in the content
-        await client.sendStateEvent(roomId, "m.room.third_party_invite", stateKey, content);
+        // const idInvite = await client.identityClient.makeEmailInvite(email, roomId);
+        // const content = {
+        //     display_name: idInvite.display_name,
+        //     // XXX: https://github.com/matrix-org/matrix-doc/issues/2948
+        //     key_validity_url: `${client.identityClient.serverUrl}/_matrix/identity/v2/pubkey/ephemeral/isvalid`,
+        //     public_key: idInvite.public_key,
+        //     public_keys: idInvite.public_keys,
+        //     [RS_3PID_PERSON_ID]: resolvedPerson.person.id,
+        // };
+        // const stateKey = idInvite.token; // not included in the content
+        // await client.sendStateEvent(roomId, "m.room.third_party_invite", stateKey, content);
+        LogService.info("invites", `Third-party inviting ${email}`)
     }
 }
