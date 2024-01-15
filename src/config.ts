@@ -109,11 +109,6 @@ export interface IJsonScheduleBackendConfig {
      * Path or HTTP(S) URL to schedule.
      */
     scheduleDefinition: string;
-
-    /**
-     * Slightly awful, but this works around some type errors in places that don't get hit if you're using a JSON schedule.
-     */
-    database: undefined;
 }
 
 export interface IPentaScheduleBackendConfig {

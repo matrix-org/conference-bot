@@ -1,9 +1,11 @@
 import { test, expect, afterEach, beforeEach, describe } from "@jest/globals";
 import { PretalxScheduleBackend } from "../../../backends/pretalx/PretalxBackend";
-import { Server, createServer } from "node:http";
-import { AddressInfo } from "node:net";
+import { fakePretalxServer } from "../../../../spec/util/fake-pretalx";
 import path from "node:path";
 import { PretalxScheduleFormat } from "../../../config";
+import { FOSDEMTalk } from "../../../backends/pretalx/FOSDEMPretalxApiClient";
+import { Role } from "../../../models/schedule";
+import { PretalxTalk } from "../../../backends/pretalx/PretalxApiClient";
 
 const pretalxSpeakers = [{
     code: "37RA83",
@@ -25,23 +27,23 @@ const pretalxTalks = [{
 }, {
     "code": "ABCDEF",
     "speakers": pretalxSpeakers,
-}];
+}] as PretalxTalk[];
 
 const matrixPersons = [{
     person_id: 2,
     name: "AnyConf Staff",
     email: "staff@anyconf.example.com",
     matrix_id: "",
-    event_role: "coordinator",
+    event_role: Role.Coordinator,
 },{
     person_id: 1324,
     name: "Alice AnyConf",
     email: "alice@anyconf.example.com",
     matrix_id: "@alice:anyconf.example.com",
-    event_role: "host",
+    event_role: Role.Host,
 }];
 
-const matrixTalks = [{
+const matrixTalks: FOSDEMTalk[] = [{
     event_id: 1235,
     title: "Welcome to AnyConf 2024",
     persons: matrixPersons,
@@ -59,38 +61,6 @@ const matrixTalks = [{
     track_id: 325,
 }];
 
-function fakePretalxServer() {
-    return new Promise<Server>(resolve => { const server = createServer((req, res) => {
-        if (req.url?.startsWith('/talks/?')) {
-            res.writeHead(200);
-            res.end(JSON.stringify({
-                count: pretalxTalks.length,
-                next: null,
-                previous: null,
-                results: pretalxTalks,
-            }));
-        } else if (req.url?.startsWith('/talks/')) {
-            const talkCode = req.url.slice('/talks/'.length);
-            const talk = pretalxTalks.find(s => s.code === talkCode);
-            if (talk) {
-                res.writeHead(200);
-                res.end(talk);
-            } else {
-                res.writeHead(404);
-                res.end(`Talk "${talkCode}" not found`);
-            }
-        } else if (req.url === '/p/matrix/') {
-            res.writeHead(200);
-            res.end(JSON.stringify({talks: matrixTalks}));
-        } else {
-            console.log(req.url);
-            res.writeHead(404);
-            res.end("Not found");
-        }
-    }).listen(undefined, '127.0.0.1', undefined, () => {
-        resolve(server);
-    })});
-}
 
 const prefixConfig = {
     // Unused here.
@@ -120,35 +90,35 @@ const prefixConfig = {
     },
 };
 describe('PretalxBackend', () => {
-    let pretalxServ;
+    let pretalxServ: Awaited<ReturnType<typeof fakePretalxServer>>;
     beforeEach(async () => {
-        pretalxServ = await fakePretalxServer();
+        pretalxServ = await fakePretalxServer({
+            matrixTalks, pretalxTalks
+        });
     });
     afterEach(async () => {
-        pretalxServ.close();
+        pretalxServ.server.close();
     });
 
     test("can parse a standard JSON format", async () => {
-        const pretalxServ = await fakePretalxServer();
         const backend = await PretalxScheduleBackend.new("/dev/null", {
             backend: "pretalx",
             scheduleFormat: PretalxScheduleFormat.Pretalx,
             scheduleDefinition: path.join(__dirname, 'anyconf.json'),
             pretalxAccessToken: "123456",
-            pretalxApiEndpoint: `http://127.0.0.1:${(pretalxServ.address() as AddressInfo).port}`,
+            pretalxApiEndpoint: pretalxServ.url,
         }, prefixConfig);
         expect(backend.conference.title).toBe('AnyConf 2024');
         expect(backend.conference.auditoriums).toHaveLength(7);
     });
 
     test.only("can parse a FOSDEM format", async () => {
-        const pretalxServ = await fakePretalxServer();
         const backend = await PretalxScheduleBackend.new("/dev/null", {
             backend: "pretalx",
             scheduleDefinition: path.join(__dirname, 'fosdemformat.xml'),
             scheduleFormat: PretalxScheduleFormat.FOSDEM,
             pretalxAccessToken: "123456",
-            pretalxApiEndpoint: `http://127.0.0.1:${(pretalxServ.address() as AddressInfo).port}`,
+            pretalxApiEndpoint: pretalxServ.url,
         }, prefixConfig);
         expect(backend.conference.title).toBe('AnyConf 2024');
         expect(backend.conference.auditoriums).toHaveLength(1);

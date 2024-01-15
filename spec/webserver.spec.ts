@@ -8,7 +8,7 @@ describe('Webserver', () => {
     let testEnv: E2ETestEnv;
     beforeEach(async () => {
         testEnv = await E2ETestEnv.createTestEnv({
-            fixture: 'basic-conference',
+            fixture: 'basic-conference.json',
             config: {
                 mode: RunMode.webserver,
             }

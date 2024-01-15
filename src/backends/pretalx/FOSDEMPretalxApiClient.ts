@@ -8,13 +8,13 @@ export interface FOSDEMTalk {
     start_datetime: string,
     duration: number,
     track_id: number,
-    persons: [{
+    persons: {
         person_id: number,
         event_role: Role,
         name: string,
         email: string,
         matrix_id: string,
-    }]
+    }[]
 }
 
 export class FOSDEMPretalxApiClient extends PretalxApiClient {

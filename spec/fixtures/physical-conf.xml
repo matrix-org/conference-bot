@@ -1,0 +1,43 @@
+<schedule>
+    <version>latest</version>
+    <conference>
+        <acronym>fosdem-2024</acronym>
+        <title>FOSDEM 2024</title>
+        <subtitle/>
+        <venue>ULB (Université Libre de Bruxelles)</venue>
+        <city>Brussels</city>
+        <start>2024-02-03</start>
+        <end>2024-02-04</end>
+        <days>2</days>
+        <day_change>09:00:00</day_change>
+        <timeslot_duration>00:05:00</timeslot_duration>
+        <base_url>https://fosdem.org/2024/schedule/</base_url>
+        <time_zone_name>Europe/Brussels</time_zone_name>
+    </conference>
+    <tracks>
+        <track online_qa="false">Main Track</track>
+    </tracks>
+    <day index="1" date="2024-02-03" start="2024-02-03T09:00:00+01:00" end="2024-02-04T08:59:00+01:00">
+        <room name="Janson" slug="janson">
+            <event guid="5bb0aa4e-0c0e-5ccd-9523-0ed1ca679039" id="1234">
+                <date>2024-02-04T09:00:00+01:00</date>
+                <start>09:00</start>
+                <duration>00:25</duration>
+                <room>janson</room>
+                <slug>welcome talk</slug>
+                <url>https://pretalx.example.com/conf/talk/GK99DE/</url>
+                <title>Welcome to AnyConf 2024</title>
+                <track>Keynotes</track>
+                <type>keynote</type>
+                <language>en</language>
+                <abstract>
+                    <p>AnyConf welcome and opening talk.</p>
+                </abstract>
+                <persons>
+                    <person id="2">AnyConf Staff</person>
+                    <person id="1324">Alice AnyConf</person>
+                </persons>
+            </event> 
+        </room>
+    </day>
+</schedule>

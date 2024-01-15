@@ -153,7 +153,7 @@ export class E2ETestEnv {
         await adminUser.client.joinRoom(mgmntRoom);
 
         // Configure JSON schedule
-        const scheduleDefinition = path.resolve(__dirname, '..', 'fixtures', opts.fixture + ".json");
+        const scheduleDefinition = path.resolve(__dirname, '..', 'fixtures', opts.fixture);
 
         const config: IConfig = {
             livestream: {
@@ -168,40 +168,6 @@ export class E2ETestEnv {
                     rtmpUrlTemplate: "rtmp://{hostname}/stream/{saltedHash}",
                     salt: "change me",
                 }
-            },
-            conference: {
-                id: 'test-conf',
-                name: 'Test Conf',
-                supportRooms: {
-                    speakers: `#speakers:${homeserver.domain}`,
-                    coordinators: `#coordinators:${homeserver.domain}`,
-                    specialInterest: `#specialInterest:${homeserver.domain}`,
-                },
-                timezone: 'Europe/Brussels',
-                lookaheadMinutes: 5,
-                existingInterestRooms: {},
-                prefixes: {
-                    auditoriumRooms: ["D."],
-                    interestRooms: ["S.", "B."],
-                    aliases: "",
-                    displayNameSuffixes: {},
-                    suffixes: {},
-                    qaAuditoriumRooms: [],
-                    physicalAuditoriumRooms: [],
-                    nameOverrides: {},
-                },
-                schedule: {
-                    backend: 'json',
-                    database: undefined,
-                    scheduleDefinition,
-                },
-                subspaces: {
-                    mysubspace: {
-                        displayName: 'My Subspace',
-                        alias: 'mysubspace',
-                        prefixes: []
-                    }
-                },
             },
             moderatorUserId: `@modbot:${homeserver.domain}`,
             webserver: {
@@ -224,6 +190,41 @@ export class E2ETestEnv {
                 port: 0,
             },
             ...providedConfig,
+            conference: {
+                id: 'test-conf',
+                name: 'Test Conf',
+                supportRooms: {
+                    speakers: `#speakers:${homeserver.domain}`,
+                    coordinators: `#coordinators:${homeserver.domain}`,
+                    specialInterest: `#specialInterest:${homeserver.domain}`,
+                },
+                timezone: 'Europe/Brussels',
+                lookaheadMinutes: 5,
+                existingInterestRooms: {},
+                prefixes: {
+                    auditoriumRooms: ["D."],
+                    interestRooms: ["S.", "B."],
+                    aliases: "",
+                    displayNameSuffixes: {},
+                    suffixes: {},
+                    qaAuditoriumRooms: [],
+                    physicalAuditoriumRooms: [],
+                    nameOverrides: {},
+                },
+                subspaces: {
+                    mysubspace: {
+                        displayName: 'My Subspace',
+                        alias: 'mysubspace',
+                        prefixes: []
+                    }
+                },
+                ...providedConfig?.conference,
+                schedule: {
+                    backend: 'json',
+                    ...providedConfig?.conference?.schedule,
+                    scheduleDefinition,
+                },
+            },
         };
         const conferenceBot = await ConferenceBot.start(config);
         return new E2ETestEnv(homeserver, conferenceBot, adminUser.client, opts, tmpDir, config);
