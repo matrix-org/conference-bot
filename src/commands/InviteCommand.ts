@@ -114,7 +114,7 @@ export class InviteCommand implements ICommand {
             if (target.mxid && effectiveJoinedUserIds.includes(target.mxid)) continue;
             if (emailInvitePersonIds.includes(target.person.id)) continue;
             try {
-                await invitePersonToRoom(this.client, target, roomId);
+                await invitePersonToRoom(this.client, target, roomId, this.config);
             } catch (e) {
                 LogService.error("InviteCommand", e);
                 await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${target.mxid}/${target.emails} / ${target.person.id} to ${roomId} - ignoring: ${e.message ?? e.statusMessage ?? '(see logs)'}`, this.client);

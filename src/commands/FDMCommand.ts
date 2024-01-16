@@ -21,11 +21,12 @@ import { invitePersonToRoom, resolveIdentifiers } from "../invites";
 import { logMessage } from "../LogProxy";
 import { IPerson } from "../models/schedule";
 import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
+import {IConfig} from "../config";
 
 export class FDMCommand implements ICommand {
     public readonly prefixes = ["fdm"];
 
-    constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference) {}
+    constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference, private readonly config: IConfig) {}
 
     public async run(roomId: string, event: any, args: string[]) {
         const spi = this.conference.getInterestRoom("I.infodesk");
@@ -115,7 +116,7 @@ export class FDMCommand implements ICommand {
             for (const person of infodeskResolved) {
                 try {
                     if (person.mxid && inBsJoined.includes(person.mxid)) continue;
-                    await invitePersonToRoom(this.client, person, infBackstage);
+                    await invitePersonToRoom(this.client, person, infBackstage, this.config);
                 } catch (e) {
                     await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.id} to ${infBackstage} - ignoring`, this.client);
                 }
@@ -124,13 +125,13 @@ export class FDMCommand implements ICommand {
             for (const person of volResolved) {
                 try {
                     if (person.mxid && volJoined.includes(person.mxid)) continue;
-                    await invitePersonToRoom(this.client, person, vol);
+                    await invitePersonToRoom(this.client, person, vol, this.config);
                 } catch (e) {
                     await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.id} to ${vol} - ignoring`, this.client);
                 }
                 try {
                     if (person.mxid && volBsJoined.includes(person.mxid)) continue;
-                    await invitePersonToRoom(this.client, person, volBackstage);
+                    await invitePersonToRoom(this.client, person, volBackstage, this.config);
                 } catch (e) {
                     await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${person.mxid} / ${person.person.id} to ${volBackstage} - ignoring`, this.client);
                 }

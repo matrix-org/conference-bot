@@ -335,3 +335,6 @@ metrics:
   enabled: false
   port: 8081
   address: 127.0.0.1
+
+# if set to "true" will prevent the conf-bot from sending live invites to email/matrix_ids
+dry_run_enabled: false
