@@ -82,7 +82,7 @@ export async function resolveIdentifiers(client: ConferenceMatrixClient, people:
 export async function invitePersonToRoom(client: ConferenceMatrixClient, resolvedPerson: ResolvedPersonIdentifier, roomId: string, config: IConfig): Promise<void> {
     if (resolvedPerson.mxid) {
         if (config.dry_run_enabled) {
-            LogService.info("invites", `Inviting ${resolvedPerson.mxid}`)
+            LogService.info("invites", `Inviting ${resolvedPerson.mxid} (dry-run)`)
         }
         else {
             return await client.inviteUser(resolvedPerson.mxid.trim(), roomId);
@@ -100,7 +100,7 @@ export async function invitePersonToRoom(client: ConferenceMatrixClient, resolve
 
     for (const email of resolvedPerson.emails) {
         if (config.dry_run_enabled) {
-            LogService.info("invites", `Third-party inviting ${email}`)
+            LogService.info("invites", `Third-party inviting ${email} (dry-run)`)
         }
         else {
             const idInvite = await client.identityClient.makeEmailInvite(email, roomId);
