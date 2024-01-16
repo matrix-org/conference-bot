@@ -238,7 +238,7 @@ export class ConferenceBot {
             new BuildCommand(this.client, this.conference, this.config),
             new CopyModeratorsCommand(this.client),
             new DevCommand(this.client, this.conference),
-            new FDMCommand(this.client, this.conference),
+            new FDMCommand(this.client, this.conference, this.config),
             new HelpCommand(this.client),
             new InviteCommand(this.client, this.conference, this.config),
             new InviteMeCommand(this.client, this.conference),
