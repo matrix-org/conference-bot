@@ -24,9 +24,10 @@ export async function runRoleCommand(action: IAction, conference: Conference, cl
     const skipTalks = args.includes("notalks");
 
     if (args[0] && args[0] !== "backstage") {
-        const aud = backstageOnly ? conference.getAuditoriumBackstage(args[0]) : conference.getAuditorium(args[0]);
+        const audId = args.join(" ")
+        const aud = backstageOnly ? conference.getAuditoriumBackstage(audId) : conference.getAuditorium(audId);
         if (!aud) {
-            const spiRoom = conference.getInterestRoom(args[0]);
+            const spiRoom = conference.getInterestRoom(audId);
             if (!spiRoom) return client.replyNotice(roomId, event, "Unknown auditorium/interest room");
             await doInterestResolveAction(action, client, spiRoom, conference, isInvite);
         } else {

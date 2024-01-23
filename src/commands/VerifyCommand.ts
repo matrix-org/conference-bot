@@ -29,8 +29,18 @@ export class VerifyCommand implements ICommand {
     constructor(private readonly client: MatrixClient, private readonly conference: Conference) {}
 
     public async run(roomId: string, event: any, args: string[]) {
-        const audId = args[0];
+        let audId;
+        if (args.includes("backstage")) {
+            const aud_slice = args.slice(0, -1)
+            audId = aud_slice.join(" ")
+        }
+        else {
+            audId = args.join(" ");
+        }
 
+        console.log(audId)
+        const auds = this.conference.storedAuditoriums
+        console.dir(auds)
         let aud: PhysicalRoom = this.conference.getAuditorium(audId);
         if (args.includes("backstage")) {
             aud = this.conference.getAuditoriumBackstage(audId);

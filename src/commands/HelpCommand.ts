@@ -45,12 +45,12 @@ export class HelpCommand implements ICommand {
             "</code></pre>" +
             "<h4>People management:</h4>" +
             "<pre><code>" +
-            "!conference verify &lt;aud&gt;  - Dumps information about who would be invited to which rooms when\n" +
-            "                            the invite command is run for the auditorium.\n" +
-            "!conference invite [aud]  - Issues invites to all the people to their relevant rooms. If an [aud] is\n" +
-            "                            supplied, only that auditorium will receive invites.\n" +
-            "!conference permissions   - Updates moderator status for everyone that is supposed to have it.\n" +
-            "!conference attendance    - Checks the status of invites across the conference.\n" +
+            "!conference verify &lt;aud&gt; [backstage]     - Dumps information about who would be invited to which rooms when\n" +
+            "                                             the invite command is run for the auditorium.\n" +
+            "!conference invite [aud]                   - Issues invites to all the people to their relevant rooms. If an [aud] is\n" +
+            "                                             supplied, only that auditorium will receive invites.\n" +
+            "!conference permissions                    - Updates moderator status for everyone that is supposed to have it.\n" +
+            "!conference attendance                     - Checks the status of invites across the conference.\n" +
             "</code></pre>" +
             "<h4>Bridge management:</h4>" +
             "<pre><code>" +
