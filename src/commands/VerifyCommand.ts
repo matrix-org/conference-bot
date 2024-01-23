@@ -30,7 +30,8 @@ export class VerifyCommand implements ICommand {
 
     public async run(roomId: string, event: any, args: string[]) {
         let audId;
-        if (args.includes("backstage")) {
+        let backstage = args.includes("backstage")
+        if (backstage) {
             const aud_slice = args.slice(0, -1)
             audId = aud_slice.join(" ")
         }
@@ -38,11 +39,8 @@ export class VerifyCommand implements ICommand {
             audId = args.join(" ");
         }
 
-        console.log(audId)
-        const auds = this.conference.storedAuditoriums
-        console.dir(auds)
         let aud: PhysicalRoom = this.conference.getAuditorium(audId);
-        if (args.includes("backstage")) {
+        if (backstage) {
             aud = this.conference.getAuditoriumBackstage(audId);
         }
 
