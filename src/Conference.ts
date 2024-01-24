@@ -699,10 +699,9 @@ export class Conference {
     public async getPeopleForAuditorium(auditorium: Auditorium): Promise<IPerson[]> {
         const audit = await auditorium.getDefinition();
         const people: IPerson[] = [];
-        for (const t of Object.values(this.talks)) {
-            const talk = await t.getDefinition();
-            if (talk.auditoriumId == audit.id) {
-                people.push(...talk.speakers);
+        for (const t of this.backend.talks.values()) {
+            if (t.auditoriumId == audit.id) {
+                people.push(...t.speakers);
             }
         }
         return people;
