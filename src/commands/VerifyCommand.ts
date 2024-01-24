@@ -30,7 +30,7 @@ export class VerifyCommand implements ICommand {
 
     public async run(roomId: string, event: any, args: string[]) {
         let audId;
-        let backstage = args.includes("backstage")
+        let backstage = args[args.length - 1] === "backstage";
         if (backstage) {
             const aud_slice = args.slice(0, -1)
             audId = aud_slice.join(" ")
