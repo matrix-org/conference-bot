@@ -25,10 +25,11 @@ Physical Auditoriums have the following differences to regular Auditoriums:
 
 - Talks do not get a dedicated room in the auditorium space (talk coordination is expected to happen in the real world)
     - The speaker will not be nagged to 'check in'; speakers are expected to be present in the real world.
-    - Scheduled announcements do not instruct audience members to join a talk room after a talk ends, because
-- TODO should they get a backstage room or not?
+    - Scheduled announcements do not instruct audience members to join a talk room after a talk ends
 
-**Physical auditoriums are only supported in the Penta backend.**
+Physical Auditoriums do still have backstage rooms for speakers and volunteers to coordinate in.
+
+**Physical auditoriums are supported in the Penta and Pretalx backends.**
 
 
 ## Q&A (Questions and Answers)
