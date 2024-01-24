@@ -25,7 +25,7 @@ export class RunCommand implements ICommand {
     constructor(private readonly client: MatrixClient, private readonly conference: Conference, private readonly scheduler: Scheduler) {}
 
     public async run(roomId: string, event: any, args: string[]) {
-        const audId = args[0];
+        const audId = args.join(" ");
         if (audId === "all") {
             await this.scheduler.addAuditorium("all");
         } else {
