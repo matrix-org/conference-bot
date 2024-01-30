@@ -561,6 +561,7 @@ export class Conference {
             ],
             name: auditorium.name,
         }));
+        LogService.info("Conference", `Created auditorium room for ${auditorium.name} ${roomId}`);
         await assignAliasVariations(this.client, roomId, applyAllAliasPrefixes(auditorium.slug, this.config.conference.prefixes.aliases),
         this.config.conference.prefixes.suffixes, auditorium.id);
         this.auditoriums[auditorium.id] = new Auditorium(roomId, auditorium, this.client, this);
@@ -592,6 +593,7 @@ export class Conference {
                 makeAuditoriumBackstageLocator(this.id, auditorium.id),
             ],
         }));
+        LogService.info("Conference", `Created auditorium room for ${auditorium.name} ${roomId}`);
         await assignAliasVariations(this.client, roomId, applyAllAliasPrefixes(auditorium.slug + "-backstage", this.config.conference.prefixes.aliases),
         this.config.conference.prefixes.suffixes, auditorium.id);
         this.auditoriumBackstages[auditorium.id] = new AuditoriumBackstage(roomId, auditorium, this.client, this);
@@ -619,6 +621,7 @@ export class Conference {
                     makeTalkLocator(this.id, talk.id),
                 ],
             }));
+            LogService.info("Conference", `Created talk room for ${talk.id} ${roomId}`);
             this.talks[talk.id] = new Talk(roomId, talk, this.client, this);
         } else {
             roomId = this.talks[talk.id].roomId;

@@ -65,8 +65,7 @@ import { collectDefaultMetrics, register } from "prom-client";
 import { PretalxScheduleBackend } from "./backends/pretalx/PretalxBackend";
 
 LogService.setLogger(new CustomLogger());
-LogService.setLevel(LogLevel.DEBUG);
-LogService.info("index", "Bot starting...");
+LogService.setLevel(LogLevel.INFO);
 
 export class ConferenceBot {
     private static async loadBackend(config: IConfig) {
@@ -315,6 +314,7 @@ export class ConferenceBot {
 
 if (require.main === module) {
     (async function () {
+        LogService.info("index", "Bot starting...");
         const conf = await ConferenceBot.start(runtimeConfig);
         process.on('SIGINT', () => {
             conf.stop().then(() => {

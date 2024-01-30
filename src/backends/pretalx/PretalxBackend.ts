@@ -123,6 +123,7 @@ export class PretalxScheduleBackend implements IScheduleBackend {
     private async hydrateFromApi() {
         if (this.apiClient instanceof FOSDEMPretalxApiClient) {
             for (const apiTalk of await this.apiClient.getFOSDEMTalks()) {
+                console.log(apiTalk);
                 const localTalk = this.talks.get(apiTalk.event_id.toString());
                 if (!localTalk) {
                     LogService.warn("PretalxScheduleBackend", `Talk missing from public schedule ${apiTalk.event_id}.`);

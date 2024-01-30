@@ -6,7 +6,7 @@ import { IConfig, RunMode } from "../../src/config";
 import { ConferenceBot } from "../../src/index";
 import path from "node:path";
 
-const WAIT_EVENT_TIMEOUT = 10000;
+const WAIT_EVENT_TIMEOUT = 20000;
 export const E2ESetupTestTimeout = 60000;
 
 interface Opts {
@@ -266,5 +266,13 @@ export class E2ETestEnv {
         const response = this.waitForMessage();
         await this.adminClient.sendText(this.config.managementRoom, cmd);
         return response;
+    }
+
+    public getUser(localpart: string) {
+        const u = this.homeserver.users.find(u => u.userId === `@${localpart}:${this.homeserver.domain}`);
+        if (!u) {
+            throw Error("User missing from test");
+        }
+        return u.client;
     }
 }

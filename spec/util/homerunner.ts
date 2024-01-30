@@ -114,6 +114,6 @@ export async function registerUser(
         }
     )}).then(res => res.json()).then(res => ({
         mxid: res.user_id,
-        client: new MatrixClient(homeserverUrl, res.access_token),
+        client: new E2ETestMatrixClient(homeserverUrl, res.access_token),
     })).catch(err => { console.log(err.response.body); throw new Error(`Failed to register user: ${err}`); });
 }

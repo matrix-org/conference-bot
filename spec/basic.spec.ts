@@ -16,7 +16,6 @@ describe('Basic test setup', () => {
     });
     it('should start up successfully', async () => {
         const { event } = await testEnv.sendAdminCommand('!conference status');
-        console.log(event.content.body);
         // Check that we're generally okay.
         expect(event.content.body).toMatch('Scheduled tasks yet to run: 0');
         expect(event.content.body).toMatch('Schedule source healthy: true');

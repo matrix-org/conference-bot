@@ -45,13 +45,13 @@ export class InviteCommand implements ICommand {
 
     public async run(roomId: string, event: any, args: string[]) {
         await this.client.replyNotice(roomId, event, "Sending invites to participants. This might take a while.");
-
+        const inviteType = args[0];
         // This is called invite but it's really membership sync in a way. We're iterating over
         // every possible room the bot knows about and making sure that we have the right people
         // in it. We don't remove anyone and don't care about extras - we just want to make sure
         // that a subset of people are joined.
 
-        if (args[0] && args[0] === "speakers-support") {
+        if (inviteType === "speakers-support") {
             let people: IPerson[] = [];
             for (const aud of this.conference.storedAuditoriumBackstages) {
                 people.push(...await this.conference.getInviteTargetsForAuditorium(aud, true));
@@ -64,7 +64,7 @@ export class InviteCommand implements ICommand {
                 }
             });
             await this.createInvites(newPeople, this.config.conference.supportRooms.speakers);
-        } else if (args[0] && args[0] === "coordinators-support") {
+        } else if (inviteType === "coordinators-support") {
             let people: IPerson[] = [];
             for (const aud of this.conference.storedAuditoriums) {
                 if (!(await aud.getId()).startsWith("D.")) {
@@ -84,7 +84,7 @@ export class InviteCommand implements ICommand {
                 }
             });
             await this.createInvites(newPeople, this.config.conference.supportRooms.coordinators);
-        } else if (args[0] && args[0] === "si-support") {
+        } else if (inviteType === "si-support") {
             const people: IPerson[] = [];
             for (const sir of this.conference.storedInterestRooms) {
                 people.push(...await this.conference.getInviteTargetsForInterest(sir));
