@@ -729,7 +729,21 @@ export class Conference {
     public async getInviteTargetsForAuditorium(auditorium: Auditorium, backstage = false): Promise<IPerson[]> {
         const people = await this.getPeopleForAuditorium(auditorium);
         const roles = [Role.Coordinator, Role.Host, Role.Speaker];
-        return people.filter(p => roles.includes(p.role));
+        let includesPerson = (person, array) => {
+            for (const element of array) {
+                if (element.name === person.name) {
+                    return true
+                }
+            }
+            return false
+        };
+        let uniquePeople: IPerson[] = []
+        for (const person of people) {
+            if (!includesPerson(person, uniquePeople)) {
+                uniquePeople.push(person)
+            }
+        }
+        return uniquePeople.filter(p => roles.includes(p.role));
     }
 
     public async getInviteTargetsForTalk(talk: Talk): Promise<IPerson[]> {
