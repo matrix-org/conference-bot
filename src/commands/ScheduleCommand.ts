@@ -33,7 +33,7 @@ export class ScheduleCommand implements ICommand {
             const upcoming = sortTasks(this.scheduler.inspect());
             let html = "Upcoming tasks:<ul>";
             for (const task of upcoming) {
-                const hasTalkRoom = this.conference.getTalk(task.talk.id) !== null;
+                const hasTalkRoom = this.conference.getTalk(task.talk.id) !== undefined;
                 const taskStart = moment(getStartTime(task));
                 const formattedTimestamp = taskStart.format("YYYY-MM-DD HH:mm:ss [UTC]ZZ");
 
