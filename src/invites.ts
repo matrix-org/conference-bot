@@ -83,10 +83,10 @@ export async function invitePersonToRoom(client: ConferenceMatrixClient, resolve
     if (resolvedPerson.mxid) {
         if (config.dry_run_enabled) {
             LogService.info("invites", `Inviting ${resolvedPerson.mxid} (dry-run)`)
+        } else {
+            await client.inviteUser(resolvedPerson.mxid.trim(), roomId);
         }
-        else {
-            return await client.inviteUser(resolvedPerson.mxid.trim(), roomId);
-        }
+        return;
     }    
 
     if (!resolvedPerson.emails) {
