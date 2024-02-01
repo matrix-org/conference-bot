@@ -906,12 +906,8 @@ export class Conference {
      * @returns A promise that resolves when the call has been made.
      */
     private async enqueueRecalculateRoomMembership(roomId: string) {
-        if (this.membershipRecalculationQueue.has(roomId)) {
-            return;
-        }
-
-        // Not interested in this room.
-        if (!this.membersInRooms[roomId]) {
+        // We are already expecting to process this room OR are not interested in this room.
+        if (this.membershipRecalculationQueue.has(roomId) || !this.membersInRooms[roomId]) {
             return;
         }
 
