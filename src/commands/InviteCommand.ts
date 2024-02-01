@@ -43,8 +43,8 @@ export class InviteCommand implements ICommand {
         await this.ensureInvited(targetRoomId, resolved);
     }
 
-    public async run(roomId: string, event: any, args: string[]) {
-        await this.client.replyNotice(roomId, event, "Sending invites to participants. This might take a while.");
+    public async run(managementRoomId: string, event: any, args: string[]) {
+        await this.client.replyNotice(managementRoomId, event, "Sending invites to participants. This might take a while.");
 
         // This is called invite but it's really membership sync in a way. We're iterating over
         // every possible room the bot knows about and making sure that we have the right people
@@ -91,10 +91,10 @@ export class InviteCommand implements ICommand {
             }
             await this.createInvites(people, this.config.conference.supportRooms.specialInterest);
         } else {
-            await runRoleCommand((_client,_room,people) => this.ensureInvited(roomId, people), this.conference, this.client, roomId, event, args);
+            await runRoleCommand((_client, room, people) => this.ensureInvited(room, people), this.conference, this.client, managementRoomId, event, args);
         }
 
-        await this.client.sendNotice(roomId, "Invites sent!");
+        await this.client.sendNotice(managementRoomId, "Invites sent!");
     }
 
     public async ensureInvited(roomId: string, people: ResolvedPersonIdentifier[]) {
