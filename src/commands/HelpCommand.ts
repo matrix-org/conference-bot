@@ -42,6 +42,10 @@ export class HelpCommand implements ICommand {
             "!conference run &lt;aud&gt;                                     - Runs the schedule in the given auditorium. If 'all' is used,\n" +
             "                                                            then all auditoriums will be run.\n" +
             "!conference stop                                          - Halts all scheduling, resetting the bot back to no watched auditoriums.\n" +
+            "!conference status|refresh                                - Refreshes the schedule source and then displays the status of the conference. MAY NOT REFRESH THE SCHEDULER, BEWARE.\n" +
+            "!conference schedule view                                 - Shows upcoming scheduler tasks.\n" +
+            "!conference schedule debug                                - Shows upcoming scheduler tasks as well as a list of stored completed task IDs.\n" +
+            "!conference schedule reset                                - Resets the scheduler.\n" +
             "</code></pre>" +
             "<h4>People management:</h4>" +
             "<pre><code>" +
