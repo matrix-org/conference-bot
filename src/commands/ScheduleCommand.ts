@@ -44,8 +44,8 @@ export class ScheduleCommand implements ICommand {
                     html = "…<ul>";
                 }
 
-                const hasRoomIndicator = hasTalkRoom ? '(has talk room)' : '(no talk room)';
-                html += `<li>${formattedTimestamp}: <b>${task.type} on ${task.talk.title} ${hasRoomIndicator}</b> (<code>${task.id}</code>) ${taskStart.fromNow()}</li>`;
+                const hasRoomIndicator = hasTalkRoom ? 'has talk room' : 'no talk room';
+                html += `<li>${formattedTimestamp}: <b>${task.type} on ${task.talk.title}</b> (<code>${task.id}</code>, ${hasRoomIndicator}) ${taskStart.fromNow()}</li>`;
             }
             html += "</ul>";
             await this.client.sendHtmlNotice(roomId, html);
