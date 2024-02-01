@@ -59,6 +59,9 @@ import { IScheduleBackend } from "./backends/IScheduleBackend";
 import { PentaBackend } from "./backends/penta/PentaBackend";
 import { setUnion } from "./utils/sets";
 import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
+import { Gauge } from "prom-client";
+
+const attendeeTotalGauge = new Gauge({ name: "confbot_attendee_total", help: "The number of attendees across all rooms."});
 
 export class Conference {
     private rootSpace: Space | null;
@@ -88,9 +91,21 @@ export class Conference {
         [personId: string]: IPerson;
     } = {};
 
+    private membersInRooms: Record<string, string[]>;
+
+    private memberRecalculationPromise = Promise.resolve();
+    private membershipRecalculationQueue: string[] = [];
+
     constructor(public readonly backend: IScheduleBackend, public readonly id: string, public readonly client: ConferenceMatrixClient, private readonly config: IConfig) {
         this.client.on("room.event", async (roomId: string, event) => {
-            if (event['type'] === 'm.room.member' && event['content']?.['third_party_invite']) {
+            if (event.type !== 'm.room.member' && event.state_key !== undefined) {
+                return;
+            }
+
+            // On any member event, recaulculate the membership.
+            this.enqueueRecalculateRoomMembershop(roomId);
+
+            if (event['content']?.['third_party_invite']) {
                 const emailInviteToken = event['content']['third_party_invite']['signed']?.['token'];
                 const emailInvite = await this.client.getRoomStateEvent(roomId, "m.room.third_party_invite", emailInviteToken);
                 if (emailInvite[RS_3PID_PERSON_ID]) {
@@ -215,32 +230,38 @@ export class Conference {
                         switch (locatorEvent[RSC_ROOM_KIND_FLAG]) {
                             case RoomKind.ConferenceSpace:
                                 this.rootSpace = new Space(roomId, this.client);
+                                this.recalculateRoomMembership(roomId);
                                 break;
                             case RoomKind.ConferenceDb:
                                 this.dbRoom = new MatrixRoom(roomId, this.client, this);
+                                this.recalculateRoomMembership(roomId);
                                 break;
                             case RoomKind.Auditorium:
                                 const auditoriumId = locatorEvent[RSC_AUDITORIUM_ID];
                                 if (this.backend.auditoriums.has(auditoriumId)) {
                                     this.auditoriums[auditoriumId] = new Auditorium(roomId, this.backend.auditoriums.get(auditoriumId)!, this.client, this);
+                                    this.recalculateRoomMembership(roomId);
                                 }
                                 break;
                             case RoomKind.AuditoriumBackstage:
                                 const auditoriumBsId = locatorEvent[RSC_AUDITORIUM_ID];
                                 if (this.backend.auditoriums.has(auditoriumBsId)) {
                                     this.auditoriumBackstages[auditoriumBsId] = new AuditoriumBackstage(roomId, this.backend.auditoriums.get(auditoriumBsId)!, this.client, this);
+                                    this.recalculateRoomMembership(roomId);
                                 }
                                 break;
                             case RoomKind.Talk:
                                 const talkId = locatorEvent[RSC_TALK_ID];
                                 if (this.backend.talks.has(talkId)) {
                                     this.talks[talkId] = new Talk(roomId, this.backend.talks.get(talkId)!, this.client, this);
+                                    this.recalculateRoomMembership(roomId);
                                 }
                                 break;
                             case RoomKind.SpecialInterest:
                                 const interestId = locatorEvent[RSC_SPECIAL_INTEREST_ID];
                                 if (this.backend.interestRooms.has(interestId)) {
                                     this.interestRooms[interestId] = new InterestRoom(roomId, this.client, this, interestId, this.config.conference.prefixes);
+                                    this.recalculateRoomMembership(roomId);
                                 }
                                 break;
                             default:
@@ -853,5 +874,42 @@ export class Conference {
         }
 
         return [];
+    }
+
+    private async recalculateRoomMembership(roomId: string) {
+        try {
+            const myUserId = await this.client.getUserId();
+            const members = await this.client.getAllRoomMembers(roomId);
+            const joinedOrLeftMembers = members.filter(m => m.effectiveMembership === "join" || m.effectiveMembership === "leave").map(m => m.stateKey);
+            this.membersInRooms[roomId] = joinedOrLeftMembers;
+            const total = new Set(Object.values(this.membersInRooms).flat());
+            total.delete(myUserId);
+            total.delete(this.config.moderatorUserId);
+            attendeeTotalGauge.set(total.size);
+        } catch (ex) {
+            LogService.warn("Conference", `Failed to recalculate room membership for ${roomId}`, ex);
+        }
+    }
+
+    private async enqueueRecalculateRoomMembershop(roomId: string) {
+        if (this.membershipRecalculationQueue.includes(roomId)) {
+            return;
+        }
+
+        // Not interested in this room.
+        if (!this.membersInRooms[roomId]) {
+            return;
+        }
+
+        this.membershipRecalculationQueue.unshift(roomId);
+        // We ensure that recalculations are linear.
+        return this.memberRecalculationPromise = this.memberRecalculationPromise.then(() => {
+            // Pop off whatever is first.
+            const queueRoomId = this.membershipRecalculationQueue.pop();
+            if (!queueRoomId) {
+                return;
+            }
+            return this.recalculateRoomMembership(queueRoomId);
+        })
     }
 }
