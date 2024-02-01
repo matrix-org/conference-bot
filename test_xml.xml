@@ -23,8 +23,8 @@
   <day index="1" date="2024-02-01" start="2024-02-01T09:00:00+01:00" end="2024-02-02T08:59:00+01:00">
     <room name="K.blanched" slug="kblanched">
       <event guid="a99d4d8b-6a43-5d91-8aa2-de6e64d7deda" id="12">
-        <date>2024-02-01T19:10:00+01:00</date>
-        <start>19:10</start>
+        <date>2024-02-01T19:20:00+01:00</date>
+        <start>19:20</start>
         <duration>01:30</duration>
         <room>K.blanched</room>
         <slug>democon-12-balanced-value-added-extranet</slug>
