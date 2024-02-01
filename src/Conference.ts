@@ -91,7 +91,7 @@ export class Conference {
         [personId: string]: IPerson;
     } = {};
 
-    private membersInRooms: Record<string, string[]>;
+    private membersInRooms: Record<string, string[]> = {};
 
     private memberRecalculationPromise = Promise.resolve();
     private membershipRecalculationQueue: string[] = [];
