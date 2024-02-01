@@ -32,7 +32,7 @@ export class WidgetsCommand implements ICommand {
         const baseUrl = this.config.webserver.publicBaseUrl;
         const audWidget = await LiveWidget.forAuditorium(aud, this.client, avatar, baseUrl);
         const audLayout = LiveWidget.layoutForAuditorium(audWidget);
-        const audSchedule = await LiveWidget.scheduleForAuditorium(aud, this.client, avatar, baseUrl);
+        const audSchedule = await LiveWidget.scheduleForAuditorium(aud, this.client, avatar, this.config.livestream.scheduleUrl);
 
         try {
             await this.client.sendStateEvent(aud.roomId, audWidget.type, audWidget.state_key, audWidget.content);
