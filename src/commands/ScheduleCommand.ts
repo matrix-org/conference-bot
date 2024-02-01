@@ -30,30 +30,34 @@ export class ScheduleCommand implements ICommand {
             await this.scheduler.reset();
             await this.client.sendNotice(roomId, "Schedule processing has been reset.");
         } else if (args[0] === 'view') {
-            const upcoming = sortTasks(this.scheduler.inspect());
-            let html = "Upcoming tasks:<ul>";
-            for (const task of upcoming) {
-                const hasTalkRoom = this.conference.getTalk(task.talk.id) !== null;
-                const taskStart = moment(getStartTime(task));
-                const formattedTimestamp = taskStart.format("YYYY-MM-DD HH:mm:ss [UTC]ZZ");
-
-                if (html.length > 20000) {
-                    // chunk up the message so we don't fail to send one very large event.
-                    html += "</ul>";
-                    await this.client.sendHtmlNotice(roomId, html);
-                    html = "…<ul>";
-                }
-
-                const hasRoomIndicator = hasTalkRoom ? '(has talk room)' : '(no talk room)';
-                html += `<li>${formattedTimestamp}: <b>${task.type} on ${task.talk.title} ${hasRoomIndicator}</b> (<code>${task.id}</code>) ${taskStart.fromNow()}</li>`;
-            }
-            html += "</ul>";
-            await this.client.sendHtmlNotice(roomId, html);
+            await this.printUpcomingTasks(roomId);
         } else if (args[0] === 'execute') {
             await this.scheduler.execute(args[1]);
             await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
         } else {
             await this.client.sendNotice(roomId, "Unknown schedule command.");
         }
+    }
+
+    private async printUpcomingTasks(roomId: string) {
+        const upcoming = sortTasks(this.scheduler.inspect());
+        let html = "Upcoming tasks:<ul>";
+        for (const task of upcoming) {
+            const hasTalkRoom = this.conference.getTalk(task.talk.id) !== undefined;
+            const taskStart = moment(getStartTime(task));
+            const formattedTimestamp = taskStart.format("YYYY-MM-DD HH:mm:ss [UTC]ZZ");
+
+            if (html.length > 20000) {
+                // chunk up the message so we don't fail to send one very large event.
+                html += "</ul>";
+                await this.client.sendHtmlNotice(roomId, html);
+                html = "…<ul>";
+            }
+
+            const hasRoomIndicator = hasTalkRoom ? 'has talk room' : 'no talk room';
+            html += `<li>${formattedTimestamp}: <b>${task.type} on ${task.talk.title}</b> (<code>${task.id}</code>, ${hasRoomIndicator}) ${taskStart.fromNow()}</li>`;
+        }
+        html += "</ul>";
+        await this.client.sendHtmlNotice(roomId, html);
     }
 }
