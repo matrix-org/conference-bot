@@ -31,6 +31,9 @@ export class ScheduleCommand implements ICommand {
             await this.client.sendNotice(roomId, "Schedule processing has been reset.");
         } else if (args[0] === 'view') {
             await this.printUpcomingTasks(roomId);
+        } else if (args[0] === 'debug') {
+            await this.printUpcomingTasks(roomId);
+            await this.printCompletedTasks(roomId);
         } else if (args[0] === 'execute') {
             await this.scheduler.execute(args[1]);
             await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
@@ -58,6 +61,27 @@ export class ScheduleCommand implements ICommand {
             html += `<li>${formattedTimestamp}: <b>${task.type} on ${task.talk.title}</b> (<code>${task.id}</code>, ${hasRoomIndicator}) ${taskStart.fromNow()}</li>`;
         }
         html += "</ul>";
+        await this.client.sendHtmlNotice(roomId, html);
+    }
+
+    private async printCompletedTasks(roomId: string) {
+        const completed = this.scheduler.inspectCompleted();
+        let html = "Completed tasks:<ul>";
+        completed.sort();
+
+        for (const taskId of completed) {
+            if (html.length > 20000) {
+                // chunk up the message so we don't fail to send one very large event.
+                html += "</ul>";
+                await this.client.sendHtmlNotice(roomId, html);
+                html = "…<ul>";
+            }
+
+            html += `<li>${taskId}</li>`;
+        }
+
+        html += "</ul>";
+
         await this.client.sendHtmlNotice(roomId, html);
     }
 }
