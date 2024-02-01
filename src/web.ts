@@ -37,9 +37,16 @@ export function renderAuditoriumWidget(req: Request, res: Response, conference: 
         return res.sendStatus(404);
     }
 
+    //let sid = audId.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    // HACK for FOSDEM 2023 and FOSDEM 2024: transform auditorium IDs to the livestream ID
+    // 1. 'K1.105A (Words)' -> 'k1.105a'
+    // 2. 'k1.105a' -> 'k1105a'
+    let sid = audId.toLowerCase().replace(/\s+\(.+\)$/, '').replace(/[^a-z0-9]/g, '');
+
     const streamUrl = template(auditoriumUrl, {
         id: audId.toLowerCase(),
-        sId: audId.toLowerCase().replace(/[^a-z0-9]/g, ''),
+        sId: sid
     });
 
     return res.render('auditorium.liquid', {
