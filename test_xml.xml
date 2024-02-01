@@ -1,0 +1,753 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schedule>
+  <version>latest</version>
+  <conference>
+    <acronym>democon</acronym>
+    <title>DemoCon</title>
+    <subtitle></subtitle>
+    <venue>ULB (Université Libre de Bruxelles)</venue>
+    <city>Brussels</city>
+    <start>2024-02-01</start>
+    <end>2024-02-02</end>
+    <days>2</days>
+    <day_change>09:00:00</day_change>
+    <timeslot_duration>00:05:00</timeslot_duration>
+    <base_url>https://fosdem.org/2024/schedule/</base_url>
+    <time_zone_name>Europe/Brussels</time_zone_name>
+  </conference>
+  <tracks>
+    <track online_qa="false">Cross-platform devroom</track>
+    <track online_qa="false">Programmable devroom</track>
+    <track online_qa="false">meer tracks</track>
+  </tracks>
+  <day index="1" date="2024-02-01" start="2024-02-01T09:00:00+01:00" end="2024-02-02T08:59:00+01:00">
+    <room name="K.blanched" slug="kblanched">
+      <event guid="a99d4d8b-6a43-5d91-8aa2-de6e64d7deda" id="12">
+        <date>2024-02-01T19:10:00+01:00</date>
+        <start>19:10</start>
+        <duration>01:30</duration>
+        <room>K.blanched</room>
+        <slug>democon-12-balanced-value-added-extranet</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-12-balanced-value-added-extranet/</url>
+        <title>Balanced value-added extranet</title>
+        <subtitle></subtitle>
+        <track>Programmable devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Target web-enabled users!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/6/feedback/</feedback_url>
+        <persons>
+          <person id="12">Kristie Weiss</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="3dbaa643-c899-5a00-8260-2dd0cf4fbe7a" id="46">
+        <date>2024-02-01T12:30:00+01:00</date>
+        <start>12:30</start>
+        <duration>00:30</duration>
+        <room>K.blanched</room>
+        <slug>democon-46-test-joh</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-46-test-joh/</url>
+        <title>test joh</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;xxx&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/ZWXKFY/feedback/</feedback_url>
+        <persons>
+          <person id="1">johan</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="d4ded1b5-880c-5eee-969b-9afd5fc7cfd3" id="13">
+        <date>2024-02-01T13:30:00+01:00</date>
+        <start>13:30</start>
+        <duration>01:30</duration>
+        <room>K.blanched</room>
+        <slug>democon-13-monitored-24-7-complexity</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-13-monitored-24-7-complexity/</url>
+        <title>Monitored 24/7 complexity</title>
+        <subtitle></subtitle>
+        <track>Programmable devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Streamline robust schemas!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/46/feedback/</feedback_url>
+        <persons>
+          <person id="13">Jennifer Woods</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+    </room>
+    <room name="D.Saddle" slug="dsaddle">
+      <event guid="1b2a9260-0869-51cb-80e9-cdc2fa5b7cac" id="3">
+        <date>2024-02-01T04:30:00+01:00</date>
+        <start>04:30</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-3-customizable-dynamic-open-system</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-3-customizable-dynamic-open-system/</url>
+        <title>Customizable dynamic open system</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Engage open-source portals!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/8/feedback/</feedback_url>
+        <persons>
+          <person id="4">Michael Johnson</person>
+          <person id="5">Sarah Garrett</person>
+        </persons>
+        <attachments>
+          <attachment type="slides" href="https://fosdem.org/2024/events/attachments/democon-3-customizable-dynamic-open-system/slides/373/16_VXEkf1j.png">Plaatje</attachment>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="a16ee540-dc46-56ca-bf18-3b5a94bd06fd" id="2">
+        <date>2024-02-01T07:00:00+01:00</date>
+        <start>07:00</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-2-face-to-face-heuristic-monitoring</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-2-face-to-face-heuristic-monitoring/</url>
+        <title>Face-to-face heuristic monitoring</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Enhance clicks-and-mortar initiatives!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/2/feedback/</feedback_url>
+        <persons>
+          <person id="3">Robert Richardson</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="8246aedf-814b-5028-bc9f-9328e3446d5c" id="5">
+        <date>2024-02-01T09:00:00+01:00</date>
+        <start>09:00</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-5-advanced-value-added-attitude</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-5-advanced-value-added-attitude/</url>
+        <title>Advanced value-added attitude</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Expedite end-to-end supply-chains!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/14/feedback/</feedback_url>
+        <persons>
+          <person id="7">Mr. Daniel Rangel</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="fac56dbe-7732-5f39-9100-8e6e30546c61" id="6">
+        <date>2024-02-01T10:00:00+01:00</date>
+        <start>10:00</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-6-profound-next-generation-policy</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-6-profound-next-generation-policy/</url>
+        <title>Profound next generation policy</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Cultivate efficient applications!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/17/feedback/</feedback_url>
+        <persons>
+          <person id="8">Zachary Ho</person>
+          <person id="12">Kristie Weiss</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="391230f5-34aa-5226-8ca8-9f5059ceee5c" id="8">
+        <date>2024-02-01T12:00:00+01:00</date>
+        <start>12:00</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-8-compatible-transitional-database</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-8-compatible-transitional-database/</url>
+        <title>Compatible transitional database</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Implement sticky systems!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/19/feedback/</feedback_url>
+        <persons>
+          <person id="5">Sarah Garrett</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="42bc03ea-7527-513f-b3b7-08a489ea822e" id="9">
+        <date>2024-02-01T12:30:00+01:00</date>
+        <start>12:30</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-9-multi-tiered-needs-based-system-engine</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-9-multi-tiered-needs-based-system-engine/</url>
+        <title>Multi-tiered needs-based system engine</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Enhance vertical convergence!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/24/feedback/</feedback_url>
+        <persons>
+          <person id="10">Kevin Tucker</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="473ae1fa-3b65-563d-9f4d-1a8e485693a8" id="10">
+        <date>2024-02-01T13:00:00+01:00</date>
+        <start>13:00</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-10-secured-3rdgeneration-superstructure</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-10-secured-3rdgeneration-superstructure/</url>
+        <title>Secured 3rdgeneration superstructure</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Enhance wireless web services!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/52/feedback/</feedback_url>
+        <persons>
+          <person id="4">Michael Johnson</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="59c9bd39-9dd2-5537-8605-2bb692867d10" id="7">
+        <date>2024-02-01T16:40:00+01:00</date>
+        <start>16:40</start>
+        <duration>00:20</duration>
+        <room>D.Saddle</room>
+        <slug>democon-7-total-clear-thinking-approach</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-7-total-clear-thinking-approach/</url>
+        <title>Total clear-thinking approach</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Generate intuitive supply-chains!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/18/feedback/</feedback_url>
+        <persons>
+          <person id="9">Samantha Sanchez</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="2ba634ae-1bf5-5465-b511-00ec892315c3" id="34">
+        <date>2024-02-01T17:00:00+01:00</date>
+        <start>17:00</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-34-distributed-motivating-throughput</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-34-distributed-motivating-throughput/</url>
+        <title>Distributed motivating throughput</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Optimize bleeding-edge bandwidth!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/37/feedback/</feedback_url>
+        <persons>
+          <person id="14">Scott Thompson</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="476dc998-28f8-52b9-a602-0c30287353c3" id="29">
+        <date>2024-02-01T17:30:00+01:00</date>
+        <start>17:30</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-29-face-to-face-responsive-policy</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-29-face-to-face-responsive-policy/</url>
+        <title>Face-to-face responsive policy</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Monetize out-of-the-box interfaces!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/20/feedback/</feedback_url>
+        <persons>
+          <person id="27">Tim Torres</person>
+          <person id="13">Jennifer Woods</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="267fe4f0-1b6d-5e3b-8be5-aac7d164a68b" id="30">
+        <date>2024-02-01T18:00:00+01:00</date>
+        <start>18:00</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-30-multi-channeled-multi-tasking-matrices</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-30-multi-channeled-multi-tasking-matrices/</url>
+        <title>Multi-channeled multi-tasking matrices</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Incentivize proactive functionalities!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/21/feedback/</feedback_url>
+        <persons>
+          <person id="28">Ronald Griffin</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="e3f97419-1e90-58c9-9963-c93856552958" id="32">
+        <date>2024-02-01T18:30:00+01:00</date>
+        <start>18:30</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-32-optimized-24hour-core</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-32-optimized-24hour-core/</url>
+        <title>Optimized 24hour core</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Deploy bleeding-edge e-services!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/35/feedback/</feedback_url>
+        <persons>
+          <person id="30">William Young</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="d8d850ab-89d8-5b87-9127-0120b53a8e0a" id="28">
+        <date>2024-02-01T19:00:00+01:00</date>
+        <start>19:00</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-28-optional-context-sensitive-policy</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-28-optional-context-sensitive-policy/</url>
+        <title>Optional context-sensitive policy</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Target next-generation web services!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/16/feedback/</feedback_url>
+        <persons>
+          <person id="15">Nicole Smith</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="c638d68f-5bc6-561a-861d-76093f12224e" id="33">
+        <date>2024-02-01T19:30:00+01:00</date>
+        <start>19:30</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-33-diverse-fresh-thinking-pricing-structure</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-33-diverse-fresh-thinking-pricing-structure/</url>
+        <title>Diverse fresh-thinking pricing structure</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Exploit value-added relationships!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/36/feedback/</feedback_url>
+        <persons>
+          <person id="31">Darryl Smith</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="3dd35f1b-c92a-51b5-8403-d8c165d3d3c3" id="26">
+        <date>2024-02-01T20:00:00+01:00</date>
+        <start>20:00</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-26-de-engineered-web-enabled-budgetary-management</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-26-de-engineered-web-enabled-budgetary-management/</url>
+        <title>De-engineered web-enabled budgetary management</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Innovate real-time technologies!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/55/feedback/</feedback_url>
+        <persons>
+          <person id="25">Jonathan Hawkins</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="5fb1d979-a1fe-5f65-9bbe-f0aa855f258d" id="31">
+        <date>2024-02-01T20:30:00+01:00</date>
+        <start>20:30</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-31-cloned-maximized-challenge</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-31-cloned-maximized-challenge/</url>
+        <title>Cloned maximized challenge</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Enhance ubiquitous markets!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/26/feedback/</feedback_url>
+        <persons>
+          <person id="29">Sean Villanueva</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+    </room>
+  </day>
+  <day index="2" date="2024-02-02" start="2024-02-02T09:00:00+01:00" end="2024-02-03T08:59:00+01:00">
+    <room name="K.blanched" slug="kblanched">
+      <event guid="6f590a8a-3c1b-5260-8ef1-be539c0e8fab" id="23">
+        <date>2024-02-02T07:00:00+01:00</date>
+        <start>07:00</start>
+        <duration>01:30</duration>
+        <room>K.blanched</room>
+        <slug>democon-23-triple-buffered-analyzing-attitude</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-23-triple-buffered-analyzing-attitude/</url>
+        <title>Triple-buffered analyzing attitude</title>
+        <subtitle></subtitle>
+        <track>Programmable devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Enhance open-source e-tailers!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/32/feedback/</feedback_url>
+        <persons>
+          <person id="23">Ashley Reed</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="83c73a31-6339-575f-a2c6-fe902298fb01" id="24">
+        <date>2024-02-02T09:30:00+01:00</date>
+        <start>09:30</start>
+        <duration>01:30</duration>
+        <room>K.blanched</room>
+        <slug>democon-24-upgradable-zero-tolerance-product</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-24-upgradable-zero-tolerance-product/</url>
+        <title>Upgradable zero tolerance product</title>
+        <subtitle></subtitle>
+        <track>Programmable devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Transform magnetic systems!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/56/feedback/</feedback_url>
+        <persons>
+          <person id="24">Mrs. Alexa Davis MD</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="3dafcdc1-b8b3-5ea3-a029-c0ddb7aa015c" id="25">
+        <date>2024-02-02T12:00:00+01:00</date>
+        <start>12:00</start>
+        <duration>01:30</duration>
+        <room>K.blanched</room>
+        <slug>democon-25-enterprise-wide-disintermediate-focus-group</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-25-enterprise-wide-disintermediate-focus-group/</url>
+        <title>Enterprise-wide disintermediate focus group</title>
+        <subtitle></subtitle>
+        <track>Programmable devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Cultivate turn-key niches!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/39/feedback/</feedback_url>
+        <persons>
+          <person id="24">Mrs. Alexa Davis MD</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+    </room>
+    <room name="D.Saddle" slug="dsaddle">
+      <event guid="b61a5bab-ac5e-5de7-9067-c20820f4a956" id="14">
+        <date>2024-02-02T07:00:00+01:00</date>
+        <start>07:00</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-14-customer-focused-modular-groupware</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-14-customer-focused-modular-groupware/</url>
+        <title>Customer-focused modular groupware</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Redefine robust info-mediaries!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/57/feedback/</feedback_url>
+        <persons>
+          <person id="14">Scott Thompson</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="fa935a20-6a91-5cc3-a879-0688303c6fd8" id="15">
+        <date>2024-02-02T07:30:00+01:00</date>
+        <start>07:30</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-15-profit-focused-client-server-paradigm</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-15-profit-focused-client-server-paradigm/</url>
+        <title>Profit-focused client-server paradigm</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Re-intermediate user-centric interfaces!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/61/feedback/</feedback_url>
+        <persons>
+          <person id="15">Nicole Smith</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="965238a2-21f4-5b26-b159-bdc0364d8701" id="16">
+        <date>2024-02-02T08:00:00+01:00</date>
+        <start>08:00</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-16-reverse-engineered-cohesive-contingency</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-16-reverse-engineered-cohesive-contingency/</url>
+        <title>Reverse-engineered cohesive contingency</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Transition granular networks!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/64/feedback/</feedback_url>
+        <persons>
+          <person id="16">David Smith</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="fad55e7b-daa6-5c95-af84-0b79ce2f8401" id="17">
+        <date>2024-02-02T09:30:00+01:00</date>
+        <start>09:30</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-17-centralized-modular-groupware</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-17-centralized-modular-groupware/</url>
+        <title>Centralized modular groupware</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Incentivize ubiquitous synergies!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/5/feedback/</feedback_url>
+        <persons>
+          <person id="17">Devon Rogers</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="2358c0fa-696c-5ccd-bccc-fdc16c54e5cf" id="18">
+        <date>2024-02-02T10:00:00+01:00</date>
+        <start>10:00</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-18-fundamental-radical-synergy</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-18-fundamental-radical-synergy/</url>
+        <title>Fundamental radical synergy</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Incubate dynamic applications!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/12/feedback/</feedback_url>
+        <persons>
+          <person id="18">Michael Garcia</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="859932f9-e222-5d7b-8d6d-b62753e0bb73" id="19">
+        <date>2024-02-02T10:30:00+01:00</date>
+        <start>10:30</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-19-optimized-mission-critical-success</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-19-optimized-mission-critical-success/</url>
+        <title>Optimized mission-critical success</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Architect dot-com partnerships!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/22/feedback/</feedback_url>
+        <persons>
+          <person id="19">Claudia Marks</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="78632063-b1b1-529d-ba45-119e35dddb5d" id="20">
+        <date>2024-02-02T12:00:00+01:00</date>
+        <start>12:00</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-20-cross-platform-interactive-task-force</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-20-cross-platform-interactive-task-force/</url>
+        <title>Cross-platform interactive task-force</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Transition seamless schemas!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/27/feedback/</feedback_url>
+        <persons>
+          <person id="20">Ian Hobbs</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="7a02f2fd-c402-5948-98fc-9aa644e9ff8e" id="21">
+        <date>2024-02-02T12:30:00+01:00</date>
+        <start>12:30</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-21-innovative-secondary-support</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-21-innovative-secondary-support/</url>
+        <title>Innovative secondary support</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Harness bleeding-edge bandwidth!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/38/feedback/</feedback_url>
+        <persons>
+          <person id="21">Glenn Oliver</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+      <event guid="dc29595f-b64f-5287-b14f-971e1f7e0d25" id="22">
+        <date>2024-02-02T13:00:00+01:00</date>
+        <start>13:00</start>
+        <duration>00:30</duration>
+        <room>D.Saddle</room>
+        <slug>democon-22-open-architected-national-monitoring</slug>
+        <url>https://fosdem.org/2024/schedule/event/democon-22-open-architected-national-monitoring/</url>
+        <title>Open-architected national monitoring</title>
+        <subtitle></subtitle>
+        <track>Cross-platform devroom</track>
+        <type>devroom</type>
+        <language>en</language>
+        <abstract>&lt;p&gt;Repurpose world-class markets!&lt;/p&gt;</abstract>
+        <description></description>
+        <feedback_url>https://pretalx-test.fosdem.org/democon/talk/40/feedback/</feedback_url>
+        <persons>
+          <person id="22">Charles Weaver</person>
+        </persons>
+        <attachments>
+        </attachments>
+        <links>
+        </links>
+      </event>
+    </room>
+  </day>
+</schedule>
+
