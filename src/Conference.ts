@@ -94,7 +94,7 @@ export class Conference {
     private membersInRooms: Record<string, string[]> = {};
 
     private memberRecalculationPromise = Promise.resolve();
-    private membershipRecalculationQueue: string[] = [];
+    private membershipRecalculationQueue = new Set<string>();
 
     constructor(public readonly backend: IScheduleBackend, public readonly id: string, public readonly client: ConferenceMatrixClient, private readonly config: IConfig) {
         this.client.on("room.event", async (roomId: string, event) => {
@@ -103,7 +103,7 @@ export class Conference {
             }
 
             // On any member event, recaulculate the membership.
-            this.enqueueRecalculateRoomMembershop(roomId);
+            this.enqueueRecalculateRoomMembership(roomId);
 
             if (event['content']?.['third_party_invite']) {
                 const emailInviteToken = event['content']['third_party_invite']['signed']?.['token'];
@@ -876,6 +876,15 @@ export class Conference {
         return [];
     }
 
+    /**
+     * Recalculate the number of joined and left users in a room,
+     * and then update the total count for the conference.
+     * 
+     * Prefer to call `enqueueRecalculateRoomMembership` as it will
+     * queue and debounce calls appropriately.
+     * 
+     * @param roomId The roomId to recalculate.
+     */
     private async recalculateRoomMembership(roomId: string) {
         try {
             const myUserId = await this.client.getUserId();
@@ -891,8 +900,13 @@ export class Conference {
         }
     }
 
-    private async enqueueRecalculateRoomMembershop(roomId: string) {
-        if (this.membershipRecalculationQueue.includes(roomId)) {
+    /**
+     * Queue up a call to `recalculateRoomMembership`.
+     * @param roomId The roomId to recalculate.
+     * @returns A promise that resolves when the call has been made.
+     */
+    private async enqueueRecalculateRoomMembership(roomId: string) {
+        if (this.membershipRecalculationQueue.has(roomId)) {
             return;
         }
 
@@ -901,15 +915,11 @@ export class Conference {
             return;
         }
 
-        this.membershipRecalculationQueue.unshift(roomId);
+        this.membershipRecalculationQueue.add(roomId);
         // We ensure that recalculations are linear.
         return this.memberRecalculationPromise = this.memberRecalculationPromise.then(() => {
-            // Pop off whatever is first.
-            const queueRoomId = this.membershipRecalculationQueue.pop();
-            if (!queueRoomId) {
-                return;
-            }
-            return this.recalculateRoomMembership(queueRoomId);
+            this.membershipRecalculationQueue.delete(roomId);
+            return this.recalculateRoomMembership(roomId);
         })
     }
 }
