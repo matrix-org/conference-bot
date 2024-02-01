@@ -67,12 +67,13 @@ export class InviteCommand implements ICommand {
         } else if (args[0] && args[0] === "coordinators-support") {
             let people: IPerson[] = [];
             for (const aud of this.conference.storedAuditoriums) {
-                if (!(await aud.getId()).startsWith("D.")) {
+                // This hack was not wanted in 2023 or 2024. 
+                // if (!(await aud.getId()).startsWith("D.")) {
                     // HACK: Only invite coordinators for D.* auditoriums.
                     // TODO: Make invitations for support rooms more configurable.
                     //       https://github.com/matrix-org/this.conference-bot/issues/76
-                    continue;
-                }
+                //     continue;
+                // }
 
                 const inviteTargets = await this.conference.getInviteTargetsForAuditorium(aud, true);
                 people.push(...inviteTargets.filter(i => i.role === Role.Coordinator));
