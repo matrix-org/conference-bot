@@ -23,8 +23,8 @@
   <day index="1" date="2024-02-01" start="2024-02-01T09:00:00+01:00" end="2024-02-02T08:59:00+01:00">
     <room name="K.blanched" slug="kblanched">
       <event guid="a99d4d8b-6a43-5d91-8aa2-de6e64d7deda" id="12">
-        <date>2024-02-01T19:45:00+01:00</date>
-        <start>19:45</start>
+        <date>2024-02-01T20:45:00+01:00</date>
+        <start>20:45</start>
         <duration>01:30</duration>
         <room>K.blanched</room>
         <slug>democon-12-balanced-value-added-extranet</slug>
@@ -46,8 +46,8 @@
         </links>
       </event>
       <event guid="3dbaa643-c899-5a00-8260-2dd0cf4fbe7a" id="46">
-        <date>2024-02-01T20:00:00+01:00</date>
-        <start>20:00</start>
+        <date>2024-02-01T21:00:00+01:00</date>
+        <start>21:00</start>
         <duration>00:30</duration>
         <room>K.blanched</room>
         <slug>democon-46-test-joh</slug>
@@ -69,8 +69,8 @@
         </links>
       </event>
       <event guid="d4ded1b5-880c-5eee-969b-9afd5fc7cfd3" id="13">
-        <date>2024-02-01T20:15:00+01:00</date>
-        <start>20:15</start>
+        <date>2024-02-01T21:15:00+01:00</date>
+        <start>21:15</start>
         <duration>01:30</duration>
         <room>K.blanched</room>
         <slug>democon-13-monitored-24-7-complexity</slug>
@@ -94,8 +94,8 @@
     </room>
     <room name="D.Saddle" slug="dsaddle">
       <event guid="1b2a9260-0869-51cb-80e9-cdc2fa5b7cac" id="3">
-        <date>2024-02-01T20:30:00+01:00</date>
-        <start>20:30</start>
+        <date>2024-02-01T21:30:00+01:00</date>
+        <start>21:30</start>
         <duration>00:30</duration>
         <room>D.Saddle</room>
         <slug>democon-3-customizable-dynamic-open-system</slug>
