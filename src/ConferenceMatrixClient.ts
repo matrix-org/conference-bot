@@ -12,7 +12,9 @@ export class ConferenceMatrixClient extends MatrixClient {
     static async create(confConfig: IConfig, storage?: IStorageProvider) {
         let idClient: IdentityClient|undefined;
         if (confConfig.idServerDomain) {
-            idClient = await new MatrixClient(confConfig.homeserverUrl, confConfig.accessToken).getIdentityServerClient(confConfig.idServerDomain);
+            const client = new MatrixClient(confConfig.homeserverUrl, confConfig.accessToken);
+            client.impersonateUserId(confConfig.userId);
+            idClient = await client.getIdentityServerClient(confConfig.idServerDomain);
             await idClient.acceptAllTerms();
             if (confConfig.idServerBrand) {
                 idClient.brand = confConfig.idServerBrand;
