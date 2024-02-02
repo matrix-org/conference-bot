@@ -45,7 +45,7 @@ export class HelpCommand implements ICommand {
             "!conference status|refresh                                - Refreshes the schedule source and then displays the status of the conference. MAY NOT REFRESH THE SCHEDULER, BEWARE.\n" +
             "!conference schedule view                                 - Shows upcoming scheduler tasks.\n" +
             "!conference schedule debug                                - Shows upcoming scheduler tasks as well as a list of stored completed task IDs.\n" +
-            "!conference schedule reset                                - Resets the scheduler.\n" +
+            "!conference schedule reset                                - Resets the scheduler which will clear all completed tasks. Some tasks may run again.\n" +
             "</code></pre>" +
             "<h4>People management:</h4>" +
             "<pre><code>" +
