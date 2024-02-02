@@ -43,6 +43,7 @@ import { PermissionsCommand } from "./commands/PermissionsCommand";
 import { VerifyCommand } from "./commands/VerifyCommand";
 import { CustomLogger } from "./CustomLogger";
 import { InviteMeCommand } from "./commands/InviteMeCommand";
+import { PowerLevelCommand } from "./commands/PowerLevelCommand";
 import { WidgetsCommand } from "./commands/WidgetsCommand";
 import { Scoreboard } from "./Scoreboard";
 import { Scheduler } from "./Scheduler";
@@ -242,6 +243,7 @@ export class ConferenceBot {
             new HelpCommand(this.client),
             new InviteCommand(this.client, this.conference, this.config),
             new InviteMeCommand(this.client, this.conference),
+            new PowerLevelCommand(this.client, this.conference),
             new JoinCommand(this.client),
             new PermissionsCommand(this.client, this.conference),
             new RunCommand(this.client, this.conference, this.scheduler),

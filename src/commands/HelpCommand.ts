@@ -68,6 +68,8 @@ export class HelpCommand implements ICommand {
             "!conference join &lt;room&gt;             - Makes the bot join the given room.\n" +
             "!conference copymods &lt;from&gt; &lt;to&gt;    - Copies the moderators from one room to another.\n" +
             "!conference widgets &lt;aud&gt;           - Creates all widgets for the auditorium and its talks.\n" +
+            "!conferece powerlevels &lt;user&gt; &lt;room&gt; &lt;powerlevel&gt;   - Assigns the given powerlevel to the given userid in the given room or room group. Run the " +
+            "command without a room and powerlevel to see a list of room groups. User must be in room to have pl elevated\n" +
             "</code></pre>" +
             "";
         return this.client.replyHtmlNotice(roomId, event, htmlHelp);
