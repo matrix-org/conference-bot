@@ -99,7 +99,7 @@ export class InviteMeCommand implements ICommand {
     /**
      * Render a (somewhat) pretty list of group names.
      */
-    private prettyGroupNameList(roomGroups: Map<string, Set<string>>) {
+    public prettyGroupNameList(roomGroups: Map<string, Set<string>>) {
         const bySection = new Map<string, string[]>();
 
         // organise the groups into sections
