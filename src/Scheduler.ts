@@ -185,6 +185,14 @@ export class Scheduler {
         return Object.values(this.pending);
     }
 
+    /**
+     * Return a list of completed task IDs.
+     */
+    public inspectCompleted(): string[] {
+        // slice() is just to clone the array to prevent mutations
+        return this.completedIds.slice();
+    }
+
     private async persistProgress() {
         const completedIds = this.completedIds.slice().reverse().slice(0, KEEP_LAST_TASKS).reverse();
         await this.client.setAccountData(ACD_SCHEDULER, {
