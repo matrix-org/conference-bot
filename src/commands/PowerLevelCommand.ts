@@ -58,7 +58,7 @@ export class PowerLevelCommand implements ICommand {
                 throw Error(`Error resolving room ${args[1]}`, {cause:error})
             }
             try {
-                await this.client.setUserPowerLevel(targetRoomId, targetRoomId, Number(pl));
+                await this.client.setUserPowerLevel(targetId, targetRoomId, Number(pl));
             }
             catch (e) {
                 throw new Error(`Error setting power levels in room ${targetRoomId}: ${e.body}`)
