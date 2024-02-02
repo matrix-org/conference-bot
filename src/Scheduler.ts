@@ -423,7 +423,9 @@ export class Scheduler {
                 const resolved = (await resolveIdentifiers(this.client, userIds)).filter(p => p.mxid).map(p => p.mxid!);
                 await this.checkins.expectCheckinFrom(resolved);
             }
-        } else if (task.type === ScheduledTaskType.TalkStart5M && confTalk !== undefined) {
+        } else if (task.type === ScheduledTaskType.TalkStart5M) {
+            if (confTalk === undefined) return;
+
             if (!task.talk.prerecorded) {
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk starts in about 5 minutes</h3><p><b>Your talk is not pre-recorded.</b> Your talk's full duration will be Q&A.</p>`);
             } else {
