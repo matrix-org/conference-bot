@@ -40,7 +40,7 @@ export async function doAuditoriumResolveAction(
     // We know that everyone should be in the backstage room, so resolve that list of people
     // to make the identity server lookup efficient.
     const backstagePeople = isInvite
-        ? await conference.getInviteTargetsForAuditorium(aud, true)
+        ? await conference.getInviteTargetsForAuditorium(aud)
         : await conference.getModeratorsForAuditorium(aud);
     LogService.info("backstagePeople", `${backstagePeople}`);
     const resolvedBackstagePeople = await resolveIdentifiers(client, backstagePeople);
@@ -50,7 +50,7 @@ export async function doAuditoriumResolveAction(
 
     const allPossiblePeople = isInvite
         ? resolvedBackstagePeople
-        : await resolveIdentifiers(client, await conference.getInviteTargetsForAuditorium(aud, true));
+        : await resolveIdentifiers(client, await conference.getInviteTargetsForAuditorium(aud));
 
     await action(client, backstage.roomId, resolvedBackstagePeople);
 

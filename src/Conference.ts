@@ -747,14 +747,13 @@ export class Conference {
         return [];
     }
 
-    public async getInviteTargetsForAuditorium(auditorium: Auditorium, backstage = false): Promise<IPerson[]> {
+    public async getInviteTargetsForAuditorium(auditorium: Auditorium, roles = [Role.Coordinator, Role.Host, Role.Speaker]): Promise<IPerson[]> {
         const people = await this.getPeopleForAuditorium(auditorium);
-        const roles = [Role.Coordinator, Role.Host, Role.Speaker];
 
         // HACK dedupe people by name.
         const namesToPersons: Map<string, IPerson> = new Map();
 
-        let shouldWritePerson = (person) => {
+        let shouldWritePerson = (person: IPerson) => {
             // ignore unknown roles
             if (! roles.includes(person.role)) return false;
 
