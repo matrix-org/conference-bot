@@ -1,7 +1,7 @@
 name: Linting and Tests
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "rei/fosdem2024_fire"]
   pull_request:
 
 jobs:
@@ -33,7 +33,7 @@ jobs:
     env:
       # Only push if this is develop, otherwise we just want to build
       # On a PR github.ref is the target branch, so don't push for that either
-      PUSH: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+      PUSH: ${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/rei/fosdem2024_fire') && github.event_name != 'pull_request' }}
 
     steps:
       - name: Check out
@@ -55,5 +55,5 @@ jobs:
           platforms: ${{ env.PLATFORMS }}
           push: ${{ env.PUSH }}
           tags: |
-            ghcr.io/matrix-org/conference-bot:latest
+            #ghcr.io/matrix-org/conference-bot:latest
             ghcr.io/matrix-org/conference-bot:${{ github.sha }}
