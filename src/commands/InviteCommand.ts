@@ -24,6 +24,7 @@ import { logMessage } from "../LogProxy";
 import { IPerson, Role } from "../models/schedule";
 import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 import { IConfig } from "../config";
+import { sleep } from "../utils";
 
 export class InviteCommand implements ICommand {
     public readonly prefixes = ["invite", "inv"];
@@ -119,12 +120,20 @@ export class InviteCommand implements ICommand {
         for (const target of people) {
             if (target.mxid && effectiveJoinedUserIds.includes(target.mxid)) continue;
             if (emailInvitePersonIds.includes(target.person.id)) continue;
-            try {
-                await invitePersonToRoom(this.client, target, roomId, this.config);
-                ++invitesSent;
-            } catch (e) {
-                LogService.error("InviteCommand", e);
-                await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${target.mxid}/${target.emails} / ${target.person.id} to ${roomId} - ignoring: ${e.message ?? e.statusMessage ?? '(see logs)'}`, this.client);
+            for (let attempt = 0; attempt < 3; ++attempt) {
+                try {
+                    await invitePersonToRoom(this.client, target, roomId, this.config);
+                    ++invitesSent;
+                } catch (e) {
+                    if (e.statusCode === 429) {
+                        // HACK Retry after ratelimits
+                        await sleep(301_000);
+                        continue;
+                    }
+                    LogService.error("InviteCommand", e);
+                    await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${target.mxid}/${target.emails} / ${target.person.id} to ${roomId} - ignoring: ${e.message ?? e.statusMessage ?? '(see logs)'}`, this.client);
+                }
+                break;
             }
         }
 
