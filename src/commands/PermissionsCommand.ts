@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { MatrixClient } from "matrix-bot-sdk";
+import { LogService, MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { ResolvedPersonIdentifier } from "../invites";
 import { runRoleCommand } from "./actions/roles";
@@ -49,6 +49,12 @@ export class PermissionsCommand implements ICommand {
 
         for (const person of people) {
             if (!person.mxid) continue;
+
+            if (! /^@[^:]+:[^\.]+\..+$/.test(person.mxid)) {
+                LogService.warn("PermissionsCommand", `ignoring invalid MXID ${person.mxid}`);
+                continue;
+            }
+
             if (powerLevels['users'][person.mxid]) continue;
             powerLevels['users'][person.mxid] = 50;
         }
