@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import * as Hls from "hls.js/dist/hls.light.js";
+import Hls from "hls.js/dist/hls.js";
 import { isWidget } from "./widgets";
 import { getAttr } from "./common";
 
