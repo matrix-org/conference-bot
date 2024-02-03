@@ -55,5 +55,4 @@ jobs:
           platforms: ${{ env.PLATFORMS }}
           push: ${{ env.PUSH }}
           tags: |
-            #ghcr.io/matrix-org/conference-bot:latest
             ghcr.io/matrix-org/conference-bot:${{ github.sha }}
