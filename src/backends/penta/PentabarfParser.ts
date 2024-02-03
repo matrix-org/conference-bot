@@ -240,7 +240,7 @@ export class PentabarfParser {
                     const parsedDuration = simpleTimeParse(pEvent.duration);
                     // HACK FOSDEM2024 +01 TIMEZONE
                     const startTime = moment(dateTs).add(parsedStartTime.hours - 1, 'hours').add(parsedStartTime.minutes, 'minutes');
-                    const endTime = moment(startTime).add(parsedDuration.hours - 1, 'hours').add(parsedDuration.minutes, 'minutes');
+                    const endTime = moment(startTime).add(parsedDuration.hours, 'hours').add(parsedDuration.minutes, 'minutes');
                     let talk: IPentabarfTalk = {
                         pretalxCode:  pEvent.attr?.["@_code"],
                         id: talkId,
