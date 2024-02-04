@@ -27,7 +27,7 @@ export class DevCommand implements ICommand {
     public async run(roomId: string, event: any, args: string[]) {
         let people: IPerson[] = [];
         for (const aud of this.conference.storedAuditoriums) {
-            const inviteTargets = await this.conference.getInviteTargetsForAuditorium(aud, true);
+            const inviteTargets = await this.conference.getInviteTargetsForAuditorium(aud);
             people.push(...inviteTargets.filter(i => i.role === Role.Coordinator));
         }
         const newPeople: IPerson[] = [];

@@ -68,7 +68,7 @@ export class VerifyCommand implements ICommand {
 
         if (aud instanceof Auditorium) {
             audToInvite = await this.conference.getInviteTargetsForAuditorium(aud);
-            audBackstageToInvite = await this.conference.getInviteTargetsForAuditorium(aud, true);
+            audBackstageToInvite = await this.conference.getInviteTargetsForAuditorium(aud);
             audToMod = await this.conference.getModeratorsForAuditorium(aud);
         } else if (aud instanceof InterestRoom) {
             audToInvite = await this.conference.getInviteTargetsForInterest(aud);

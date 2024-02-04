@@ -88,7 +88,7 @@ export class AttendanceCommand implements ICommand {
             const doAppend = !!targetAudId && (targetAudId === "all" || targetAudId === await auditorium.getId());
             const bs = this.conference.getAuditoriumBackstage(await auditorium.getId());
             const inviteTargets = await this.conference.getInviteTargetsForAuditorium(auditorium);
-            const bsInviteTargets = await this.conference.getInviteTargetsForAuditorium(auditorium, true);
+            const bsInviteTargets = await this.conference.getInviteTargetsForAuditorium(auditorium);
             try {
                 await append(inviteTargets, bsInviteTargets, await auditorium.getId(), auditorium.roomId, bs.roomId, doAppend);
             }
