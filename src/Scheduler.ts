@@ -387,7 +387,7 @@ export class Scheduler {
                     await this.client.sendStateEvent(confAud.roomId, "m.room.name", "", nameEventContent);
                 }
             } catch (e) {
-                LogService.error("Scheduler:talkStart", `Error when considering changing name of track room: ${e}`);
+                LogService.error("Scheduler:talkStart", `Error when considering changing name of track room`, e);
             }
         } else if (task.type === ScheduledTaskType.TalkQA) {
             if (!task.talk.prerecorded) return;
