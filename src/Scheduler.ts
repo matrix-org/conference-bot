@@ -381,10 +381,12 @@ export class Scheduler {
             );
 
             try {
-                const nameEventContent = await this.client.getRoomStateEvent(confAud.roomId, "m.room.name", "");
-                if (task.talk.track != '' && task.talk.track != undefined && task.talk.track != nameEventContent["name"]) {
-                    nameEventContent["name"] = task.talk.track;
-                    await this.client.sendStateEvent(confAud.roomId, "m.room.name", "", nameEventContent);
+                if (task.talk.track != '' && task.talk.track != undefined) {
+                    const nameEventContent = await this.client.getRoomStateEvent(confAud.roomId, "m.room.name", "");
+                    if (task.talk.track != nameEventContent["name"]) {
+                        nameEventContent["name"] = task.talk.track;
+                        await this.client.sendStateEvent(confAud.roomId, "m.room.name", "", nameEventContent);
+                    }
                 }
             } catch (e) {
                 LogService.error("Scheduler:talkStart", `Error when considering changing name of track room`, e);
