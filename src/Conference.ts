@@ -747,24 +747,33 @@ export class Conference {
         return [];
     }
 
-    public async getInviteTargetsForAuditorium(auditorium: Auditorium, backstage = false): Promise<IPerson[]> {
+    public async getInviteTargetsForAuditorium(auditorium: Auditorium, roles = [Role.Coordinator, Role.Host, Role.Speaker]): Promise<IPerson[]> {
         const people = await this.getPeopleForAuditorium(auditorium);
-        const roles = [Role.Coordinator, Role.Host, Role.Speaker];
-        let includesPerson = (person, array) => {
-            for (const element of array) {
-                if (element.name === person.name) {
-                    return true
-                }
-            }
-            return false
+
+        // HACK dedupe people by name.
+        const namesToPersons: Map<string, IPerson> = new Map();
+
+        let shouldWritePerson = (person: IPerson) => {
+            // ignore unknown roles
+            if (! roles.includes(person.role)) return false;
+
+            if (! namesToPersons.has(person.name)) return true;
+
+            // (TODO HACK we should figure out a nicer way of doing this, like directly tracking multiple roles for people)
+            // overwrite the previous person entry if this person is a coordinator
+            // (coordinator role is more important than speaker)
+            if (person.role == Role.Coordinator) return true;
+
+            return false;
         };
-        let uniquePeople: IPerson[] = []
+
         for (const person of people) {
-            if (!includesPerson(person, uniquePeople)) {
-                uniquePeople.push(person)
+            if (shouldWritePerson(person)) {
+                namesToPersons.set(person.name, person);
             }
         }
-        return uniquePeople.filter(p => roles.includes(p.role));
+
+        return Array.from(namesToPersons.values());
     }
 
     public async getInviteTargetsForTalk(talk: Talk): Promise<IPerson[]> {

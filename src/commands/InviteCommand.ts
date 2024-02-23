@@ -54,9 +54,8 @@ export class InviteCommand implements ICommand {
         if (args[0] && args[0] === "speakers-support") {
             let people: IPerson[] = [];
             for (const aud of this.conference.storedAuditoriumBackstages) {
-                people.push(...await this.conference.getInviteTargetsForAuditorium(aud, true));
+                people.push(...await this.conference.getInviteTargetsForAuditorium(aud, [Role.Speaker]));
             }
-            people = people.filter(p => p.role === Role.Speaker);
             const newPeople: IPerson[] = [];
             people.forEach(p => {
                 if (!newPeople.some(n => n.id === p.id)) {
@@ -75,8 +74,8 @@ export class InviteCommand implements ICommand {
                 //     continue;
                 // }
 
-                const inviteTargets = await this.conference.getInviteTargetsForAuditorium(aud, true);
-                people.push(...inviteTargets.filter(i => i.role === Role.Coordinator));
+                const inviteTargets = await this.conference.getInviteTargetsForAuditorium(aud, [Role.Coordinator]);
+                people.push(...inviteTargets);
             }
             const newPeople: IPerson[] = [];
             people.forEach(p => {
