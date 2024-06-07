@@ -126,8 +126,13 @@ export class InviteCommand implements ICommand {
                     ++invitesSent;
                 } catch (e) {
                     if (e.statusCode === 429) {
-                        // HACK Retry after ratelimits
-                        await sleep(301_000);
+                        // Retry after ratelimits
+                        // Add 1 second to the ratelimit just to ensure we don't retry too quickly
+                        // due to clock drift or a very small requested wait.
+                        // If no retry time set, use 5 minutes.
+                        let delay = (e.retryAfterMs ?? 300_000) + 1_000;
+
+                        await sleep(delay);
                         continue;
                     }
                     LogService.error("InviteCommand", e);
