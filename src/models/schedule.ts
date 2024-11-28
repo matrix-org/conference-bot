@@ -76,6 +76,14 @@ export interface IAuditorium {
     kind: RoomKind;
     talks: Map<TalkId, ITalk>;
     /**
+     * People, in addition to those mentioned in individual talks.
+     * People may be specified here, in talks, or in both.
+     *
+     * The motivation for this field is to allow coordinators to exist in the
+     * conference, even before any talks have been scheduled.
+     */
+    extraPeople: IPerson[];
+    /**
      * If true, this auditorium is just a virtual representation of a real-world physical auditorium.
      */
     isPhysical: boolean;
