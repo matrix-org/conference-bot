@@ -203,7 +203,7 @@ export class E2ETestEnv {
                     }
                 },
             },
-            moderatorUserId: `@modbot:${homeserver.domain}`,
+            moderatorUserIds: [`@modbot:${homeserver.domain}`],
             webserver: {
                 address: '0.0.0.0',
                 port: 0,

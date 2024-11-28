@@ -30,7 +30,7 @@ export interface IConfig {
     managementRoom: string;
     idServerDomain?: string;
     idServerBrand?: string;
-    moderatorUserId: string;
+    moderatorUserIds: string[];
     livestream: {
         auditoriumUrl: string;
         talkUrl: string;

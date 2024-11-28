@@ -26,10 +26,10 @@ idServerDomain: "vector.im"
 # result in emails or other communications to the user.
 idServerBrand: "vector-im"
 
-# This is the user ID of the moderator for all public-facing rooms the bot creates.
-# Note that this user will be granted power level 100 (the highest) in every room
+# These are the user IDs of the moderators for all public-facing rooms the bot creates.
+# Note that these users will be granted power level 100 (the highest) in every room
 # and be invited.
-moderatorUserId: "@moderator:example.org"
+moderatorUserIds: ["@moderator:example.org"]
 
 # Settings for how the bot should represent livestreams.
 livestream:

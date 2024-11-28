@@ -394,7 +394,7 @@ export class Conference {
                         this.client,
                         mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
                             room_alias_name: (new RoomAlias(alias)).localpart,
-                            invite: [this.config.moderatorUserId],
+                            invite: this.config.moderatorUserIds,
                         }),
                     );
                     await rootSpace.addChildRoom(roomId);
@@ -433,7 +433,7 @@ export class Conference {
             subspace = await this.client.createSpace({
                 isPublic: true,
                 name: name,
-                invites: [this.config.moderatorUserId],
+                invites: this.config.moderatorUserIds,
             });
             this.subspaces[subspaceId] = subspace;
 
@@ -448,9 +448,11 @@ export class Conference {
                 roomId: subspace.roomId,
             } as IStoredSubspace);
 
-            // Grants PL100 to the moderator in the subspace.
+            // Grants PL100 to the moderators in the subspace.
             // We can't do this directly with `createSpace` unfortunately, as we could for plain rooms.
-            await this.client.setUserPowerLevel(this.config.moderatorUserId, subspace.roomId, 100);
+            for (let moderator of this.config.moderatorUserIds) {
+                await this.client.setUserPowerLevel(moderator, subspace.roomId, 100);
+            }
         } else {
             subspace = this.subspaces[subspaceId];
         }
@@ -481,7 +483,7 @@ export class Conference {
                 );
             } else {
                 // Create a new interest room.
-                roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(SPECIAL_INTEREST_CREATION_TEMPLATE(this.config.moderatorUserId), {
+                roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(SPECIAL_INTEREST_CREATION_TEMPLATE(this.config.moderatorUserIds), {
                     creation_content: {
                         [RSC_CONFERENCE_ID]: this.id,
                         [RSC_SPECIAL_INTEREST_ID]: interestRoom.id,
@@ -571,7 +573,7 @@ export class Conference {
 
         await parentSpace.addChildSpace(audSpace, { order: `auditorium-${auditorium.id}` });
 
-        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_CREATION_TEMPLATE(this.config.moderatorUserId), {
+        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_CREATION_TEMPLATE(this.config.moderatorUserIds), {
             creation_content: {
                 [RSC_CONFERENCE_ID]: this.id,
                 [RSC_AUDITORIUM_ID]: auditorium.id,
@@ -629,7 +631,7 @@ export class Conference {
         }
 
         if (!this.talks[talk.id]) {
-            roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(TALK_CREATION_TEMPLATE(this.config.moderatorUserId), {
+            roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(TALK_CREATION_TEMPLATE(this.config.moderatorUserIds), {
                 name: talk.title,
                 creation_content: {
                     [RSC_CONFERENCE_ID]: this.id,
@@ -848,7 +850,9 @@ export class Conference {
         // we'll be unable to do promotions/demotions in the future.
         const pls = await this.client.getRoomStateEvent(roomId, "m.room.power_levels", "");
         pls['users'][await this.client.getUserId()] = 100;
-        pls['users'][this.config.moderatorUserId] = 100;
+        for (let moderator of this.config.moderatorUserIds) {
+            pls['users'][moderator] = 100;
+        }
         for (const userId of mxids) {
             if (pls['users'][userId]) continue;
             pls['users'][userId] = 50;
@@ -916,7 +920,9 @@ export class Conference {
             this.membersInRooms[roomId] = joinedOrLeftMembers;
             const total = new Set(Object.values(this.membersInRooms).flat());
             total.delete(myUserId);
-            total.delete(this.config.moderatorUserId);
+            for (let moderator of this.config.moderatorUserIds) {
+                total.delete(moderator);
+            }
             attendeeTotalGauge.set(total.size);
         } catch (ex) {
             LogService.warn("Conference", `Failed to recalculate room membership for ${roomId}`, ex);
