@@ -713,6 +713,7 @@ export class Conference {
                 people.push(...t.speakers);
             }
         }
+        people.push(...audit.extraPeople);
         return people;
     }
 
