@@ -129,25 +129,28 @@ export const TALK_CREATION_TEMPLATE = (moderatorUserIds: string[]) => ({ // befo
     invite: moderatorUserIds,
 } satisfies RoomCreateOptions);
 
-export const SPECIAL_INTEREST_CREATION_TEMPLATE = (moderatorUserIds: string[]) => ({
-    preset: 'public_chat',
-    visibility: 'public',
-    initial_state: [
-        {type: "m.room.guest_access", state_key: "", content: {guest_access: "can_join"}},
-        {type: "m.room.history_visibility", state_key: "", content: {history_visibility: "world_readable"}},
-    ],
-    creation_content: {
-        [RSC_ROOM_KIND_FLAG]: RoomKind.SpecialInterest,
-    },
-    power_level_content_override: {
-        ...PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
-        events: {
-            ...PUBLIC_ROOM_POWER_LEVELS_TEMPLATE['events'],
-            "m.room.power_levels": 50,
+export const SPECIAL_INTEREST_CREATION_TEMPLATE = (moderatorUserIds: string[]) => {
+    let template = PUBLIC_ROOM_POWER_LEVELS_TEMPLATE(moderatorUserIds);
+    return ({
+        preset: 'public_chat',
+        visibility: 'public',
+        initial_state: [
+            {type: "m.room.guest_access", state_key: "", content: {guest_access: "can_join"}},
+            {type: "m.room.history_visibility", state_key: "", content: {history_visibility: "world_readable"}},
+        ],
+        creation_content: {
+            [RSC_ROOM_KIND_FLAG]: RoomKind.SpecialInterest,
         },
-    },
-    invite: moderatorUserIds,
-} satisfies RoomCreateOptions);
+        power_level_content_override: {
+            ...template,
+            events: {
+                ...template.events,
+                "m.room.power_levels": 50,
+            },
+        },
+        invite: moderatorUserIds,
+    } satisfies RoomCreateOptions);
+};
 
 export function mergeWithCreationTemplate(template: RoomCreateOptions, addlProps: any): any {
     const result = {...template};
