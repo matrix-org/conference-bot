@@ -50,13 +50,11 @@ import { MatrixRoom } from "./models/MatrixRoom";
 import { Auditorium, AuditoriumBackstage } from "./models/Auditorium";
 import { Talk } from "./models/Talk";
 import { ResolvedPersonIdentifier, resolveIdentifiers } from "./invites";
-import { PentaDb } from "./backends/penta/db/PentaDb";
 import { PermissionsCommand } from "./commands/PermissionsCommand";
 import { InterestRoom } from "./models/InterestRoom";
 import { IStateEvent } from "./models/room_state";
 import { logMessage } from "./LogProxy";
 import { IScheduleBackend } from "./backends/IScheduleBackend";
-import { PentaBackend } from "./backends/penta/PentaBackend";
 import { setUnion } from "./utils/sets";
 import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
 import { Gauge } from "prom-client";
@@ -66,8 +64,6 @@ const attendeeTotalGauge = new Gauge({ name: "confbot_attendee_total", help: "Th
 export class Conference {
     private rootSpace: Space | null;
     private dbRoom: MatrixRoom | null;
-    // TODO This shouldn't be here.
-    private pentaDb: PentaDb | null = null;
     private subspaces: {
         [subspaceId: string]: Space
     } = {};
@@ -205,11 +201,6 @@ export class Conference {
 
     public async construct() {
         this.reset();
-
-        if (this.backend instanceof PentaBackend) {
-            // TODO this is not nice.
-            this.pentaDb = this.backend.db;
-        }
 
         // Locate all the rooms for the conference
         const roomIds = await this.client.getJoinedRooms();
@@ -355,12 +346,6 @@ export class Conference {
 
             this.dbRoom = new MatrixRoom(roomId, this.client, this);
         }
-    }
-
-    public async getPentaDb(): Promise<PentaDb | null> {
-        if (this.pentaDb === null) return null;
-        await this.pentaDb.connect();
-        return this.pentaDb;
     }
 
     public async getSpace(): Promise<Space | null> {
@@ -728,22 +713,17 @@ export class Conference {
         return people;
     }
 
+    /**
+     * @deprecated Just use `.getSpeakers()`
+     */
     public async getPeopleForTalk(talk: Talk): Promise<IPerson[]> {
-        const db = await this.getPentaDb();
-        if (db !== null) {
-            return await this.resolvePeople(await db.findAllPeopleForTalk(await talk.getId()));
-        }
-
         return talk.getSpeakers();
     }
 
+    /**
+     * @deprecated This always returns `[]`.
+     */
     public async getPeopleForInterest(int: InterestRoom): Promise<IPerson[]> {
-        const db = await this.getPentaDb();
-        if (db !== null) {
-            // Yes, an interest room is an auditorium to Penta.
-            return await this.resolvePeople(await db.findAllPeopleForAuditorium(await int.getId()));
-        }
-
         return [];
     }
 
@@ -889,13 +869,10 @@ export class Conference {
         return this.getUpcomingTalksByLambda(talk => talk.endTime, inNextMinutes, minBefore);
     }
 
+    /**
+     * @deprecated This always returns `[]` and should be removed or fixed.
+     */
     public async findPeopleWithId(personId: string): Promise<IPerson[]> {
-        // TODO
-        const db = await this.getPentaDb();
-        if (db !== null) {
-            return await db.findPeopleWithId(personId);
-        }
-
         return [];
     }
 

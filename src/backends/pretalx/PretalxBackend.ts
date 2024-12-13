@@ -98,6 +98,7 @@ export class PretalxScheduleBackend implements IScheduleBackend {
         // For FOSDEM we prefer to use the pentabarf format as it contains
         // extra information not found in the JSON format. This may change
         // in the future.
+        // TODO what is this extra information???
         if (cfg.scheduleFormat === PretalxScheduleFormat.FOSDEM) {
             const pentaData = new PentabarfParser(jsonOrXMLDesc, prefixCfg);
             data = {
