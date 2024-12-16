@@ -195,7 +195,6 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
                         })), //event.persons,
                         // TODO: Unsure?
                         auditoriumId: roomName,
-                        slug: event.slug,
                     };
                     talks.set(eventCode, talk);
                     auditorium?.talks.set(eventCode, talk);

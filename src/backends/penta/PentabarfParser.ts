@@ -246,7 +246,6 @@ export class PentabarfParser {
                         dateTs: dateTs,
                         startTime: startTime.valueOf(),
                         endTime: endTime.valueOf(),
-                        slug: pEvent.slug,
                         title: pEvent.title,
                         subtitle: pEvent.subtitle,
                         track: pEvent.track,
