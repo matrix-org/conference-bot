@@ -192,7 +192,6 @@ export class E2ETestEnv {
                 },
                 schedule: {
                     backend: 'json',
-                    database: undefined,
                     scheduleDefinition,
                 },
                 subspaces: {

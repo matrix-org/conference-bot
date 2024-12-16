@@ -37,7 +37,6 @@
     "matrix-widget-api": "^1.6.0",
     "moment": "^2.29.4",
     "node-fetch": "^2.6.1",
-    "pg": "^8.9.0",
     "postcss-preset-env": "^6.7.0",
     "prom-client": "^15.0.0",
     "qs": "^6.11.2",
@@ -47,7 +46,6 @@
   "devDependencies": {
     "@types/jest": "^29.2.5",
     "@types/node": "^18",
-    "@types/pg": "^7.14.7",
     "clean-webpack-plugin": "^4.0.0",
     "css-loader": "^6.8.1",
     "homerunner-client": "^0.0.6",

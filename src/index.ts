@@ -53,13 +53,10 @@ import { CopyModeratorsCommand } from "./commands/CopyModeratorsCommand";
 import { AttendanceCommand } from "./commands/AttendanceCommand";
 import { ScheduleCommand } from "./commands/ScheduleCommand";
 import { CheckInMap } from "./CheckInMap";
-import { FDMCommand } from "./commands/FDMCommand";
 import { IScheduleBackend } from "./backends/IScheduleBackend";
-import { PentaBackend } from "./backends/penta/PentaBackend";
 import { JsonScheduleBackend } from "./backends/json/JsonScheduleBackend";
 import { JoinCommand } from "./commands/JoinRoomCommand";
 import { StatusCommand } from "./commands/StatusCommand";
-import { CachingBackend } from "./backends/CachingBackend";
 import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
 import { Server } from "http";
 import { collectDefaultMetrics, register } from "prom-client";
@@ -72,8 +69,6 @@ LogService.info("index", "Bot starting...");
 export class ConferenceBot {
     private static async loadBackend(config: IConfig) {
         switch (config.conference.schedule.backend) {
-            case "penta":
-                return await CachingBackend.new(() => PentaBackend.new(config), path.join(config.dataPath, "penta_cache.json"));
             case "pretalx":
                 return await PretalxScheduleBackend.new(config.dataPath, config.conference.schedule, config.conference.prefixes);
             case "json":
@@ -239,7 +234,6 @@ export class ConferenceBot {
             new BuildCommand(this.client, this.conference, this.config),
             new CopyModeratorsCommand(this.client),
             new DevCommand(this.client, this.conference),
-            new FDMCommand(this.client, this.conference, this.config),
             new HelpCommand(this.client),
             new InviteCommand(this.client, this.conference, this.config),
             new InviteMeCommand(this.client, this.conference),

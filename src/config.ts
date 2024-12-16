@@ -110,20 +110,6 @@ export interface IJsonScheduleBackendConfig {
      * Path or HTTP(S) URL to schedule.
      */
     scheduleDefinition: string;
-
-    /**
-     * Slightly awful, but this works around some type errors in places that don't get hit if you're using a JSON schedule.
-     */
-    database: undefined;
-}
-
-export interface IPentaScheduleBackendConfig {
-    backend: "penta";
-    /**
-     * HTTP(S) URL to schedule.
-     */
-    scheduleDefinition: string;
-    database: IPentaDbConfig;
 }
 
 export enum PretalxScheduleFormat {
@@ -155,20 +141,7 @@ export interface IPretalxScheduleBackendConfig {
 }
 
 
-export type ScheduleBackendConfig = IJsonScheduleBackendConfig | IPentaScheduleBackendConfig | IPretalxScheduleBackendConfig;
-
-export interface IPentaDbConfig {
-    host: string;
-    port: number;
-    username: string;
-    password: string;
-    database: string;
-    sslmode: string;
-    tblPeople: string;
-    tblSchedule: string;
-    schedulePreBufferSeconds: number;
-    schedulePostBufferSeconds: number;
-}
+export type ScheduleBackendConfig = IJsonScheduleBackendConfig | IPretalxScheduleBackendConfig;
 
 const liveConfig: IConfig = {
     ...config,
