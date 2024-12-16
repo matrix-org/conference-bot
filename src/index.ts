@@ -87,6 +87,11 @@ export class ConferenceBot {
         if (!RunMode[config.mode]) {
             throw Error(`Incorrect mode '${config.mode}'`);
         }
+
+        if (config.moderatorUserId !== undefined) {
+            throw new Error("The `moderatorUserId` config option has been replaced by `moderatorUserIds` that takes a list.");
+        }
+        
         const storage = new SimpleFsStorageProvider(path.join(config.dataPath, "bot.json"));
         const client = await ConferenceMatrixClient.create(config, storage);
         client.impersonateUserId(config.userId);       

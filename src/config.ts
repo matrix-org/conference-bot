@@ -30,6 +30,11 @@ export interface IConfig {
     managementRoom: string;
     idServerDomain?: string;
     idServerBrand?: string;
+
+    // Legacy option that causes a startup error when supplied.
+    // Removed in favour of `moderatorUserIds`.
+    moderatorUserId?: string;
+    
     moderatorUserIds: string[];
     livestream: {
         auditoriumUrl: string;
