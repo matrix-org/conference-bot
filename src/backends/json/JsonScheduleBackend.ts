@@ -1,4 +1,4 @@
-import { IJsonScheduleBackendConfig } from "../../config";
+import { IConfig, IJsonScheduleBackendConfig, JsonScheduleFormat } from "../../config";
 import { IConference, ITalk, IAuditorium, IInterestRoom } from "../../models/schedule";
 import { AuditoriumId, InterestId, IScheduleBackend, TalkId } from "../IScheduleBackend";
 import { JsonScheduleLoader } from "./JsonScheduleLoader";
@@ -6,9 +6,17 @@ import * as fetch from "node-fetch";
 import * as path from "path";
 import { LogService } from "matrix-bot-sdk";
 import { readJsonFileAsync, writeJsonFileAsync } from "../../utils";
+import { FosdemJsonScheduleLoader } from "./FosdemJsonScheduleLoader";
+
+interface ILoader {
+    conference: IConference;
+    talks: Map<TalkId, ITalk>;
+    auditoriums: Map<AuditoriumId, IAuditorium>;
+    interestRooms: Map<InterestId, IInterestRoom>;
+}
 
 export class JsonScheduleBackend implements IScheduleBackend {
-    constructor(private loader: JsonScheduleLoader, private cfg: IJsonScheduleBackendConfig, private wasFromCache: boolean, public readonly dataPath: string) {
+    constructor(private loader: ILoader, private cfg: IJsonScheduleBackendConfig, private globalConfig: IConfig, private wasFromCache: boolean, public readonly dataPath: string) {
 
     }
 
@@ -16,8 +24,8 @@ export class JsonScheduleBackend implements IScheduleBackend {
         return this.wasFromCache;
     }
 
-    private static async loadConferenceFromCfg(dataPath: string, cfg: IJsonScheduleBackendConfig, allowUseCache: boolean): Promise<{loader: JsonScheduleLoader, cached: boolean}> {
-        let jsonDesc;
+    private static async loadConferenceFromCfg(dataPath: string, cfg: IJsonScheduleBackendConfig, globalConfig: IConfig, allowUseCache: boolean): Promise<{loader: ILoader, cached: boolean}> {
+        let jsonDesc: any;
         let cached = false;
 
         const cachedSchedulePath = path.join(dataPath, 'cached_schedule.json');
@@ -32,7 +40,12 @@ export class JsonScheduleBackend implements IScheduleBackend {
             }
 
             // Save a cached copy.
-            await writeJsonFileAsync(cachedSchedulePath, jsonDesc);
+            try {
+                await writeJsonFileAsync(cachedSchedulePath, jsonDesc);
+            } catch (ex) {
+                // Allow this to fail
+                LogService.warn("PretalxScheduleBackend", "Failed to cache copy of schedule.", ex);
+            }
         } catch (e) {
             // Fallback to cache — only if allowed
             if (! allowUseCache) throw e;
@@ -56,16 +69,29 @@ export class JsonScheduleBackend implements IScheduleBackend {
             }
         }
 
-        return {loader: new JsonScheduleLoader(jsonDesc), cached};
+        let loader: ILoader;
+        switch (cfg.scheduleFormat) {
+            case JsonScheduleFormat.FOSDEM:
+                loader = new FosdemJsonScheduleLoader(jsonDesc, globalConfig);
+                break;
+            case JsonScheduleFormat.Original:
+            case undefined:
+                loader = new JsonScheduleLoader(jsonDesc);
+                break;
+            default:
+                throw new Error(`Unknown JSON schedule format: ${cfg.scheduleFormat}`);
+        }
+
+        return {loader, cached};
     }
 
-    static async new(dataPath: string, cfg: IJsonScheduleBackendConfig): Promise<JsonScheduleBackend> {
-        const loader = await JsonScheduleBackend.loadConferenceFromCfg(dataPath, cfg, true);
-        return new JsonScheduleBackend(loader.loader, cfg, loader.cached, dataPath);
+    static async new(dataPath: string, cfg: IJsonScheduleBackendConfig, globalConfig: IConfig): Promise<JsonScheduleBackend> {
+        const loader = await JsonScheduleBackend.loadConferenceFromCfg(dataPath, cfg, globalConfig, true);
+        return new JsonScheduleBackend(loader.loader, cfg, globalConfig, loader.cached, dataPath);
     }
 
     async refresh(): Promise<void> {
-        this.loader = (await JsonScheduleBackend.loadConferenceFromCfg(this.dataPath, this.cfg, false)).loader;
+        this.loader = (await JsonScheduleBackend.loadConferenceFromCfg(this.dataPath, this.cfg, this.globalConfig, false)).loader;
         // If we managed to load anything, this isn't from the cache anymore.
         this.wasFromCache = false;
     }
