@@ -249,7 +249,6 @@ export class PentabarfParser {
                         slug: pEvent.slug,
                         title: pEvent.title,
                         subtitle: pEvent.subtitle,
-                        track: pEvent.track,
                         speakers: [],
                         prerecorded: true,
                         auditoriumId: auditorium.id,

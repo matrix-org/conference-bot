@@ -55,7 +55,6 @@ export interface ITalk {
     slug: string;
     title: string;
     subtitle: string;
-    track: string;
     /**
      * MISNOMER: This variable contains ALL people for the talk, NOT JUST speakers.
      * TODO rename (at a time when it's a less risky change to do...)

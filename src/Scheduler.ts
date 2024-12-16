@@ -379,18 +379,6 @@ export class Scheduler {
                 (task.talk.qa_startTime !== null ? `<p>During the talk, you can ask questions here for the Q&A at the end. ` +
                 `The questions with the most 👍 votes are most visible to the speaker.</p>` : ''),
             );
-
-            try {
-                if (task.talk.track != '' && task.talk.track != undefined) {
-                    const nameEventContent = await this.client.getRoomStateEvent(confAud.roomId, "m.room.name", "");
-                    if (task.talk.track != nameEventContent["name"]) {
-                        nameEventContent["name"] = task.talk.track;
-                        await this.client.sendStateEvent(confAud.roomId, "m.room.name", "", nameEventContent);
-                    }
-                }
-            } catch (e) {
-                LogService.error("Scheduler:talkStart", `Error when considering changing name of track room`, e);
-            }
         } else if (task.type === ScheduledTaskType.TalkQA) {
             if (!task.talk.prerecorded) return;
             if (confTalk !== undefined) {
