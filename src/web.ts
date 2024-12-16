@@ -81,7 +81,7 @@ export async function renderTalkWidget(req: Request, res: Response, conference: 
 
     const streamUrl = template(talkUrl, {
         audId: audId.toLowerCase(),
-        slug: (await talk.getDefinition()).slug.toLowerCase(),
+        id: await talk.getId(),
         jitsi: base32.stringify(Buffer.from(talk.roomId), { pad: false }).toLowerCase(),
     });
 
