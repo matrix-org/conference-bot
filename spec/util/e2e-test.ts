@@ -227,13 +227,14 @@ export class E2ETestEnv {
             ...providedConfig,
         };
         const conferenceBot = await ConferenceBot.start(config);
-        return new E2ETestEnv(homeserver, conferenceBot, adminUser.client, opts, tmpDir, config);
+        return new E2ETestEnv(homeserver, conferenceBot, adminUser.client, confBotOpts.client, opts, tmpDir, config);
     }
 
     private constructor(
         public readonly homeserver: ComplementHomeServer,
         public confBot: ConferenceBot,
         public readonly adminClient: MatrixClient,
+        public readonly confbotClient: MatrixClient,
         public readonly opts: Opts,
         private readonly dataDir: string,
         private readonly config: IConfig,
