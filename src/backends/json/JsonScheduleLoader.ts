@@ -75,7 +75,6 @@ export class JsonScheduleLoader {
             qa_startTime: null, // TODO
             livestream_endTime: endMoment.valueOf(), // TODO is this right?
             speakers: talk.speakers.map(speaker => this.convertSpeaker(speaker)),
-            track: "", // TODO we have multiple of them!!!
 
             // Must .clone() here because .startOf() mutates the moment(!)
             dateTs: startMoment.clone().startOf("day").valueOf(),
