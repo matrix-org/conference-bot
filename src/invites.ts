@@ -79,6 +79,11 @@ export async function resolveIdentifiers(client: ConferenceMatrixClient, people:
     return resolved;
 }
 
+/**
+ * Invites a person to a room idempotently.
+ *
+ * Raises an exception when we don't have information to invite the user, or there is some Matrix or network error preventing us from doing so.
+ */
 export async function invitePersonToRoom(client: ConferenceMatrixClient, resolvedPerson: ResolvedPersonIdentifier, roomId: string, config: IConfig): Promise<void> {
     if (resolvedPerson.mxid) {
         if (config.dry_run_enabled) {
