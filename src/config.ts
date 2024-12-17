@@ -109,12 +109,30 @@ export interface IPrefixConfig {
     };
 }
 
+export enum JsonScheduleFormat {
+    /**
+     * Our original JSON schedule format.
+     */
+    Original = "original",
+
+    /**
+     * The FOSDEM-specific schedule format, available on the `/p/matrix` endpoint.
+     */
+    FOSDEM = "fosdem",
+}
+
 export interface IJsonScheduleBackendConfig {
     backend: "json";
     /**
      * Path or HTTP(S) URL to schedule.
      */
     scheduleDefinition: string;
+
+    /**
+     * What JSON schedule format to use.
+     * Defaults to original.
+     */
+    scheduleFormat?: JsonScheduleFormat;
 }
 
 export enum PretalxScheduleFormat {

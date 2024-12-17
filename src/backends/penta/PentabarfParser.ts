@@ -211,6 +211,7 @@ export class PentabarfParser {
                     name: metadata.name,
                     kind: metadata.kind,
                     talks: new Map(),
+                    extraPeople: [],
                     isPhysical: isPhysical
                 };
                 const existingAuditorium = this.auditoriums.find(r => r.id === auditorium.id);
