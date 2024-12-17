@@ -68,7 +68,6 @@ export class JsonScheduleLoader {
             id: talk.id.toString(), // TODO We have numbers on the rhs and a string on the lhs.
             title: talk.title,
             subtitle: talk.description, // TODO is this valid?
-            slug: slugify(talk.title),
 
             auditoriumId,
             prerecorded: true, // TODO

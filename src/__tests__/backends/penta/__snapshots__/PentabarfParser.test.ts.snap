@@ -18,7 +18,6 @@ exports[`parsing pentabarf XML: overview: auditoriums 1`] = `
         "prerecorded": true,
         "pretalxCode": undefined,
         "qa_startTime": null,
-        "slug": "testcon_opening_remarks",
         "speakers": [
           {
             "email": "",
@@ -63,7 +62,6 @@ exports[`parsing pentabarf XML: overview: conference 1`] = `
           "prerecorded": true,
           "pretalxCode": undefined,
           "qa_startTime": null,
-          "slug": "testcon_opening_remarks",
           "speakers": [
             {
               "email": "",
@@ -124,7 +122,6 @@ exports[`parsing pentabarf XML: overview: talks 1`] = `
     "prerecorded": true,
     "pretalxCode": undefined,
     "qa_startTime": null,
-    "slug": "testcon_opening_remarks",
     "speakers": [
       {
         "email": "",
@@ -159,7 +156,6 @@ exports[`tracks that set a online qa value correctly apply to talks: talks 1`] =
     "prerecorded": true,
     "pretalxCode": undefined,
     "qa_startTime": 0,
-    "slug": "testcon_opening_remarks",
     "speakers": [
       {
         "email": "",
@@ -189,7 +185,6 @@ exports[`tracks that set a online qa value correctly apply to talks: talks 1`] =
     "prerecorded": true,
     "pretalxCode": undefined,
     "qa_startTime": 0,
-    "slug": "testcon_opening_remarks",
     "speakers": [
       {
         "email": "",
@@ -219,7 +214,6 @@ exports[`tracks that set a online qa value correctly apply to talks: talks 1`] =
     "prerecorded": true,
     "pretalxCode": undefined,
     "qa_startTime": null,
-    "slug": "testcon_opening_remarks",
     "speakers": [
       {
         "email": "",
@@ -249,7 +243,6 @@ exports[`tracks that set a online qa value correctly apply to talks: talks 1`] =
     "prerecorded": true,
     "pretalxCode": undefined,
     "qa_startTime": 0,
-    "slug": "testcon_opening_remarks",
     "speakers": [
       {
         "email": "",

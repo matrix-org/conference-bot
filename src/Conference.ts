@@ -635,7 +635,8 @@ export class Conference {
 
         // Calculate all the aliases the room should have, then update the list of bot-assigned aliases to match
         const wantedBaseNames = [
-            (await auditorium.getSlug()) + '-' + talk.slug,
+            // Talk slugs no longer exist. But if we ever use this feature again, we probably want to reinstate them.
+            // (await auditorium.getSlug()) + '-' + talk.slug,
             'talk-' + talk.id,
         ];
         const wantedPrefixedNames = wantedBaseNames.flatMap(baseName => applyAllAliasPrefixes(baseName, this.config.conference.prefixes.aliases));

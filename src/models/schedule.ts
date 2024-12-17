@@ -52,7 +52,6 @@ export interface ITalk {
      */
     qa_startTime: number | null;
     livestream_endTime: number;
-    slug: string;
     title: string;
     subtitle: string;
     /**
