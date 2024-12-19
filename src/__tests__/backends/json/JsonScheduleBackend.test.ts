@@ -18,6 +18,11 @@ function jsonScheduleServer() {
         const json = getFixture("original_democon.json");
         res.end(json);
       } else if (req.url === "/fosdem/p/matrix") {
+        if (req.headers.authorization !== "Bearer TOKEN") {
+          res.writeHead(401);
+          res.end("Not authorised");
+          return;
+        }
         res.writeHead(200);
         const json = getFixture("fosdem_democon.json");
         res.end(json);
@@ -51,6 +56,9 @@ describe("JsonScheduleBackend", () => {
         scheduleDefinition: `http://127.0.0.1:${
           (serv.address() as AddressInfo).port
         }/fosdem/p/matrix`,
+        scheduleRequestHeaders: {
+          "Authorization": "Bearer TOKEN"
+        }
       },
       globalConfig
     );
