@@ -28,12 +28,14 @@ export class JsonScheduleBackend implements IScheduleBackend {
         let jsonDesc: any;
         let cached = false;
 
+
         const cachedSchedulePath = path.join(dataPath, 'cached_schedule.json');
 
         try {
             if (cfg.scheduleDefinition.startsWith("http")) {
+                const headers = cfg.scheduleRequestHeaders ?? {};
                 // Fetch the JSON track over the network
-                jsonDesc = await fetch(cfg.scheduleDefinition).then(r => r.json());
+                jsonDesc = await fetch(cfg.scheduleDefinition, {headers}).then(r => r.json());
             } else {
                 // Load the JSON from disk
                 jsonDesc = await readJsonFileAsync(cfg.scheduleDefinition);

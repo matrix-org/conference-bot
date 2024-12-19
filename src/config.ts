@@ -133,6 +133,15 @@ export interface IJsonScheduleBackendConfig {
      * Defaults to original.
      */
     scheduleFormat?: JsonScheduleFormat;
+
+    /**
+     * Map of request headers to send when requesting the schedule definition.
+     * Useful for authenticating requests.
+     * Required for the FOSDEM-format schedules.
+     *
+     * Defaults to no headers.
+     */
+    scheduleRequestHeaders?: {[_: string]: string};
 }
 
 export enum PretalxScheduleFormat {
