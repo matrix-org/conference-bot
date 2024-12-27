@@ -93,7 +93,7 @@ export class FosdemJsonScheduleLoader {
             // This is overall a messy concept, but the only thing that matters now is whether this is
             // null (Q&A disabled) or non-null (Q&A enabled, with reminder 5 minutes before the end of the talk slot).
             // TODO overhaul replace with a boolean instead...?
-            qa_startTime: 0,
+            qa_startTime: talk.track.online_qa ? 0 : null,
 
             // Since the talks are not pre-recorded, the livestream is considered ended when the event ends.
             livestream_endTime: endMoment.valueOf(),

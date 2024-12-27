@@ -16,7 +16,7 @@ Map {
         "id": "3",
         "livestream_endTime": 1706778000000,
         "prerecorded": false,
-        "qa_startTime": 0,
+        "qa_startTime": null,
         "speakers": [
           {
             "email": "ioferrell@localhost",
@@ -131,7 +131,7 @@ Map {
     "id": "3",
     "livestream_endTime": 1706778000000,
     "prerecorded": false,
-    "qa_startTime": 0,
+    "qa_startTime": null,
     "speakers": [
       {
         "email": "ioferrell@localhost",

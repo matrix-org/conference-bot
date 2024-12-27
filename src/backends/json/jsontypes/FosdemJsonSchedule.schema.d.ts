@@ -42,6 +42,10 @@ export interface FOSDEMTalk {
      * The Track ID of the track that the talk is in
      */
     id: number;
+    /**
+     * Whether online question & answer support is enabled for this track.
+     */
+    online_qa: boolean;
     [k: string]: unknown;
   };
   /**

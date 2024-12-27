@@ -32,7 +32,8 @@
       "track": {
         "id": 5,
         "slug": "open_cad_cam",
-        "name": "Open CAD/CAM devroom"
+        "name": "Open CAD/CAM devroom",
+        "online_qa": false
       }
     },
     {
@@ -60,7 +61,8 @@
       "track": {
         "id": 6,
         "slug": "selfhosting",
-        "name": "Self-Hosted Software devroom"
+        "name": "Self-Hosted Software devroom",
+        "online_qa": true
       }
     },
     {
@@ -88,7 +90,8 @@
       "track": {
         "id": 6,
         "slug": "selfhosting",
-        "name": "Self-Hosted Software devroom"
+        "name": "Self-Hosted Software devroom",
+        "online_qa": true
       }
     }
   ],
