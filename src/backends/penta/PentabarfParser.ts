@@ -211,7 +211,8 @@ export class PentabarfParser {
                     name: metadata.name,
                     kind: metadata.kind,
                     talks: new Map(),
-                    isPhysical: isPhysical
+                    isPhysical: isPhysical,
+                    trackType: '',
                 };
                 const existingAuditorium = this.auditoriums.find(r => r.id === auditorium.id);
                 if (existingAuditorium) {
