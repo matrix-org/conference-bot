@@ -87,6 +87,13 @@ export interface IAuditorium {
      * If true, this auditorium is just a virtual representation of a real-world physical auditorium.
      */
     isPhysical: boolean;
+
+    /**
+     * A 'type' of track that this auditorium is in.
+     * May be an empty string if there is no concept of types.
+     * This string will not be human-readable.
+     */
+    trackType: string;
 }
 
 export interface IConference {
