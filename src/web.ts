@@ -75,7 +75,7 @@ export async function renderTalkWidget(req: Request, res: Response, conference: 
         return res.sendStatus(404);
     }
 
-    if (await talk.getAuditoriumId() !== await aud.getId()) {
+    if (await talk.getAuditoriumId() !== aud.getId()) {
         return res.sendStatus(404);
     }
 
@@ -196,7 +196,7 @@ export async function renderScoreboardWidget(req: Request, res: Response, confer
             return res.sendStatus(404);
         }
 
-        if (await talk.getAuditoriumId() !== await aud.getId()) {
+        if (await talk.getAuditoriumId() !== aud.getId()) {
             return res.sendStatus(404);
         }
     }

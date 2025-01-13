@@ -55,7 +55,7 @@ export class WidgetsCommand implements ICommand {
             throw Error(`Error sending state event for layout widget into room ${aud.roomId}`, {cause:error})
         }
 
-        const talks = await asyncFilter(this.conference.storedTalks, async t => (await t.getAuditoriumId()) === (await aud.getId()));
+        const talks = await asyncFilter(this.conference.storedTalks, async t => (await t.getAuditoriumId()) === aud.getId());
         for (const talk of talks) {
             const talkWidget = await LiveWidget.forTalk(talk, this.client, avatar, baseUrl);
             const scoreboardWidget = await LiveWidget.scoreboardForTalk(talk, this.client, this.conference, avatar, baseUrl);
@@ -86,7 +86,7 @@ export class WidgetsCommand implements ICommand {
             // For physical auditoriums, the talks don't have anywhere to display a Q&A scoreboard.
             // So what we do instead is add a Q&A scoreboard to the backstage room, so that an organiser can read off
             // any questions if necessary.
-            const backstage = this.conference.getAuditoriumBackstage(await aud.getId());
+            const backstage = this.conference.getAuditoriumBackstage(aud.getId());
             const audScoreboardWidget = await LiveWidget.scoreboardForAuditorium(aud, this.client, avatar, baseUrl);
             const backstageLayout = LiveWidget.layoutForPhysicalAudBackstage(audScoreboardWidget);
             

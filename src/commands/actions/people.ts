@@ -36,7 +36,7 @@ export async function doAuditoriumResolveAction(
     skipTalks = false,
     isInvite = true,
 ): Promise<void> {
-    const audId = await aud.getId();
+    const audId = aud.getId();
     // We know that everyone should be in the backstage room, so resolve that list of people
     // to make the identity server lookup efficient.
     const backstagePeople = isInvite
@@ -71,7 +71,7 @@ export async function doAuditoriumResolveAction(
     if (!skipTalks) {
         const talks = await asyncFilter(
             conference.storedTalks,
-            async t => (await t.getAuditoriumId()) === (await aud.getId()),
+            async t => (await t.getAuditoriumId()) === aud.getId(),
         );
         for (const talk of talks) {
             const talkPeople = isInvite

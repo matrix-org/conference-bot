@@ -53,7 +53,7 @@ export class VerifyCommand implements ICommand {
 
         await this.client.replyNotice(roomId, event, "Calculating list of people...");
 
-        let html = `<h1>${await aud.getName()} (${await aud.getId()})</h1>`;
+        let html = `<h1>${aud.getName()} (${aud.getId()})</h1>`;
 
         const appendPeople = (invite: IPerson[], mods: IPerson[]) => {
             for (const target of invite) {
@@ -89,7 +89,7 @@ export class VerifyCommand implements ICommand {
             appendPeople(audBackstageToInvite, audToMod);
             html += "</ul>";
 
-            const talks = await asyncFilter(this.conference.storedTalks, async t => (await t.getAuditoriumId()) === (await aud.getId()));
+            const talks = await asyncFilter(this.conference.storedTalks, async t => (await t.getAuditoriumId()) === aud.getId());
             for (const talk of talks) {
                 const talkToInvite = await this.conference.getInviteTargetsForTalk(talk);
                 const talkToMod = await this.conference.getModeratorsForTalk(talk);

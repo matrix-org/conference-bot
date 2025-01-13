@@ -621,7 +621,7 @@ export class Conference {
                 creation_content: {
                     [RSC_CONFERENCE_ID]: this.id,
                     [RSC_TALK_ID]: talk.id,
-                    [RSC_AUDITORIUM_ID]: await auditorium.getId(),
+                    [RSC_AUDITORIUM_ID]: auditorium.getId(),
                 },
                 initial_state: [
                     makeTalkLocator(this.id, talk.id),
