@@ -79,7 +79,7 @@ export class InviteMeCommand implements ICommand {
 
         for (const talk of this.conference.storedTalks) {
             addToGroup("talk", talk.roomId);
-            const audSlug = this.conference.getAuditorium(await talk.getAuditoriumId()).getSlug();
+            const audSlug = this.conference.getAuditorium(talk.getAuditoriumId()).getSlug();
             addToGroup(audSlug + ":talk", talk.roomId);
             addToGroup(audSlug + ":*", talk.roomId);
             addToGroup(audSlug + ":private", talk.roomId);

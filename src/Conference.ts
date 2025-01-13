@@ -717,13 +717,6 @@ export class Conference {
     }
 
     /**
-     * @deprecated Just use `.getSpeakers()`
-     */
-    public async getPeopleForTalk(talk: Talk): Promise<IPerson[]> {
-        return talk.getSpeakers();
-    }
-
-    /**
      * @deprecated This always returns `[]`.
      */
     public async getPeopleForInterest(int: InterestRoom): Promise<IPerson[]> {
@@ -760,7 +753,7 @@ export class Conference {
     }
 
     public async getInviteTargetsForTalk(talk: Talk): Promise<IPerson[]> {
-        const people = await this.getPeopleForTalk(talk);
+        const people = talk.getSpeakers();
         const roles = [Role.Speaker, Role.Host, Role.Coordinator];
         return people.filter(p => roles.includes(p.role));
     }
@@ -778,7 +771,7 @@ export class Conference {
     }
 
     public async getModeratorsForTalk(talk: Talk): Promise<IPerson[]> {
-        const people = await this.getPeopleForTalk(talk);
+        const people = talk.getSpeakers();
         const roles = [Role.Coordinator, Role.Speaker, Role.Host];
         return people.filter(p => roles.includes(p.role));
     }

@@ -71,7 +71,7 @@ export async function doAuditoriumResolveAction(
     if (!skipTalks) {
         const talks = await asyncFilter(
             conference.storedTalks,
-            async t => (await t.getAuditoriumId()) === aud.getId(),
+            async t => t.getAuditoriumId() === aud.getId(),
         );
         for (const talk of talks) {
             const talkPeople = isInvite
@@ -84,7 +84,7 @@ export async function doAuditoriumResolveAction(
                 const unresolveable = talkPeople.filter(
                     p => allPossiblePeople.find(b => p.id === b.person.id) === undefined
                 )
-                logMessage(LogLevel.WARN, "people", `Failed to resolve all targets for talk ${await talk.getId()}: ` + JSON.stringify(unresolveable), client);
+                logMessage(LogLevel.WARN, "people", `Failed to resolve all targets for talk ${talk.getId()}: ` + JSON.stringify(unresolveable), client);
             }
 
             const resolvedTalkPeopleOnly = resolvedTalkPeople.filter(p => !!p);

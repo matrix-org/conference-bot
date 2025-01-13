@@ -89,12 +89,12 @@ export class VerifyCommand implements ICommand {
             appendPeople(audBackstageToInvite, audToMod);
             html += "</ul>";
 
-            const talks = await asyncFilter(this.conference.storedTalks, async t => (await t.getAuditoriumId()) === aud.getId());
+            const talks = await asyncFilter(this.conference.storedTalks, async t => t.getAuditoriumId() === aud.getId());
             for (const talk of talks) {
                 const talkToInvite = await this.conference.getInviteTargetsForTalk(talk);
                 const talkToMod = await this.conference.getModeratorsForTalk(talk);
                 if (talkToMod.length || talkToInvite.length) {
-                    html += `<b>Talk: ${await talk.getName()} (${await talk.getId()})</b><ul>`;
+                    html += `<b>Talk: ${talk.getName()} (${talk.getId()})</b><ul>`;
                     appendPeople(talkToInvite, talkToMod);
                     html += "</ul>";
                 }

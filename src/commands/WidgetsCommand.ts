@@ -55,7 +55,7 @@ export class WidgetsCommand implements ICommand {
             throw Error(`Error sending state event for layout widget into room ${aud.roomId}`, {cause:error})
         }
 
-        const talks = await asyncFilter(this.conference.storedTalks, async t => (await t.getAuditoriumId()) === aud.getId());
+        const talks = await asyncFilter(this.conference.storedTalks, async t => t.getAuditoriumId() === aud.getId());
         for (const talk of talks) {
             const talkWidget = await LiveWidget.forTalk(talk, this.client, avatar, baseUrl);
             const scoreboardWidget = await LiveWidget.scoreboardForTalk(talk, this.client, this.conference, avatar, baseUrl);
