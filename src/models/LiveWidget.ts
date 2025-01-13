@@ -38,7 +38,7 @@ export class LiveWidget {
     private constructor() { }
 
     public static async forAuditorium(aud: Auditorium, client: MatrixClient, avatar: string, baseUrl: string): Promise<IStateEvent<IWidget>> {
-        const widgetId = sha256(JSON.stringify(await aud.getDefinition()));
+        const widgetId = sha256(JSON.stringify(aud.getDefinition()));
         return {
             type: "im.vector.modular.widgets",
             state_key: widgetId,
@@ -133,7 +133,7 @@ export class LiveWidget {
     }
 
     public static async scheduleForAuditorium(aud: Auditorium, client: MatrixClient, avatar: string, scheduleUrl: string): Promise<IStateEvent<IWidget>> {
-        const widgetId = sha256(JSON.stringify(await aud.getDefinition()) + "_AUDSCHED");
+        const widgetId = sha256(JSON.stringify(aud.getDefinition()) + "_AUDSCHED");
         const widgetUrl = template(scheduleUrl, {
             audId: await aud.getId(),
         });

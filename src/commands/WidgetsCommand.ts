@@ -82,7 +82,7 @@ export class WidgetsCommand implements ICommand {
             }
         }
 
-        if ((await aud.getDefinition()).isPhysical) {
+        if (aud.getDefinition().isPhysical) {
             // For physical auditoriums, the talks don't have anywhere to display a Q&A scoreboard.
             // So what we do instead is add a Q&A scoreboard to the backstage room, so that an organiser can read off
             // any questions if necessary.

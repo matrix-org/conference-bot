@@ -343,7 +343,7 @@ export class Scheduler {
         const confAudBackstage = this.conference.getAuditoriumBackstage(task.talk.auditoriumId);
 
         // If we don't have a talk room and the talk isn't physical, we're missing a talk room,=.
-        const isMissingTalkRoom = (!confTalk) && !(await confAud.getDefinition()).isPhysical;
+        const isMissingTalkRoom = (!confTalk) && !confAud.getDefinition().isPhysical;
 
         if (isMissingTalkRoom) {
             LogService.warn("Scheduler", `Skipping task ${task.id} - Cannot find talk room`);

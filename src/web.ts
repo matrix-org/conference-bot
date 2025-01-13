@@ -180,7 +180,7 @@ export async function renderScoreboardWidget(req: Request, res: Response, confer
         return res.sendStatus(404);
     }
 
-    if (!(await aud.getDefinition()).isPhysical) {
+    if (!aud.getDefinition().isPhysical) {
         // For physical auditoriums, the widget sits in the backstage room and so there isn't any talk ID to cross-reference, so skip
         // these checks for physical auditoriums.
         // I'm not sure why we want to check a talk ID anyway — 'security'?
