@@ -226,6 +226,8 @@ conference:
     #  alias: stands
     #  # The prefixes of rooms which belong in the subspace
     #  prefixes: ["S."]
+    #  # The types of tracks which belong in the subspace
+    #  trackTypes: ["stands"]
 
 # Options related to the IRC bridge. Set to null if you don't use an IRC bridge.
 ircBridge: null
