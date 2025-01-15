@@ -43,6 +43,51 @@ export class InviteCommand implements ICommand {
         await this.ensureInvited(targetRoomId, resolved);
     }
 
+    private async runSpeakersSupport(): Promise<void> {
+        let people: IPerson[] = [];
+        for (const aud of this.conference.storedAuditoriumBackstages) {
+            people.push(...await this.conference.getInviteTargetsForAuditorium(aud, [Role.Speaker]));
+        }
+        const newPeople: IPerson[] = [];
+        people.forEach(p => {
+            if (!newPeople.some(n => n.id === p.id)) {
+                newPeople.push(p);
+            }
+        });
+        await this.createInvites(newPeople, this.config.conference.supportRooms.speakers);
+    }
+
+    private async runCoordinatorsSupport(): Promise<void> {
+        let people: IPerson[] = [];
+        for (const aud of this.conference.storedAuditoriums) {
+            // This hack was not wanted in 2023 or 2024.
+            // if (!(await aud.getId()).startsWith("D.")) {
+                // HACK: Only invite coordinators for D.* auditoriums.
+                // TODO: Make invitations for support rooms more configurable.
+                //       https://github.com/matrix-org/this.conference-bot/issues/76
+            //     continue;
+            // }
+
+            const inviteTargets = await this.conference.getInviteTargetsForAuditorium(aud, [Role.Coordinator]);
+            people.push(...inviteTargets);
+        }
+        const newPeople: IPerson[] = [];
+        people.forEach(p => {
+            if (!newPeople.some(n => n.id == p.id)) {
+                newPeople.push(p);
+            }
+        });
+        await this.createInvites(newPeople, this.config.conference.supportRooms.coordinators);
+    }
+
+    private async runSpecialInterestSupport(): Promise<void> {
+        const people: IPerson[] = [];
+        for (const sir of this.conference.storedInterestRooms) {
+            people.push(...await this.conference.getInviteTargetsForInterest(sir));
+        }
+        await this.createInvites(people, this.config.conference.supportRooms.specialInterest);
+    }
+
     public async run(managementRoomId: string, event: any, args: string[]) {
         await this.client.replyNotice(managementRoomId, event, "Sending invites to participants. This might take a while.");
 
@@ -52,46 +97,20 @@ export class InviteCommand implements ICommand {
         // that a subset of people are joined.
 
         if (args[0] && args[0] === "speakers-support") {
-            let people: IPerson[] = [];
-            for (const aud of this.conference.storedAuditoriumBackstages) {
-                people.push(...await this.conference.getInviteTargetsForAuditorium(aud, [Role.Speaker]));
-            }
-            const newPeople: IPerson[] = [];
-            people.forEach(p => {
-                if (!newPeople.some(n => n.id === p.id)) {
-                    newPeople.push(p);
-                }
-            });
-            await this.createInvites(newPeople, this.config.conference.supportRooms.speakers);
+            await this.runSpeakersSupport();
         } else if (args[0] && args[0] === "coordinators-support") {
-            let people: IPerson[] = [];
-            for (const aud of this.conference.storedAuditoriums) {
-                // This hack was not wanted in 2023 or 2024. 
-                // if (!(await aud.getId()).startsWith("D.")) {
-                    // HACK: Only invite coordinators for D.* auditoriums.
-                    // TODO: Make invitations for support rooms more configurable.
-                    //       https://github.com/matrix-org/this.conference-bot/issues/76
-                //     continue;
-                // }
-
-                const inviteTargets = await this.conference.getInviteTargetsForAuditorium(aud, [Role.Coordinator]);
-                people.push(...inviteTargets);
-            }
-            const newPeople: IPerson[] = [];
-            people.forEach(p => {
-                if (!newPeople.some(n => n.id == p.id)) {
-                    newPeople.push(p);
-                }
-            });
-            await this.createInvites(newPeople, this.config.conference.supportRooms.coordinators);
+            await this.runCoordinatorsSupport();
         } else if (args[0] && args[0] === "si-support") {
-            const people: IPerson[] = [];
-            for (const sir of this.conference.storedInterestRooms) {
-                people.push(...await this.conference.getInviteTargetsForInterest(sir));
-            }
-            await this.createInvites(people, this.config.conference.supportRooms.specialInterest);
+            await this.runSpecialInterestSupport();
         } else {
             await runRoleCommand((_client, room, people) => this.ensureInvited(room, people), this.conference, this.client, managementRoomId, event, args);
+
+            if (args.length === 0) {
+                // If no specific rooms are requested, then also handle invites to all support rooms.
+                await this.runSpeakersSupport();
+                await this.runCoordinatorsSupport();
+                await this.runSpecialInterestSupport();
+            }
         }
 
         await this.client.sendNotice(managementRoomId, "Invites sent!");
