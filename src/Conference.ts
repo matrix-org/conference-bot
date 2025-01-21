@@ -117,12 +117,11 @@ export class Conference {
                             const people = await this.findPeopleWithId(emailInvite[RS_3PID_PERSON_ID]);
                             if (people?.length) {
                                 // Finally, associate the users.
-                                for (const person of people) {
-                                    const clonedPerson = objectFastClone(person);
-                                    clonedPerson.matrix_id = event['state_key'];
-                                    await this.createUpdatePerson(clonedPerson);
-                                    LogService.info("Conference", `Updated ${clonedPerson.id} to be associated with ${clonedPerson.matrix_id}`);
-                                }
+                                let person = people[0];
+                                const clonedPerson = objectFastClone(person);
+                                clonedPerson.matrix_id = event['state_key'];
+                                await this.createUpdatePerson(clonedPerson);
+                                LogService.info("Conference", `Updated ${clonedPerson.id} to be associated with ${clonedPerson.matrix_id}`);
 
                                 // Update permissions while we're here (if we can identify the room kind)
                                 const aud = this.storedAuditoriums.find(a => a.roomId === roomId);
