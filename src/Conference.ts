@@ -45,7 +45,7 @@ import {
 } from "./models/room_state";
 import { applySuffixRules, objectFastClone, safeCreateRoom } from "./utils";
 import { addAndDeleteManagedAliases, applyAllAliasPrefixes, assignAliasVariations, calculateAliasVariations } from "./utils/aliases";
-import { IConfig } from "./config";
+import { IConfig, RunMode } from "./config";
 import { MatrixRoom } from "./models/MatrixRoom";
 import { Auditorium, AuditoriumBackstage } from "./models/Auditorium";
 import { Talk } from "./models/Talk";
@@ -101,7 +101,8 @@ export class Conference {
             // On any member event, recaulculate the membership.
             this.enqueueRecalculateRoomMembership(roomId);
 
-            if (event['content']?.['third_party_invite']) {
+            // Only process 3pid invites when running as the bot, not the web interface
+            if (event['content']?.['third_party_invite'] && config.mode === RunMode.normal) {
                 const emailInviteToken = event['content']['third_party_invite']['signed']?.['token'];
                 const emailInvite = await this.client.getRoomStateEvent(roomId, "m.room.third_party_invite", emailInviteToken);
                 if (emailInvite[RS_3PID_PERSON_ID]) {
