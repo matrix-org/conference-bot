@@ -38,7 +38,7 @@ export class LiveWidget {
     private constructor() { }
 
     public static async forAuditorium(aud: Auditorium, client: MatrixClient, avatar: string, baseUrl: string): Promise<IStateEvent<IWidget>> {
-        const widgetId = sha256(JSON.stringify(await aud.getDefinition()));
+        const widgetId = sha256(JSON.stringify(aud.getDefinition()));
         return {
             type: "im.vector.modular.widgets",
             state_key: widgetId,
@@ -51,15 +51,15 @@ export class LiveWidget {
                 avatar_url: avatar,
                 url: baseUrl + "/widgets/auditorium.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&theme=$theme",
                 data: {
-                    title: await aud.getName(),
-                    auditoriumId: await aud.getId(),
+                    title: aud.getName(),
+                    auditoriumId: aud.getId(),
                 },
             } as IWidget,
         };
     }
 
     public static async forTalk(talk: Talk, client: MatrixClient, avatar: string, baseUrl: string): Promise<IStateEvent<IWidget>> {
-        const widgetId = sha256(JSON.stringify(await talk.getDefinition()));
+        const widgetId = sha256(JSON.stringify(talk.getDefinition()));
         return {
             type: "im.vector.modular.widgets",
             state_key: widgetId,
@@ -72,9 +72,9 @@ export class LiveWidget {
                 avatar_url: avatar,
                 url: baseUrl + "/widgets/talk.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&talkId=$talkId&theme=$theme#displayName=$matrix_display_name&avatarUrl=$matrix_avatar_url&userId=$matrix_user_id&roomId=$matrix_room_id&auth=openidtoken-jwt",
                 data: {
-                    title: await talk.getName(),
-                    auditoriumId: await talk.getAuditoriumId(),
-                    talkId: await talk.getId(),
+                    title: talk.getName(),
+                    auditoriumId: talk.getAuditoriumId(),
+                    talkId: talk.getId(),
                 },
             } as IWidget,
         };
@@ -101,16 +101,16 @@ export class LiveWidget {
     }
 
     public static async scoreboardForTalk(talk: Talk, client: MatrixClient, conference: Conference, avatar: string, url: string): Promise<IStateEvent<IWidget>> {
-        const aud = conference.getAuditorium(await talk.getAuditoriumId());
+        const aud = conference.getAuditorium(talk.getAuditoriumId());
         if (aud === undefined) {
-            throw new Error(`No auditorium ${await talk.getAuditoriumId()} for talk ${await talk.getId()}`);
+            throw new Error(`No auditorium ${talk.getAuditoriumId()} for talk ${talk.getId()}`);
         }
         return this.scoreboardForAuditorium(aud, client, avatar, url, talk);
     }
 
     public static async scoreboardForAuditorium(aud: Auditorium, client: MatrixClient, avatar: string, url: string, talk?: Talk): Promise<IStateEvent<IWidget>> {
         // note: this is a little bit awkward, but there's nothing special about the widget ID, it just needs to be unique
-        const widgetId = sha256(JSON.stringify([await aud.getId(), (await talk?.getId()) ?? '' ]) + "_SCOREBOARD");
+        const widgetId = sha256(JSON.stringify([aud.getId(), (talk?.getId()) ?? '' ]) + "_SCOREBOARD");
         const title = `Messages from ${await aud.getCanonicalAlias()}`;
         return {
             type: "im.vector.modular.widgets",
@@ -125,17 +125,17 @@ export class LiveWidget {
                 url: url + "/widgets/scoreboard.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&talkId=$talkId&theme=$theme",
                 data: {
                     title: title,
-                    auditoriumId: await aud.getId(),
-                    talkId: talk ? await talk.getId() : null
+                    auditoriumId: aud.getId(),
+                    talkId: talk ? talk.getId() : null
                 },
             } as IWidget,
         };
     }
 
     public static async scheduleForAuditorium(aud: Auditorium, client: MatrixClient, avatar: string, scheduleUrl: string): Promise<IStateEvent<IWidget>> {
-        const widgetId = sha256(JSON.stringify(await aud.getDefinition()) + "_AUDSCHED");
+        const widgetId = sha256(JSON.stringify(aud.getDefinition()) + "_AUDSCHED");
         const widgetUrl = template(scheduleUrl, {
-            audId: await aud.getId(),
+            audId: aud.getId(),
         });
         return {
             type: "im.vector.modular.widgets",
@@ -150,7 +150,7 @@ export class LiveWidget {
                 url: widgetUrl,
                 data: {
                     title: "Conference Schedule",
-                    auditoriumId: await aud.getId(),
+                    auditoriumId: aud.getId(),
                 },
             } as IWidget,
         };
