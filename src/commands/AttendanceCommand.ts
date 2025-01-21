@@ -21,6 +21,8 @@ import { COLOR_GREEN, COLOR_RED } from "../models/colors";
 import { IPerson } from "../models/schedule";
 import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
+const BROKEN_WARNING = "<a href='https://github.com/matrix-org/conference-bot/issues/245'>This command is somewhat broken/misleading.</a> Accepted = percentage of invites that are Matrix and accepted. Emails = percentage of invites that are e-mail (regardless of whether they are accepted or not).";
+
 export class AttendanceCommand implements ICommand {
     public readonly prefixes = ["attendance"];
 
@@ -46,16 +48,22 @@ export class AttendanceCommand implements ICommand {
             }
         }
 
-        let html = "<ul>";
+        let html = BROKEN_WARNING + "<ul>";
         const append = async (invitePeople: IPerson[], bsPeople: IPerson[] | null, name: string, roomId: string, bsRoomId: string | null, withHtml: boolean) => {
+            // all persons that are to be invited to this room
             const inviteTargets = await resolveIdentifiers(this.client, invitePeople);
 
+            // all Matrix members of the room
             const joinedMembers = await this.client.getJoinedRoomMembers(roomId);
 
+            // all invite targets that were e-mail invited, by virtue of not having a registered MXID
             const emailInvites = inviteTargets.filter(i => !i.mxid).length;
+            // all Matrix targets that have also joined
             const joined = inviteTargets.filter(i => i.mxid && joinedMembers.includes(i.mxid)).length;
 
+            // percentage of invites that are both Matrix and accepted
             const acceptedPct = Math.round((joined / inviteTargets.length) * 100);
+            // percentage of invites that are e-mail invites. Regardless of whether they are accepted.
             const emailPct = Math.round((emailInvites / inviteTargets.length) * 100);
 
             totalInvites += inviteTargets.length;
