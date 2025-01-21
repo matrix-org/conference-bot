@@ -42,10 +42,14 @@ export interface FOSDEMTalk {
      * The Track ID of the track that the talk is in
      */
     id: number;
+    /**
+     * Whether online question & answer support is enabled for this track.
+     */
+    online_qa: boolean;
     [k: string]: unknown;
   };
   /**
-   * Name of the physical (in real life) room that the talk is held in.
+   * System name (not human-friendly) of the physical (in real life) room that the talk is held in. e.g. `ud2218a`
    */
   conference_room: string;
   [k: string]: unknown;

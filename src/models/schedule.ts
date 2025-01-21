@@ -94,6 +94,11 @@ export interface IAuditorium {
      * This string will not be human-readable.
      */
     trackType: string;
+    /**
+     * Identifier useful for the video livestream URL.
+     * If not required by the conference backend, should be an empty string.
+     */
+    livestreamId: string;
 }
 
 export interface IConference {

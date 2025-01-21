@@ -94,13 +94,17 @@
             "id": {
               "type": "number",
               "description": "The Track ID of the track that the talk is in"
+            },
+            "online_qa": {
+              "type": "boolean",
+              "description": "Whether online question & answer support is enabled for this track."
             }
           },
-          "required": ["id"]
+          "required": ["id", "online_qa"]
         },
         "conference_room": {
           "type": "string",
-          "description": "Name of the physical (in real life) room that the talk is held in."
+          "description": "System name (not human-friendly) of the physical (in real life) room that the talk is held in. e.g. `ud2218a`"
         }
       },
       "required": [ "event_id", "title", "start_datetime", "duration", "persons", "track", "conference_room" ]

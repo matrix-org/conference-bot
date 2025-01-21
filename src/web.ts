@@ -32,7 +32,8 @@ export function renderAuditoriumWidget(req: Request, res: Response, conference: 
         return res.sendStatus(404);
     }
 
-    if (!conference.getAuditorium(audId)) {
+    let aud = conference.getAuditorium(audId);
+    if (!aud) {
         return res.sendStatus(404);
     }
 
@@ -41,11 +42,13 @@ export function renderAuditoriumWidget(req: Request, res: Response, conference: 
     // HACK for FOSDEM 2023 and FOSDEM 2024: transform auditorium IDs to the livestream ID
     // 1. 'K1.105A (Words)' -> 'k1.105a'
     // 2. 'k1.105a' -> 'k1105a'
+    // DEPRECATED — see livestreamId instead nowadays!
     let sid = audId.toLowerCase().replace(/\s+\(.+\)$/, '').replace(/[^a-z0-9]/g, '');
 
     const streamUrl = template(auditoriumUrl, {
         id: audId.toLowerCase(),
-        sId: sid
+        sId: sid,
+        livestreamId: aud.getDefinition().livestreamId,
     });
 
     return res.render('auditorium.liquid', {

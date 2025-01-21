@@ -26,13 +26,14 @@
           "matrix_id": "@conal:example.org"
         }
       ],
-      "conference_room": "C.1.111",
+      "conference_room": "c1111a",
       "start_datetime": "2024-02-01T09:30:00+01:00",
       "duration": 30,
       "track": {
         "id": 5,
         "slug": "open_cad_cam",
-        "name": "Open CAD/CAM devroom"
+        "name": "Open CAD/CAM devroom",
+        "online_qa": false
       }
     },
     {
@@ -54,13 +55,14 @@
           "matrix_id": "@chloe:example.org"
         }
       ],
-      "conference_room": "C.4.172",
+      "conference_room": "c4172",
       "start_datetime": "2024-02-01T09:45:00+01:00",
       "duration": 45,
       "track": {
         "id": 6,
         "slug": "selfhosting",
-        "name": "Self-Hosted Software devroom"
+        "name": "Self-Hosted Software devroom",
+        "online_qa": true
       }
     },
     {
@@ -82,13 +84,14 @@
           "matrix_id": "@chloe:example.org"
         }
       ],
-      "conference_room": "C.4.172",
+      "conference_room": "c4172",
       "start_datetime": "2024-02-01T10:45:00+01:00",
       "duration": 45,
       "track": {
         "id": 6,
         "slug": "selfhosting",
-        "name": "Self-Hosted Software devroom"
+        "name": "Self-Hosted Software devroom",
+        "online_qa": true
       }
     }
   ],
