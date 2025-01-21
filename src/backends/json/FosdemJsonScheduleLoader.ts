@@ -117,6 +117,7 @@ export class FosdemJsonScheduleLoader {
             talks: new Map(),
             // Hardcoded: FOSDEM is always physical now.
             isPhysical: true,
+            livestreamId: '',
         };
     }
 }
