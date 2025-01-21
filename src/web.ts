@@ -32,7 +32,8 @@ export function renderAuditoriumWidget(req: Request, res: Response, conference: 
         return res.sendStatus(404);
     }
 
-    if (!conference.getAuditorium(audId)) {
+    let aud = conference.getAuditorium(audId);
+    if (!aud) {
         return res.sendStatus(404);
     }
 
@@ -45,7 +46,8 @@ export function renderAuditoriumWidget(req: Request, res: Response, conference: 
 
     const streamUrl = template(auditoriumUrl, {
         id: audId.toLowerCase(),
-        sId: sid
+        sId: sid,
+        livestreamId: aud.getDefinition().livestreamId,
     });
 
     return res.render('auditorium.liquid', {
