@@ -38,11 +38,11 @@ export class InterestRoom extends MatrixRoom implements PhysicalRoom {
         this.name = decodePrefix(id, prefixes)!.name;
     }
 
-    public async getName(): Promise<string> {
+    public getName(): string {
         return this.name;
     }
 
-    public async getId(): Promise<string> {
+    public getId(): string {
         return this.id;
     }
 }

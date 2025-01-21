@@ -32,7 +32,7 @@ export class RunCommand implements ICommand {
             const aud = this.conference.getAuditorium(audId);
             if (!aud) return await this.client.replyHtmlNotice(roomId, event, `Unknown auditorium: ${audId}`);
 
-            await this.scheduler.addAuditorium(await aud.getId());
+            await this.scheduler.addAuditorium(aud.getId());
         }
 
         await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
