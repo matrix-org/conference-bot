@@ -62,7 +62,7 @@ export class IRCBridge {
     }
 
     public async deriveChannelName(auditorium: Auditorium) {
-        const name = await auditorium.getName();
+        const name = auditorium.getName();
         if (!name) {
             throw Error('Auditorium name is empty');
         }
@@ -70,7 +70,7 @@ export class IRCBridge {
     }
 
     public async deriveChannelNameSI(interest: InterestRoom) {
-        const name = makeLocalpart(await interest.getName(), this.rootConfig.conference.prefixes.suffixes, await interest.getId());
+        const name = makeLocalpart(interest.getName(), this.rootConfig.conference.prefixes.suffixes, interest.getId());
         if (!name) {
             throw Error('Special interest name is empty');
         }

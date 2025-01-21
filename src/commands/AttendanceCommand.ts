@@ -85,22 +85,22 @@ export class AttendanceCommand implements ICommand {
             if (withHtml) html += "</li>";
         };
         for (const auditorium of this.conference.storedAuditoriums) {
-            const doAppend = !!targetAudId && (targetAudId === "all" || targetAudId === await auditorium.getId());
-            const bs = this.conference.getAuditoriumBackstage(await auditorium.getId());
+            const doAppend = !!targetAudId && (targetAudId === "all" || targetAudId === auditorium.getId() || targetAudId === auditorium.getSlug());
+            const bs = this.conference.getAuditoriumBackstage(auditorium.getId());
             const inviteTargets = await this.conference.getInviteTargetsForAuditorium(auditorium);
             const bsInviteTargets = await this.conference.getInviteTargetsForAuditorium(auditorium);
             try {
-                await append(inviteTargets, bsInviteTargets, await auditorium.getId(), auditorium.roomId, bs.roomId, doAppend);
+                await append(inviteTargets, bsInviteTargets, auditorium.getId(), auditorium.roomId, bs.roomId, doAppend);
             }
             catch (error) {
                 throw new Error(`Error calculating invite acceptance in auditorium ${auditorium}`, {cause: error})
             }
         }
         for (const spiRoom of this.conference.storedInterestRooms) {
-            const doAppend = !!targetAudId && (targetAudId === "all" || targetAudId === await spiRoom.getId());
+            const doAppend = !!targetAudId && (targetAudId === "all" || targetAudId === spiRoom.getId());
             const inviteTargets = await this.conference.getInviteTargetsForInterest(spiRoom);
             try {
-                await append(inviteTargets, null, await spiRoom.getId(), spiRoom.roomId, null, doAppend);
+                await append(inviteTargets, null, spiRoom.getId(), spiRoom.roomId, null, doAppend);
             }
             catch (error) {
                 throw new Error(`Error calculating invite acceptance in special interest room ${spiRoom}`, {cause:error})
