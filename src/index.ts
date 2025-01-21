@@ -273,6 +273,7 @@ export class ConferenceBot {
 
             const prefixes = [
                 "!conference",
+                "!c",
                 localpart + ":",
                 displayName + ":",
                 userId + ":",
