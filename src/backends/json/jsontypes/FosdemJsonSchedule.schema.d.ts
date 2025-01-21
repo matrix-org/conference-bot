@@ -49,7 +49,7 @@ export interface FOSDEMTalk {
     [k: string]: unknown;
   };
   /**
-   * Name of the physical (in real life) room that the talk is held in.
+   * System name (not human-friendly) of the physical (in real life) room that the talk is held in. e.g. `ud2218a`
    */
   conference_room: string;
   [k: string]: unknown;

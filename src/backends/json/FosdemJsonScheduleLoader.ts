@@ -21,6 +21,7 @@ export class FosdemJsonScheduleLoader {
         const jsonSchedule = jsonDesc as FOSDEMSpecificJSONSchedule;
 
         this.auditoriums = new Map();
+        const livestreamIdMapping = this.makeLivestreamIdMapping(jsonSchedule);
 
         for (let rawTrack of jsonSchedule.tracks) {
             // Tracks are now (since 2025) mapped 1:1 to auditoria
@@ -29,6 +30,12 @@ export class FosdemJsonScheduleLoader {
                 throw `Conflict in auditorium ID «${auditorium.id}»!`;
             }
             this.auditoriums.set(auditorium.id, auditorium);
+
+            // Look up the livestream ID
+            let livestreamId = livestreamIdMapping.get(auditorium.id);
+            if (livestreamId !== undefined) {
+                auditorium.livestreamId = livestreamId;
+            }
         }
 
         this.talks = new Map();
@@ -55,6 +62,19 @@ export class FosdemJsonScheduleLoader {
             auditoriums: Array.from(this.auditoriums.values()),
             interestRooms: Array.from(this.interestRooms.values())
         };
+    }
+
+    /**
+     * Returns a mapping from auditorium (track) ID to the conference_room for one of the talks in that track.
+     *
+     * Assumption: All talks in the same track are scheduled in the same room. (this is true for FOSDEM)
+     */
+    private makeLivestreamIdMapping(sched: FOSDEMSpecificJSONSchedule): Map<string, string> {
+        let out = new Map();
+        for (let talk of sched.talks) {
+            out.set(talk.track.id.toString(), talk.conference_room);
+        }
+        return out;
     }
 
     private convertPerson(person: FOSDEMPerson): IPerson {
@@ -117,6 +137,7 @@ export class FosdemJsonScheduleLoader {
             talks: new Map(),
             // Hardcoded: FOSDEM is always physical now.
             isPhysical: true,
+            // This will be populated afterwards, with the value of one of the talks.
             livestreamId: '',
         };
     }

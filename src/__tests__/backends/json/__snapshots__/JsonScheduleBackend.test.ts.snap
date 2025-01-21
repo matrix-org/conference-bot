@@ -6,6 +6,7 @@ Map {
     "id": "5",
     "isPhysical": true,
     "kind": "auditorium",
+    "livestreamId": "c1111a",
     "name": "Open CAD/CAM devroom",
     "slug": "open_cad_cam",
     "talks": Map {
@@ -50,6 +51,7 @@ Map {
     "id": "6",
     "isPhysical": true,
     "kind": "auditorium",
+    "livestreamId": "c4172",
     "name": "Self-Hosted Software devroom",
     "slug": "selfhosting",
     "talks": Map {
@@ -115,6 +117,7 @@ Map {
     "id": "7",
     "isPhysical": true,
     "kind": "auditorium",
+    "livestreamId": "",
     "name": "Keynotes (TALKS NOT ANNOUNCED YET)",
     "slug": "key_notes",
     "talks": Map {},

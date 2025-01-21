@@ -104,7 +104,7 @@
         },
         "conference_room": {
           "type": "string",
-          "description": "Name of the physical (in real life) room that the talk is held in."
+          "description": "System name (not human-friendly) of the physical (in real life) room that the talk is held in. e.g. `ud2218a`"
         }
       },
       "required": [ "event_id", "title", "start_datetime", "duration", "persons", "track", "conference_room" ]
