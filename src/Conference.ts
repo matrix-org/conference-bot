@@ -875,10 +875,31 @@ export class Conference {
     }
 
     /**
-     * @deprecated This always returns `[]` and should be removed or fixed.
+     * Return a list of all people with the given person ID.
+     *
+     * TODO does not support interest rooms
      */
     public async findPeopleWithId(personId: string): Promise<IPerson[]> {
-        return [];
+        let out: IPerson[] = [];
+
+        for (let auditorium of Object.values(this.auditoriums)) {
+            let audDef = auditorium.getDefinition();
+            for (let talk of audDef.talks.values()) {
+                for (let person of talk.speakers) {
+                    if (person.id === personId) {
+                        out.push(person);
+                    }
+                }
+            }
+
+            for (let person of audDef.extraPeople) {
+                if (person.id === personId) {
+                    out.push(person);
+                }
+            }
+        }
+
+        return out;
     }
 
     /**
