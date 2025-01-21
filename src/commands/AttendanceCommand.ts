@@ -85,7 +85,7 @@ export class AttendanceCommand implements ICommand {
             if (withHtml) html += "</li>";
         };
         for (const auditorium of this.conference.storedAuditoriums) {
-            const doAppend = !!targetAudId && (targetAudId === "all" || targetAudId === auditorium.getId());
+            const doAppend = !!targetAudId && (targetAudId === "all" || targetAudId === auditorium.getId() || targetAudId === auditorium.getSlug());
             const bs = this.conference.getAuditoriumBackstage(auditorium.getId());
             const inviteTargets = await this.conference.getInviteTargetsForAuditorium(auditorium);
             const bsInviteTargets = await this.conference.getInviteTargetsForAuditorium(auditorium);

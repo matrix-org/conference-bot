@@ -29,31 +29,28 @@ export class VerifyCommand implements ICommand {
     constructor(private readonly client: MatrixClient, private readonly conference: Conference) {}
 
     public async run(roomId: string, event: any, args: string[]) {
-        let audId;
+        let targetIdOrSlug: string;
         let backstage = args[args.length - 1] === "backstage";
         if (backstage) {
             const aud_slice = args.slice(0, -1)
-            audId = aud_slice.join(" ")
+            targetIdOrSlug = aud_slice.join(" ")
         }
         else {
-            audId = args.join(" ");
+            targetIdOrSlug = args.join(" ");
         }
 
-        let aud: PhysicalRoom = this.conference.getAuditorium(audId);
-        if (backstage) {
-            aud = this.conference.getAuditoriumBackstage(audId);
+        let room: PhysicalRoom | null = this.conference.getAuditoriumOrInterestByIdOrSlug(targetIdOrSlug);
+        if (backstage && room !== null) {
+            room = this.conference.getAuditoriumBackstage(room.getId());
         }
 
-        if (!aud) {
-            aud = this.conference.getInterestRoom(audId);
-            if (!aud) {
-                return await this.client.replyNotice(roomId, event, `Unknown auditorium/interest room: ${audId}`);
-            }
+        if (!room) {
+            return await this.client.replyNotice(roomId, event, `Unknown auditorium/interest room: ${targetIdOrSlug}`);
         }
 
         await this.client.replyNotice(roomId, event, "Calculating list of people...");
 
-        let html = `<h1>${aud.getName()} (${aud.getId()})</h1>`;
+        let html = `<h1>${room.getName()} (${room.getId()})</h1>`;
 
         const appendPeople = (invite: IPerson[], mods: IPerson[]) => {
             for (const target of invite) {
@@ -66,30 +63,30 @@ export class VerifyCommand implements ICommand {
         let audBackstageToInvite: IPerson[];
         let audToMod: IPerson[];
 
-        if (aud instanceof Auditorium) {
-            audToInvite = await this.conference.getInviteTargetsForAuditorium(aud);
-            audBackstageToInvite = await this.conference.getInviteTargetsForAuditorium(aud);
-            audToMod = await this.conference.getModeratorsForAuditorium(aud);
-        } else if (aud instanceof InterestRoom) {
-            audToInvite = await this.conference.getInviteTargetsForInterest(aud);
+        if (room instanceof Auditorium) {
+            audToInvite = await this.conference.getInviteTargetsForAuditorium(room);
+            audBackstageToInvite = await this.conference.getInviteTargetsForAuditorium(room);
+            audToMod = await this.conference.getModeratorsForAuditorium(room);
+        } else if (room instanceof InterestRoom) {
+            audToInvite = await this.conference.getInviteTargetsForInterest(room);
             audBackstageToInvite = [];
-            audToMod = await this.conference.getModeratorsForInterest(aud);
+            audToMod = await this.conference.getModeratorsForInterest(room);
         } else {
-            return await this.client.replyNotice(roomId, event, `Unknown room kind: ${aud}`);
+            return await this.client.replyNotice(roomId, event, `Unknown room kind: ${room}`);
         }
 
-        const publicAud = this.conference.getAuditorium(audId);
-        if (publicAud || !(aud instanceof Auditorium)) {
+        const publicAud = this.conference.getAuditorium(targetIdOrSlug);
+        if (publicAud || !(room instanceof Auditorium)) {
             html += "<b>Public-facing room:</b><ul>";
             appendPeople(audToInvite, audToMod);
         }
 
-        if (aud instanceof Auditorium) {
+        if (room instanceof Auditorium) {
             html += "</ul><b>Backstage room:</b><ul>";
             appendPeople(audBackstageToInvite, audToMod);
             html += "</ul>";
 
-            const talks = await asyncFilter(this.conference.storedTalks, async t => t.getAuditoriumId() === aud.getId());
+            const talks = await asyncFilter(this.conference.storedTalks, async t => t.getAuditoriumId() === room!.getId());
             for (const talk of talks) {
                 const talkToInvite = await this.conference.getInviteTargetsForTalk(talk);
                 const talkToMod = await this.conference.getModeratorsForTalk(talk);

@@ -804,6 +804,15 @@ export class Conference {
         return this.auditoriums[audId];
     }
 
+    public getAuditoriumBySlug(audSlug: string): Auditorium | null {
+        for (let auditorium of Object.values(this.auditoriums)) {
+            if (auditorium.getSlug() === audSlug) {
+                return auditorium;
+            }
+        }
+        return null;
+    }
+
     public getAuditoriumBackstage(audId: string): AuditoriumBackstage {
         return this.auditoriumBackstages[audId];
     }
@@ -814,6 +823,25 @@ export class Conference {
 
     public getInterestRoom(intId: string): InterestRoom {
         return this.interestRooms[intId];
+    }
+
+    public getInterestById(audSlug: string): InterestRoom | null {
+        for (let interest of Object.values(this.interestRooms)) {
+            if (interest.getId() === audSlug) {
+                return interest;
+            }
+        }
+        return null;
+    }
+
+    public getAuditoriumOrInterestByIdOrSlug(audOrInterestIdOrSlug: string): Auditorium | InterestRoom | null {
+        if (this.auditoriums[audOrInterestIdOrSlug]) {
+            return this.auditoriums[audOrInterestIdOrSlug];
+        }
+        if (this.interestRooms[audOrInterestIdOrSlug]) {
+            return this.interestRooms[audOrInterestIdOrSlug];
+        }
+        return this.getAuditoriumBySlug(audOrInterestIdOrSlug);
     }
 
     public async ensurePermissionsFor(people: ResolvedPersonIdentifier[], roomId: string): Promise<void> {
