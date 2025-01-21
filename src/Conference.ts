@@ -621,7 +621,7 @@ export class Conference {
                 creation_content: {
                     [RSC_CONFERENCE_ID]: this.id,
                     [RSC_TALK_ID]: talk.id,
-                    [RSC_AUDITORIUM_ID]: await auditorium.getId(),
+                    [RSC_AUDITORIUM_ID]: auditorium.getId(),
                 },
                 initial_state: [
                     makeTalkLocator(this.id, talk.id),
@@ -726,7 +726,7 @@ export class Conference {
     }
 
     public async getPeopleForAuditorium(auditorium: Auditorium): Promise<IPerson[]> {
-        const audit = await auditorium.getDefinition();
+        const audit = auditorium.getDefinition();
         const people: IPerson[] = [];
         for (const t of this.backend.talks.values()) {
             if (t.auditoriumId == audit.id) {
@@ -735,13 +735,6 @@ export class Conference {
         }
         people.push(...audit.extraPeople);
         return people;
-    }
-
-    /**
-     * @deprecated Just use `.getSpeakers()`
-     */
-    public async getPeopleForTalk(talk: Talk): Promise<IPerson[]> {
-        return talk.getSpeakers();
     }
 
     /**
@@ -781,7 +774,7 @@ export class Conference {
     }
 
     public async getInviteTargetsForTalk(talk: Talk): Promise<IPerson[]> {
-        const people = await this.getPeopleForTalk(talk);
+        const people = talk.getSpeakers();
         const roles = [Role.Speaker, Role.Host, Role.Coordinator];
         return people.filter(p => roles.includes(p.role));
     }
@@ -799,7 +792,7 @@ export class Conference {
     }
 
     public async getModeratorsForTalk(talk: Talk): Promise<IPerson[]> {
-        const people = await this.getPeopleForTalk(talk);
+        const people = talk.getSpeakers();
         const roles = [Role.Coordinator, Role.Speaker, Role.Host];
         return people.filter(p => roles.includes(p.role));
     }
@@ -832,6 +825,15 @@ export class Conference {
         return this.auditoriums[audId];
     }
 
+    public getAuditoriumBySlug(audSlug: string): Auditorium | null {
+        for (let auditorium of Object.values(this.auditoriums)) {
+            if (auditorium.getSlug() === audSlug) {
+                return auditorium;
+            }
+        }
+        return null;
+    }
+
     public getAuditoriumBackstage(audId: string): AuditoriumBackstage {
         return this.auditoriumBackstages[audId];
     }
@@ -842,6 +844,25 @@ export class Conference {
 
     public getInterestRoom(intId: string): InterestRoom {
         return this.interestRooms[intId];
+    }
+
+    public getInterestById(audSlug: string): InterestRoom | null {
+        for (let interest of Object.values(this.interestRooms)) {
+            if (interest.getId() === audSlug) {
+                return interest;
+            }
+        }
+        return null;
+    }
+
+    public getAuditoriumOrInterestByIdOrSlug(audOrInterestIdOrSlug: string): Auditorium | InterestRoom | null {
+        if (this.auditoriums[audOrInterestIdOrSlug]) {
+            return this.auditoriums[audOrInterestIdOrSlug];
+        }
+        if (this.interestRooms[audOrInterestIdOrSlug]) {
+            return this.interestRooms[audOrInterestIdOrSlug];
+        }
+        return this.getAuditoriumBySlug(audOrInterestIdOrSlug);
     }
 
     public async ensurePermissionsFor(people: ResolvedPersonIdentifier[], roomId: string): Promise<void> {
