@@ -169,6 +169,8 @@ export class Conference {
      * Returns all detected talk rooms for this conference.
      * (Note that since physical auditoriums don't have any talk rooms, there won't be any results for talks
      * in physical auditoriums here.)
+     *
+     * @deprecated as non-physical auditoria are not supported, this is now redundant
      */
     public get storedTalks(): Talk[] {
         return Object.values(this.talks);
