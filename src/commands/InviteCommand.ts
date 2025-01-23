@@ -140,8 +140,14 @@ export class InviteCommand implements ICommand {
         // List of Matrix user IDs that have already joined
         const effectiveJoinedUserIds: string[] = members.filter(m => m.effectiveMembership === "join").map(m => m.membershipFor);
         for (const target of people) {
-            if (target.mxid && effectiveJoinedUserIds.includes(target.mxid)) continue;
-            if (emailInvitePersonIds.includes(target.person.id)) continue;
+            if (target.mxid) {
+                if (effectiveJoinedUserIds.includes(target.mxid)) continue;
+            } else {
+                // Notably: don't stop Matrix-inviting a user just because they had
+                // previously been e-mail-invited
+                if (emailInvitePersonIds.includes(target.person.id)) continue;
+            }
+            
             try {
                 await invitePersonToRoom(this.client, target, roomId, this.config);
             } catch (e) {
