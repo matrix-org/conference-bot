@@ -31,7 +31,7 @@ interface PersonState {
     bestKind: 'matrix' | 'e-mail' | 'uncontactable',
     
     // what's the current state of this person in this room?
-    membership: 'invited' | 'joined' | 'missing'
+    membership: 'invited' | 'joined' | 'missing' | 'invited-but-by-e-mail'
 }
 
 export class VerifyCommand implements ICommand {
@@ -70,7 +70,7 @@ export class VerifyCommand implements ICommand {
 
                 let state =peopleToStates.get(target.id);
                 if (state) {
-                    html += ` (best contact method: ${state.bestKind}; membership: ${state.membership})`;
+                    html += ` (best method: <u>${state.bestKind}</u>; membership: <u>${state.membership}</u>)`;
                 } else {
                     html += " (unknown state)";
                 }
@@ -122,7 +122,7 @@ export class VerifyCommand implements ICommand {
                 const effectiveInvitedUserIds: string[] = members.filter(m => m.effectiveMembership === "invite").map(m => m.membershipFor);
                 for (const person of resolved) {
                     let bestKind: 'matrix' | 'e-mail' | 'uncontactable' = 'uncontactable';
-                    let state: 'invited' | 'joined' | 'missing' = 'missing';
+                    let state: 'invited' | 'joined' | 'missing' | 'invited-but-by-e-mail' = 'missing';
 
                     if (person.mxid) {
                         bestKind = 'matrix';
@@ -130,6 +130,8 @@ export class VerifyCommand implements ICommand {
                             state = 'joined';
                         } else if (effectiveInvitedUserIds.includes(person.mxid)) {
                             state = 'invited';
+                        } else if (emailInvitePersonIds.includes(person.person.id)) {
+                            state = 'invited-but-by-e-mail';
                         }
                     } else if (person.emails) {
                         bestKind = 'e-mail';
