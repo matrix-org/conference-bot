@@ -1,2 +1,5 @@
 onlyBuiltDependencies:
   - '@matrix-org/matrix-sdk-crypto-nodejs'
+
+  # Needed for building the Bot SDK from source
+  - "@vector-im/matrix-bot-sdk"

@@ -39,8 +39,8 @@ importers:
         specifier: ^9.19.0
         version: 9.43.0
       matrix-bot-sdk:
-        specifier: npm:@vector-im/matrix-bot-sdk@^0.6.7-element.1
-        version: '@vector-im/matrix-bot-sdk@0.6.7-element.1'
+        specifier: git+https://github.com/reivilibre/fork-matrix-bot-sdk#rei/fd25_dms-catch
+        version: '@vector-im/matrix-bot-sdk@https://codeload.github.com/reivilibre/fork-matrix-bot-sdk/tar.gz/565090ac3cb3f6fa0b260f9039f4b89245f0a7a0'
       matrix-widget-api:
         specifier: ^1.6.0
         version: 1.15.0
@@ -413,8 +413,8 @@ packages:
   '@leichtgewicht/ip-codec@2.0.5':
     resolution: {integrity: sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==}
 
-  '@matrix-org/matrix-sdk-crypto-nodejs@0.1.0-beta.11':
-    resolution: {integrity: sha512-z5adcQo4o0UAry4zs6JHGxbTDlYTUMKUfpOpigmso65ETBDumbeTSQCWRw8UeUV7aCAyVoHARqDTol9SrauEFA==}
+  '@matrix-org/matrix-sdk-crypto-nodejs@0.1.0-beta.9':
+    resolution: {integrity: sha512-ee2YlBoXPLgp1aav9MqREJKvWJfURn9Jcs46FyWT4NXEl37KQDNC8CWWnqgqsHkLfBxxSxfq9kMA/mWQZF7QJw==}
     engines: {node: '>= 16'}
 
   '@opentelemetry/api@1.9.0':
@@ -648,8 +648,9 @@ packages:
   '@types/yargs@17.0.35':
     resolution: {integrity: sha512-qUHkeCyQFxMXg79wQfTtfndEC+N9ZZg76HJftDJp+qH2tV7Gj4OJi7l+PiWwJ+pWtW8GwSmqsDj/oymhrTWXjg==}
 
-  '@vector-im/matrix-bot-sdk@0.6.7-element.1':
-    resolution: {integrity: sha512-SFaCorDIibhMcJq3AfdacecKALWBEL+sDZVCUDkdA/pgqoWyJiC5c5TcMJT+Gs/vCxCYZzD1qmYssXJ6w7wEYQ==}
+  '@vector-im/matrix-bot-sdk@https://codeload.github.com/reivilibre/fork-matrix-bot-sdk/tar.gz/565090ac3cb3f6fa0b260f9039f4b89245f0a7a0':
+    resolution: {tarball: https://codeload.github.com/reivilibre/fork-matrix-bot-sdk/tar.gz/565090ac3cb3f6fa0b260f9039f4b89245f0a7a0}
+    version: 0.6.7-element.0
     engines: {node: '>=18.0.0'}
 
   '@webassemblyjs/ast@1.14.1':
@@ -3699,7 +3700,7 @@ snapshots:
 
   '@leichtgewicht/ip-codec@2.0.5': {}
 
-  '@matrix-org/matrix-sdk-crypto-nodejs@0.1.0-beta.11':
+  '@matrix-org/matrix-sdk-crypto-nodejs@0.1.0-beta.9':
     dependencies:
       https-proxy-agent: 5.0.1
       node-downloader-helper: 2.1.10
@@ -3953,9 +3954,9 @@ snapshots:
     dependencies:
       '@types/yargs-parser': 21.0.3
 
-  '@vector-im/matrix-bot-sdk@0.6.7-element.1':
+  '@vector-im/matrix-bot-sdk@https://codeload.github.com/reivilibre/fork-matrix-bot-sdk/tar.gz/565090ac3cb3f6fa0b260f9039f4b89245f0a7a0':
     dependencies:
-      '@matrix-org/matrix-sdk-crypto-nodejs': 0.1.0-beta.11
+      '@matrix-org/matrix-sdk-crypto-nodejs': 0.1.0-beta.9
       '@types/express': 4.17.25
       another-json: 0.2.0
       async-lock: 1.4.1
