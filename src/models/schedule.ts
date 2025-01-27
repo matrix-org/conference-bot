@@ -76,9 +76,29 @@ export interface IAuditorium {
     kind: RoomKind;
     talks: Map<TalkId, ITalk>;
     /**
+     * People, in addition to those mentioned in individual talks.
+     * People may be specified here, in talks, or in both.
+     *
+     * The motivation for this field is to allow coordinators to exist in the
+     * conference, even before any talks have been scheduled.
+     */
+    extraPeople: IPerson[];
+    /**
      * If true, this auditorium is just a virtual representation of a real-world physical auditorium.
      */
     isPhysical: boolean;
+
+    /**
+     * A 'type' of track that this auditorium is in.
+     * May be an empty string if there is no concept of types.
+     * This string will not be human-readable.
+     */
+    trackType: string;
+    /**
+     * Identifier useful for the video livestream URL.
+     * If not required by the conference backend, should be an empty string.
+     */
+    livestreamId: string;
 }
 
 export interface IConference {

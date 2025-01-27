@@ -102,8 +102,11 @@ export class JsonScheduleLoader {
             name: stream.stream_name,
             kind: RoomKind.Auditorium,
             talks,
+            extraPeople: [],
             // TODO Support physical auditoriums in the JSON schedule backend
             isPhysical: false,
+            trackType: '',
+            livestreamId: '',
         };
     }
 }

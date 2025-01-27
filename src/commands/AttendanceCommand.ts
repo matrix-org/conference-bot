@@ -21,6 +21,8 @@ import { COLOR_GREEN, COLOR_RED } from "../models/colors";
 import { IPerson } from "../models/schedule";
 import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
+const BROKEN_WARNING = "<a href='https://github.com/matrix-org/conference-bot/issues/245'>This command is somewhat broken/misleading.</a> Accepted = percentage of invites that are Matrix and accepted. Emails = percentage of invites that are e-mail (regardless of whether they are accepted or not).";
+
 export class AttendanceCommand implements ICommand {
     public readonly prefixes = ["attendance"];
 
@@ -46,16 +48,22 @@ export class AttendanceCommand implements ICommand {
             }
         }
 
-        let html = "<ul>";
+        let html = BROKEN_WARNING + "<ul>";
         const append = async (invitePeople: IPerson[], bsPeople: IPerson[] | null, name: string, roomId: string, bsRoomId: string | null, withHtml: boolean) => {
+            // all persons that are to be invited to this room
             const inviteTargets = await resolveIdentifiers(this.client, invitePeople);
 
+            // all Matrix members of the room
             const joinedMembers = await this.client.getJoinedRoomMembers(roomId);
 
+            // all invite targets that were e-mail invited, by virtue of not having a registered MXID
             const emailInvites = inviteTargets.filter(i => !i.mxid).length;
+            // all Matrix targets that have also joined
             const joined = inviteTargets.filter(i => i.mxid && joinedMembers.includes(i.mxid)).length;
 
+            // percentage of invites that are both Matrix and accepted
             const acceptedPct = Math.round((joined / inviteTargets.length) * 100);
+            // percentage of invites that are e-mail invites. Regardless of whether they are accepted.
             const emailPct = Math.round((emailInvites / inviteTargets.length) * 100);
 
             totalInvites += inviteTargets.length;
@@ -85,22 +93,22 @@ export class AttendanceCommand implements ICommand {
             if (withHtml) html += "</li>";
         };
         for (const auditorium of this.conference.storedAuditoriums) {
-            const doAppend = !!targetAudId && (targetAudId === "all" || targetAudId === await auditorium.getId());
-            const bs = this.conference.getAuditoriumBackstage(await auditorium.getId());
+            const doAppend = !!targetAudId && (targetAudId === "all" || targetAudId === auditorium.getId() || targetAudId === auditorium.getSlug());
+            const bs = this.conference.getAuditoriumBackstage(auditorium.getId());
             const inviteTargets = await this.conference.getInviteTargetsForAuditorium(auditorium);
             const bsInviteTargets = await this.conference.getInviteTargetsForAuditorium(auditorium);
             try {
-                await append(inviteTargets, bsInviteTargets, await auditorium.getId(), auditorium.roomId, bs.roomId, doAppend);
+                await append(inviteTargets, bsInviteTargets, auditorium.getId(), auditorium.roomId, bs.roomId, doAppend);
             }
             catch (error) {
                 throw new Error(`Error calculating invite acceptance in auditorium ${auditorium}`, {cause: error})
             }
         }
         for (const spiRoom of this.conference.storedInterestRooms) {
-            const doAppend = !!targetAudId && (targetAudId === "all" || targetAudId === await spiRoom.getId());
+            const doAppend = !!targetAudId && (targetAudId === "all" || targetAudId === spiRoom.getId());
             const inviteTargets = await this.conference.getInviteTargetsForInterest(spiRoom);
             try {
-                await append(inviteTargets, null, await spiRoom.getId(), spiRoom.roomId, null, doAppend);
+                await append(inviteTargets, null, spiRoom.getId(), spiRoom.roomId, null, doAppend);
             }
             catch (error) {
                 throw new Error(`Error calculating invite acceptance in special interest room ${spiRoom}`, {cause:error})
