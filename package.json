@@ -24,9 +24,9 @@
   },
   "dependencies": {
     "@tsconfig/node18": "^18.2.2",
-    "matrix-bot-sdk": "git+https://github.com/reivilibre/fork-matrix-bot-sdk#rei/fd25_dms-catch",
     "await-lock": "^2.1.0",
     "config": "^3.3.3",
+    "date-fns": "^4.1.0",
     "express": "^4.17.1",
     "fast-xml-parser": "^4.3.2",
     "hls.js": "^1.5.3",
@@ -34,6 +34,7 @@
     "js-yaml": "^3.14.1",
     "jsrsasign": "^10.1.4",
     "liquidjs": "^9.19.0",
+    "matrix-bot-sdk": "git+https://github.com/reivilibre/fork-matrix-bot-sdk#rei/fd25_dms-catch",
     "matrix-widget-api": "^1.6.0",
     "moment": "^2.29.4",
     "node-fetch": "^2.6.1",

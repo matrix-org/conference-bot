@@ -51,7 +51,7 @@ export interface ITalk {
      * Start time of Q&A as a unix timestamp in ms, or null if Q&A is disabled for this talk.
      */
     qa_startTime: number | null;
-    livestream_endTime: number;
+    livestream_endTime: number; // ms
     title: string;
     subtitle: string;
     /**
