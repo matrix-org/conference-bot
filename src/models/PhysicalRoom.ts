@@ -16,6 +16,6 @@ limitations under the License.
 
 export interface PhysicalRoom {
     roomId: string;
-    getId(): Promise<string>;
-    getName(): Promise<string>;
+    getId(): string;
+    getName(): string;
 }

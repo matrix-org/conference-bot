@@ -89,6 +89,13 @@ export class InviteCommand implements ICommand {
     }
 
     public async run(managementRoomId: string, event: any, args: string[]) {
+        try {
+            // Try to refresh the schedule first, to ensure we don't miss any updates.
+            await this.conference.backend.refresh();
+        } catch (error) {
+            LogService.error(`StatusCommand`, `Failed to opportunistically refresh the backend (continuing invites anyway): ${error}`)
+        }
+
         await this.client.replyNotice(managementRoomId, event, "Sending invites to participants. This might take a while.");
 
         // This is called invite but it's really membership sync in a way. We're iterating over
@@ -119,19 +126,28 @@ export class InviteCommand implements ICommand {
     public async ensureInvited(roomId: string, people: ResolvedPersonIdentifier[]) {
         // We don't want to invite anyone we have already invited or that has joined though, so
         // avoid those people. We do this by querying the room state and filtering.
-        let state;
+        let state: any[];
         try {
             state = await this.client.getRoomState(roomId);
         }
         catch (error) {
             throw Error(`Error fetching state for room ${roomId}`, {cause: error})
         }
-        const emailInvitePersonIds = state.filter(s => s.type === "m.room.third_party_invite").map(s => s.content?.[RS_3PID_PERSON_ID]).filter(i => !!i);
-        const members = state.filter(s => s.type === "m.room.member").map(s => new MembershipEvent(s));
-        const effectiveJoinedUserIds = members.filter(m => m.effectiveMembership === "join").map(m => m.membershipFor);
+        // List of IDs of people that have already been invited by e-mail
+        const emailInvitePersonIds: string[] = state.filter(s => s.type === "m.room.third_party_invite").map(s => s.content?.[RS_3PID_PERSON_ID]).filter(i => !!i);
+        // List of state events that are m.room.member events.
+        const members: MembershipEvent[] = state.filter(s => s.type === "m.room.member").map(s => new MembershipEvent(s));
+        // List of Matrix user IDs that have already joined
+        const effectiveJoinedUserIds: string[] = members.filter(m => m.effectiveMembership === "join").map(m => m.membershipFor);
         for (const target of people) {
-            if (target.mxid && effectiveJoinedUserIds.includes(target.mxid)) continue;
-            if (emailInvitePersonIds.includes(target.person.id)) continue;
+            if (target.mxid) {
+                if (effectiveJoinedUserIds.includes(target.mxid)) continue;
+            } else {
+                // Notably: don't stop Matrix-inviting a user just because they had
+                // previously been e-mail-invited
+                if (emailInvitePersonIds.includes(target.person.id)) continue;
+            }
+            
             try {
                 await invitePersonToRoom(this.client, target, roomId, this.config);
             } catch (e) {

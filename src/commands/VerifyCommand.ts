@@ -15,50 +15,67 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { asyncFilter } from "../utils";
 import { Auditorium } from "../models/Auditorium";
 import { PhysicalRoom } from "../models/PhysicalRoom";
 import { InterestRoom } from "../models/InterestRoom";
 import { IPerson } from "../models/schedule";
+import { resolveIdentifiers } from "../invites";
+import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
+import { RS_3PID_PERSON_ID } from "../models/room_state";
+import { LogService, MembershipEvent } from "matrix-bot-sdk";
+
+interface PersonState {
+    // what's the best contact method we have for the person?
+    bestKind: 'matrix' | 'e-mail' | 'uncontactable',
+    
+    // what's the current state of this person in this room?
+    membership: 'invited' | 'joined' | 'missing' | 'invited-but-by-e-mail'
+}
 
 export class VerifyCommand implements ICommand {
     public readonly prefixes = ["verify", "v"];
 
-    constructor(private readonly client: MatrixClient, private readonly conference: Conference) {}
+    constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference) {}
 
-    public async run(roomId: string, event: any, args: string[]) {
-        let audId;
+    public async run(controlRoomId: string, event: any, args: string[]) {
+        let targetIdOrSlug: string;
         let backstage = args[args.length - 1] === "backstage";
         if (backstage) {
             const aud_slice = args.slice(0, -1)
-            audId = aud_slice.join(" ")
+            targetIdOrSlug = aud_slice.join(" ")
         }
         else {
-            audId = args.join(" ");
+            targetIdOrSlug = args.join(" ");
         }
 
-        let aud: PhysicalRoom = this.conference.getAuditorium(audId);
-        if (backstage) {
-            aud = this.conference.getAuditoriumBackstage(audId);
+        let room: PhysicalRoom | null = this.conference.getAuditoriumOrInterestByIdOrSlug(targetIdOrSlug);
+        if (backstage && room !== null) {
+            room = this.conference.getAuditoriumBackstage(room.getId());
         }
 
-        if (!aud) {
-            aud = this.conference.getInterestRoom(audId);
-            if (!aud) {
-                return await this.client.replyNotice(roomId, event, `Unknown auditorium/interest room: ${audId}`);
-            }
+        if (!room) {
+            return await this.client.replyNotice(controlRoomId, event, `Unknown auditorium/interest room: ${targetIdOrSlug}`);
         }
 
-        await this.client.replyNotice(roomId, event, "Calculating list of people...");
+        await this.client.replyNotice(controlRoomId, event, "Calculating list of people...");
 
-        let html = `<h1>${await aud.getName()} (${await aud.getId()})</h1>`;
+        let html = `<h1>${room.getName()} (${room.getId()})</h1>`;
 
-        const appendPeople = (invite: IPerson[], mods: IPerson[]) => {
+        const appendPeople = (invite: IPerson[], mods: IPerson[], peopleToStates: Map<string, PersonState>) => {
             for (const target of invite) {
                 const isMod = mods.some(m => m.id === target.id);
-                html += `<li>${target.name} (${target.role}${isMod ? ' + room moderator' : ''})</li>`;
+                html += `<li>${target.name} (${target.role}${isMod ? ' + room moderator' : ''})`;
+
+                let state =peopleToStates.get(target.id);
+                if (state) {
+                    html += ` (best method: <u>${state.bestKind}</u>; membership: <u>${state.membership}</u>)`;
+                } else {
+                    html += " (unknown state)";
+                }
+                
+                `</li>`;
             }
         };
 
@@ -66,41 +83,86 @@ export class VerifyCommand implements ICommand {
         let audBackstageToInvite: IPerson[];
         let audToMod: IPerson[];
 
-        if (aud instanceof Auditorium) {
-            audToInvite = await this.conference.getInviteTargetsForAuditorium(aud);
-            audBackstageToInvite = await this.conference.getInviteTargetsForAuditorium(aud);
-            audToMod = await this.conference.getModeratorsForAuditorium(aud);
-        } else if (aud instanceof InterestRoom) {
-            audToInvite = await this.conference.getInviteTargetsForInterest(aud);
+        if (room instanceof Auditorium) {
+            audToInvite = await this.conference.getInviteTargetsForAuditorium(room);
+            audBackstageToInvite = await this.conference.getInviteTargetsForAuditorium(room);
+            audToMod = await this.conference.getModeratorsForAuditorium(room);
+        } else if (room instanceof InterestRoom) {
+            audToInvite = await this.conference.getInviteTargetsForInterest(room);
             audBackstageToInvite = [];
-            audToMod = await this.conference.getModeratorsForInterest(aud);
+            audToMod = await this.conference.getModeratorsForInterest(room);
         } else {
-            return await this.client.replyNotice(roomId, event, `Unknown room kind: ${aud}`);
+            return await this.client.replyNotice(controlRoomId, event, `Unknown room kind: ${room}`);
         }
 
-        const publicAud = this.conference.getAuditorium(audId);
-        if (publicAud || !(aud instanceof Auditorium)) {
+        const publicAud = this.conference.getAuditorium(targetIdOrSlug);
+        if (publicAud || !(room instanceof Auditorium)) {
             html += "<b>Public-facing room:</b><ul>";
-            appendPeople(audToInvite, audToMod);
+            appendPeople(audToInvite, audToMod, new Map());
         }
 
-        if (aud instanceof Auditorium) {
+        if (room instanceof Auditorium) {
+            // Calculate some debug info, all based on the invite logic
+            let peopleToStates: Map<string, PersonState> = new Map();
+            try {
+                const resolved = await resolveIdentifiers(this.client, audBackstageToInvite);
+                let state: any[];
+                try {
+                    state = await this.client.getRoomState(room.roomId);
+                }
+                catch (error) {
+                    throw Error(`Error fetching state for room ${room.roomId}`, {cause: error})
+                }
+                // List of IDs of people that have already been invited by e-mail
+                const emailInvitePersonIds: string[] = state.filter(s => s.type === "m.room.third_party_invite").map(s => s.content?.[RS_3PID_PERSON_ID]).filter(i => !!i);
+                // List of state events that are m.room.member events.
+                const members: MembershipEvent[] = state.filter(s => s.type === "m.room.member").map(s => new MembershipEvent(s));
+                // List of Matrix user IDs that have already joined
+                const effectiveJoinedUserIds: string[] = members.filter(m => m.effectiveMembership === "join").map(m => m.membershipFor);
+                const effectiveInvitedUserIds: string[] = members.filter(m => m.effectiveMembership === "invite").map(m => m.membershipFor);
+                for (const person of resolved) {
+                    let bestKind: 'matrix' | 'e-mail' | 'uncontactable' = 'uncontactable';
+                    let state: 'invited' | 'joined' | 'missing' | 'invited-but-by-e-mail' = 'missing';
+
+                    if (person.mxid) {
+                        bestKind = 'matrix';
+                        if (effectiveJoinedUserIds.includes(person.mxid)) {
+                            state = 'joined';
+                        } else if (effectiveInvitedUserIds.includes(person.mxid)) {
+                            state = 'invited';
+                        } else if (emailInvitePersonIds.includes(person.person.id)) {
+                            state = 'invited-but-by-e-mail';
+                        }
+                    } else if (person.emails) {
+                        bestKind = 'e-mail';
+                        if (emailInvitePersonIds.includes(person.person.id)) {
+                            state = 'invited';
+                        }
+                    }
+
+                    peopleToStates.set(person.person.id, {bestKind, membership: state});
+                }
+            } catch (error) {
+                await this.client.replyNotice(controlRoomId, event, "Failed to calculate people states");
+                LogService.error("VerifyCommand", "Error trying calculate people states:", error);
+            }
+
             html += "</ul><b>Backstage room:</b><ul>";
-            appendPeople(audBackstageToInvite, audToMod);
+            appendPeople(audBackstageToInvite, audToMod, peopleToStates);
             html += "</ul>";
 
-            const talks = await asyncFilter(this.conference.storedTalks, async t => (await t.getAuditoriumId()) === (await aud.getId()));
+            const talks = await asyncFilter(this.conference.storedTalks, async t => t.getAuditoriumId() === room!.getId());
             for (const talk of talks) {
                 const talkToInvite = await this.conference.getInviteTargetsForTalk(talk);
                 const talkToMod = await this.conference.getModeratorsForTalk(talk);
                 if (talkToMod.length || talkToInvite.length) {
-                    html += `<b>Talk: ${await talk.getName()} (${await talk.getId()})</b><ul>`;
-                    appendPeople(talkToInvite, talkToMod);
+                    html += `<b>Talk: ${talk.getName()} (${talk.getId()})</b><ul>`;
+                    appendPeople(talkToInvite, talkToMod, new Map());
                     html += "</ul>";
                 }
             }
         }
 
-        await this.client.sendHtmlNotice(roomId, html);
+        await this.client.sendHtmlNotice(controlRoomId, html);
     }
 }

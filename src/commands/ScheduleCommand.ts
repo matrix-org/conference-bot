@@ -16,9 +16,9 @@ limitations under the License.
 
 import { ICommand } from "./ICommand";
 import { Scheduler, getStartTime, sortTasks } from "../Scheduler";
-import moment = require("moment");
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
+import { formatISO, intlFormatDistance } from "date-fns";
 
 export class ScheduleCommand implements ICommand {
     public readonly prefixes = ["schedule"];
@@ -47,8 +47,11 @@ export class ScheduleCommand implements ICommand {
         let html = "Upcoming tasks:<ul>";
         for (const task of upcoming) {
             const hasTalkRoom = this.conference.getTalk(task.talk.id) !== undefined;
-            const taskStart = moment(getStartTime(task));
-            const formattedTimestamp = taskStart.format("YYYY-MM-DD HH:mm:ss [UTC]ZZ");
+            
+            const taskStart = getStartTime(task);
+            
+            const formattedTimestamp = taskStart === null ? '<not runnable>' : formatISO(taskStart, {format: 'extended'});
+            const relativeTimestamp = taskStart === null ? '' : intlFormatDistance(taskStart, new Date());
 
             if (html.length > 20000) {
                 // chunk up the message so we don't fail to send one very large event.
@@ -58,7 +61,7 @@ export class ScheduleCommand implements ICommand {
             }
 
             const hasRoomIndicator = hasTalkRoom ? 'has talk room' : 'no talk room';
-            html += `<li>${formattedTimestamp}: <b>${task.type} on ${task.talk.title}</b> (<code>${task.id}</code>, ${hasRoomIndicator}) ${taskStart.fromNow()}</li>`;
+            html += `<li>${formattedTimestamp}: <b>${task.type} on ${task.talk.title}</b> (<code>${task.id}</code>, ${hasRoomIndicator}) ${relativeTimestamp}</li>`;
         }
         html += "</ul>";
         await this.client.sendHtmlNotice(roomId, html);

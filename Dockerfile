@@ -1,4 +1,8 @@
-FROM node:18-slim AS builder
+FROM node:18 AS builder
+
+# because yarn insists on using SSH to fetch the git repository, even with `git+https://`...
+# seriously, why?!
+RUN git config --global url."https://github".insteadOf ssh://git@github && git config --global url."https://github.com/".insteadOf git@github.com:
 
 COPY ./ /app/
 WORKDIR /app
@@ -8,7 +12,10 @@ RUN yarn install
 ENV NODE_ENV=production
 RUN yarn build
 
-FROM node:18-slim
+FROM node:18
+
+# see note in builder stage
+RUN git config --global url."https://github".insteadOf ssh://git@github && git config --global url."https://github.com/".insteadOf git@github.com:
 
 COPY --from=builder /app/lib /app/lib
 COPY --from=builder /app/srv /app/srv
