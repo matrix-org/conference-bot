@@ -343,7 +343,7 @@ export class Scheduler {
         const confAudBackstage = this.conference.getAuditoriumBackstage(task.talk.auditoriumId);
 
         // If we don't have a talk room and the talk isn't physical, we're missing a talk room,=.
-        const isMissingTalkRoom = (!confTalk) && !(await confAud.getDefinition()).isPhysical;
+        const isMissingTalkRoom = (!confTalk) && !confAud.getDefinition().isPhysical;
 
         if (isMissingTalkRoom) {
             LogService.warn("Scheduler", `Skipping task ${task.id} - Cannot find talk room`);
@@ -364,9 +364,8 @@ export class Scheduler {
                 await this.client.sendHtmlText(
                     confAud.roomId,
                     `<h3>${task.talk.title}</h3>` +
-                    `<p><b>There is no video for this talk.</b> ` +
                     (task.talk.qa_startTime !== null ? `Ask your questions here and they'll try to answer them! ` +
-                    `The questions with the most 👍 votes are most visible to the speaker.</p>` : ''),
+                    `The questions with the most 👍 votes are most visible to the speaker.` : ''),
                 );
                 return;
             }
@@ -533,7 +532,7 @@ export class Scheduler {
                     }
                 }
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>Please check in.</h3><p>${pills.join(', ')} - It does not appear as though you are present for your talk. Please say something in this room.</p>`);
-                await this.client.sendHtmlText(confAudBackstage.roomId, `<h3>Required persons not checked in for upcoming talk</h3><p>Please track down the speakers for <b>${await confTalk.getName()}</b>.</p><p>Missing: ${pills.join(', ')}</p>`);
+                await this.client.sendHtmlText(confAudBackstage.roomId, `<h3>Required persons not checked in for upcoming talk</h3><p>Please track down the speakers for <b>${confTalk.getName()}</b>.</p><p>Missing: ${pills.join(', ')}</p>`);
 
                 const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
                 const resolved = (await resolveIdentifiers(this.client, userIds)).filter(p => p.mxid).map(p => p.mxid!);
@@ -573,7 +572,7 @@ export class Scheduler {
                 const roomPill = await MentionPill.forRoom(confTalk.roomId, this.client);
                 await this.client.sendHtmlText(this.config.managementRoom, `<h3>Talk is missing speakers</h3><p>${roomPill.html} is missing one or more speakers: ${pills.join(', ')}</p><p>The talk starts in about 15 minutes.</p>`);
                 await this.client.sendHtmlText(confTalk.roomId, `<h3>@room - please check in.</h3><p>${pills.join(', ')} - It does not appear as though you are present for your talk. Please say something in this room. The conference staff have been notified.</p>`);
-                await this.client.sendHtmlText(confAudBackstage.roomId, `<h3>Required persons not checked in for upcoming talk</h3><p>Please track down the speakers for <b>${await confTalk.getName()}</b>. The conference staff have been notified.</p><p>Missing: ${pills.join(', ')}</p>`);
+                await this.client.sendHtmlText(confAudBackstage.roomId, `<h3>Required persons not checked in for upcoming talk</h3><p>Please track down the speakers for <b>${confTalk.getName()}</b>. The conference staff have been notified.</p><p>Missing: ${pills.join(', ')}</p>`);
 
                 const userIds = await this.conference.getInviteTargetsForTalk(confTalk);
                 const resolved = (await resolveIdentifiers(this.client, userIds)).filter(p => p.mxid).map(p => p.mxid!);
