@@ -364,9 +364,8 @@ export class Scheduler {
                 await this.client.sendHtmlText(
                     confAud.roomId,
                     `<h3>${task.talk.title}</h3>` +
-                    `<p><b>There is no video for this talk.</b> ` +
                     (task.talk.qa_startTime !== null ? `Ask your questions here and they'll try to answer them! ` +
-                    `The questions with the most 👍 votes are most visible to the speaker.</p>` : ''),
+                    `The questions with the most 👍 votes are most visible to the speaker.` : ''),
                 );
                 return;
             }
