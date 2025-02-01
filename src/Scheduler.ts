@@ -339,7 +339,9 @@ export class Scheduler {
         // This is undefined when we're either just plain missing a talk room when we shouldn't,
         // or when the auditorium is physical (in which case talks don't have rooms).
         const confTalk: Talk | undefined = this.conference.getTalk(task.talk.id);
-        const confAud = this.conference.getAuditorium(task.talk.auditoriumId);
+        // HACK FOSDEM2025: remap 'Main Track - Janson' -> Keynotes
+        const audId = task.talk.auditoriumId === "464" ? "538" : task.talk.auditoriumId;
+        const confAud = this.conference.getAuditorium(audId);
         const confAudBackstage = this.conference.getAuditoriumBackstage(task.talk.auditoriumId);
 
         // If we don't have a talk room and the talk isn't physical, we're missing a talk room,=.
