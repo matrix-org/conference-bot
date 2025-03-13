@@ -24,23 +24,23 @@ export class Talk extends MatrixRoom {
         super(roomId, client, conference);
     }
 
-    public async getDefinition(): Promise<ITalk> {
+    public getDefinition(): ITalk {
         return this.definition;
     }
 
-    public async getName(): Promise<string> {
-        return (await this.getDefinition()).title;
+    public getName(): string {
+        return this.getDefinition().title;
     }
 
-    public async getId(): Promise<string> {
-        return (await this.getDefinition()).id;
+    public getId(): string {
+        return this.getDefinition().id;
     }
 
-    public async getAuditoriumId(): Promise<string> {
-        return (await this.getDefinition()).auditoriumId;
+    public getAuditoriumId(): string {
+        return this.getDefinition().auditoriumId;
     }
 
-    public async getSpeakers(): Promise<IPerson[]> {
-        return (await this.getDefinition()).speakers;
+    public getSpeakers(): IPerson[] {
+        return this.getDefinition().speakers;
     }
 }

@@ -75,20 +75,20 @@ export async function renderTalkWidget(req: Request, res: Response, conference: 
         return res.sendStatus(404);
     }
 
-    if (await talk.getAuditoriumId() !== await aud.getId()) {
+    if (talk.getAuditoriumId() !== aud.getId()) {
         return res.sendStatus(404);
     }
 
     const streamUrl = template(talkUrl, {
         audId: audId.toLowerCase(),
-        id: await talk.getId(),
+        id: talk.getId(),
         jitsi: base32.stringify(Buffer.from(talk.roomId), { pad: false }).toLowerCase(),
     });
 
     return res.render('talk.liquid', {
         theme: req.query?.['theme'] === 'dark' ? 'dark' : 'light',
         videoUrl: streamUrl,
-        roomName: await talk.getName(),
+        roomName: talk.getName(),
         conferenceDomain: jitsiDomain,
         conferenceId: base32.stringify(Buffer.from(talk.roomId), { pad: false }).toLowerCase(),
         // TODO These are broken/redundant as they relied on PentaDb
@@ -150,13 +150,13 @@ export async function rtmpRedirect(req: Request, res: Response, conference: Conf
 
         // Redirect to RTMP URL
         const hostname = template(cfg.rtmpHostnameTemplate, {
-            squishedAudId: (await talk.getAuditoriumId()).replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
+            squishedAudId: (talk.getAuditoriumId()).replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
         });
         const ip = await dns.promises.resolve(hostname);
         const uri = template(config.livestream.onpublish.rtmpUrlTemplate, {
             // Use first returned IP.
             hostname: ip[0],
-            saltedHash: sha256((await talk.getId()) + '.' + config.livestream.onpublish.salt),
+            saltedHash: sha256((talk.getId()) + '.' + config.livestream.onpublish.salt),
         });
         return res.redirect(uri);
     } catch (e) {
@@ -180,7 +180,7 @@ export async function renderScoreboardWidget(req: Request, res: Response, confer
         return res.sendStatus(404);
     }
 
-    if (!(await aud.getDefinition()).isPhysical) {
+    if (!aud.getDefinition().isPhysical) {
         // For physical auditoriums, the widget sits in the backstage room and so there isn't any talk ID to cross-reference, so skip
         // these checks for physical auditoriums.
         // I'm not sure why we want to check a talk ID anyway — 'security'?
@@ -196,7 +196,7 @@ export async function renderScoreboardWidget(req: Request, res: Response, confer
             return res.sendStatus(404);
         }
 
-        if (await talk.getAuditoriumId() !== await aud.getId()) {
+        if (talk.getAuditoriumId() !== aud.getId()) {
             return res.sendStatus(404);
         }
     }
