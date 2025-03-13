@@ -89,6 +89,13 @@ export class InviteCommand implements ICommand {
     }
 
     public async run(managementRoomId: string, event: any, args: string[]) {
+        try {
+            // Try to refresh the schedule first, to ensure we don't miss any updates.
+            await this.conference.backend.refresh();
+        } catch (error) {
+            LogService.error(`StatusCommand`, `Failed to opportunistically refresh the backend (continuing invites anyway): ${error}`)
+        }
+
         await this.client.replyNotice(managementRoomId, event, "Sending invites to participants. This might take a while.");
 
         // This is called invite but it's really membership sync in a way. We're iterating over
