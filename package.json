@@ -26,6 +26,7 @@
     "@tsconfig/node18": "^18.2.2",
     "await-lock": "^2.1.0",
     "config": "^3.3.3",
+    "date-fns": "^4.1.0",
     "express": "^4.17.1",
     "fast-xml-parser": "^4.3.2",
     "hls.js": "^1.5.3",

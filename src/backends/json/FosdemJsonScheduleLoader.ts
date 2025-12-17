@@ -1,9 +1,9 @@
 import { RoomKind } from "../../models/room_kinds";
 import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from "../../models/schedule";
 import { FOSDEMSpecificJSONSchedule, FOSDEMPerson, FOSDEMTrack, FOSDEMTalk } from "./jsontypes/FosdemJsonSchedule.schema";
-import * as moment from "moment";
 import { AuditoriumId, InterestId, TalkId } from "../IScheduleBackend";
 import { IConfig } from "../../config";
+import { addMinutes, getTime, getUnixTime, parseISO, startOfDay } from "date-fns";
 
 /**
  * Loader and holder for FOSDEM-specific JSON schedules, acquired from the
@@ -73,8 +73,9 @@ export class FosdemJsonScheduleLoader {
 
     private convertTalk(talk: FOSDEMTalk): ITalk {
         const auditoriumId = talk.track.id.toString();
-        const startMoment = moment.utc(talk.start_datetime, moment.ISO_8601, true);
-        const endMoment = startMoment.add(talk.duration, "minutes");
+        const startInstant = parseISO(talk.start_datetime);
+        const endInstant = addMinutes(startInstant, talk.duration);
+        const dateTs = getTime(startOfDay(startInstant));
 
         return {
             id: talk.event_id.toString(),
@@ -96,14 +97,13 @@ export class FosdemJsonScheduleLoader {
             qa_startTime: talk.track.online_qa ? 0 : null,
 
             // Since the talks are not pre-recorded, the livestream is considered ended when the event ends.
-            livestream_endTime: endMoment.valueOf(),
+            livestream_endTime: getTime(endInstant),
 
             speakers: talk.persons.map(person => this.convertPerson(person)),
 
-            // Must .clone() here because .startOf() mutates the moment(!)
-            dateTs: startMoment.clone().startOf("day").valueOf(),
-            startTime: startMoment.valueOf(),
-            endTime: endMoment.valueOf(),
+            dateTs,
+            startTime: getTime(startInstant),
+            endTime: getTime(endInstant),
         };
     }
 
