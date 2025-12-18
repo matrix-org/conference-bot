@@ -6,7 +6,11 @@
   languages = {
     javascript = {
       enable = true;
-      yarn.enable = true;
+      # Use pnpm as a package manager
+      # Notable constraint: it does the right thing with git+https dependencies
+      # whereas yarn converts them to SSH fetch, even if you're not
+      # set up to authenticate with SSH.
+      pnpm.enable = true;
     };
     typescript.enable = true;
   };

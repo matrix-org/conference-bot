@@ -7,23 +7,22 @@
   "author": "The Matrix.org Foundation C.I.C.",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "private": true,
   "scripts": {
-    "start:bot": "yarn build:jsonschema && yarn build:ts && node --enable-source-maps lib/index.js",
+    "start:bot": "pnpm run build:jsonschema && pnpm run build:ts && node --enable-source-maps lib/index.js",
     "start:web": "webpack serve",
     "watch:web": "webpack --watch",
-    "build": "yarn build:jsonschema && yarn build:ts && yarn build:web",
+    "build": "pnpm run build:jsonschema && pnpm run build:ts && pnpm run build:web",
     "build:jsonschema": "json2ts -i src/backends/json/jsonschemas/ -o src/backends/json/jsontypes/",
     "build:ts": "tsc",
     "build:web": "webpack",
-    "run:merge-roles": "yarn build && node lib/scripts/merge-roles.js",
+    "run:merge-roles": "pnpm run build && node lib/scripts/merge-roles.js",
     "test": "jest src/__tests__",
     "test:e2e": "jest spec/"
   },
   "dependencies": {
-    "@tsconfig/node18": "^18.2.2",
     "await-lock": "^2.1.0",
     "config": "^3.3.3",
     "date-fns": "^4.1.0",
@@ -45,8 +44,10 @@
     "xss": "^1.0.14"
   },
   "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@tsconfig/node22": "^22.0.5",
     "@types/jest": "^29.2.5",
-    "@types/node": "^18",
+    "@types/node": "^22",
     "clean-webpack-plugin": "^4.0.0",
     "css-loader": "^6.8.1",
     "homerunner-client": "^0.0.6",
