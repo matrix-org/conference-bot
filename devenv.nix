@@ -11,6 +11,9 @@
       # whereas yarn converts them to SSH fetch, even if you're not
       # set up to authenticate with SSH.
       pnpm.enable = true;
+
+      # Needed in order to build the bot SDK, but don't use it for the confbot repo!
+      yarn.enable = true;
     };
     typescript.enable = true;
   };
