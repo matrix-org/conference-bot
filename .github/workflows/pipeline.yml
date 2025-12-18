@@ -16,6 +16,8 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version-file: .node-version
+      - run: pnpm --version
+      - run: yarn --version # yarn is still used to build the bot SDK
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test
 
