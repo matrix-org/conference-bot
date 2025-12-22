@@ -80,7 +80,7 @@ export interface IAuditorium {
      */
     isPhysical: boolean;
     /**
-     * Identifier useful for the video livestream URL.
+     * Identifier that can be used as a template parameter for the video livestream URL.
      * If not required by the conference backend, should be an empty string.
      */
     livestreamId: string;
