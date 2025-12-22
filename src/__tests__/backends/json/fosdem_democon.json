@@ -26,7 +26,7 @@
           "matrix_id": "@conal:example.org"
         }
       ],
-      "conference_room": "C.1.111",
+      "conference_room": "c1111a",
       "start_datetime": "2024-02-01T09:30:00+01:00",
       "duration": 30,
       "track": {
@@ -55,7 +55,7 @@
           "matrix_id": "@chloe:example.org"
         }
       ],
-      "conference_room": "C.4.172",
+      "conference_room": "c4172",
       "start_datetime": "2024-02-01T09:45:00+01:00",
       "duration": 45,
       "track": {
@@ -84,7 +84,7 @@
           "matrix_id": "@chloe:example.org"
         }
       ],
-      "conference_room": "C.4.172",
+      "conference_room": "c4172",
       "start_datetime": "2024-02-01T10:45:00+01:00",
       "duration": 45,
       "track": {

@@ -87,6 +87,11 @@ export interface IAuditorium {
      * If true, this auditorium is just a virtual representation of a real-world physical auditorium.
      */
     isPhysical: boolean;
+    /**
+     * Identifier that can be used as a template parameter for the video livestream URL.
+     * If not required by the conference backend, should be an empty string.
+     */
+    livestreamId: string;
 
     /**
      * The 'type' of track that this auditorium is in, e.g. "devroom", "maintrack".

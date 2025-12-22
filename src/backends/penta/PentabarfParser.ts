@@ -214,6 +214,7 @@ export class PentabarfParser {
                     extraPeople: [],
                     isPhysical: isPhysical,
                     trackType: '',
+                    livestreamId: '',
                 };
                 const existingAuditorium = this.auditoriums.find(r => r.id === auditorium.id);
                 if (existingAuditorium) {

@@ -106,6 +106,7 @@ export class JsonScheduleLoader {
             // TODO Support physical auditoriums in the JSON schedule backend
             isPhysical: false,
             trackType: '',
+            livestreamId: '',
         };
     }
 }
