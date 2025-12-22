@@ -119,6 +119,7 @@ export class FosdemJsonScheduleLoader {
             // Hardcoded: FOSDEM is always physical now.
             isPhysical: true,
             extraPeople,
+            trackType: track.type,
         };
     }
 }

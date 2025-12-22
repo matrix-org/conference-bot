@@ -54,6 +54,7 @@ Map {
         "title": "Panacea3D: The Final Word in Open Source 3D Solid Modelling",
       },
     },
+    "trackType": "devroom",
   },
   "6" => {
     "extraPeople": [
@@ -128,6 +129,7 @@ Map {
         "title": "Devising a Blended Federation Topology that reaches Cosmique Perfection",
       },
     },
+    "trackType": "devroom",
   },
   "7" => {
     "extraPeople": [
@@ -145,6 +147,7 @@ Map {
     "name": "Keynotes (TALKS NOT ANNOUNCED YET)",
     "slug": "key_notes",
     "talks": Map {},
+    "trackType": "maintrack",
   },
 }
 `;

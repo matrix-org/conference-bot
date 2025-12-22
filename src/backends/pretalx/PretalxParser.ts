@@ -143,6 +143,7 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
                 extraPeople: [],
                 isPhysical: isPhysical,
                 qaEnabled: qaEnabled,
+                trackType: '',
             };
             auditoriums.set(room.name, auditorium);
         }

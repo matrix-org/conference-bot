@@ -105,6 +105,7 @@ export class JsonScheduleLoader {
             extraPeople: [],
             // TODO Support physical auditoriums in the JSON schedule backend
             isPhysical: false,
+            trackType: '',
         };
     }
 }
