@@ -573,6 +573,7 @@ export class Conference {
             initial_state: [
                 makeAuditoriumBackstageLocator(this.id, auditorium.id),
             ],
+            name: `[BACKSTAGE] ${auditorium.name}`,
         }));
         await assignAliasVariations(this.client, roomId, applyAllAliasPrefixes(auditorium.slug + "-backstage", this.config.conference.prefixes.aliases),
         this.config.conference.prefixes.suffixes, auditorium.id);
