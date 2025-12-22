@@ -49,7 +49,6 @@ interface PretalxTalk {
     do_not_record: boolean,
     title: string,
     subtitle: string,
-    track: string,
     type: string,
     language: string,
     abstract: string,
@@ -141,8 +140,10 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
                 name: description,
                 kind: kind,
                 talks: new Map(),
+                extraPeople: [],
                 isPhysical: isPhysical,
                 qaEnabled: qaEnabled,
+                trackType: '',
             };
             auditoriums.set(room.name, auditorium);
         }
@@ -182,7 +183,6 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
                         startTime: eventDate.getTime(),
                         subtitle: event.subtitle,
                         title: event.title,
-                        track: event.track,
                         prerecorded: false,
                         speakers: event.persons.map(p => ({
                             id: p.code,
@@ -195,7 +195,6 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
                         })), //event.persons,
                         // TODO: Unsure?
                         auditoriumId: roomName,
-                        slug: event.slug,
                     };
                     talks.set(eventCode, talk);
                     auditorium?.talks.set(eventCode, talk);

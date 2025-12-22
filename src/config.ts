@@ -30,7 +30,12 @@ export interface IConfig {
     managementRoom: string;
     idServerDomain?: string;
     idServerBrand?: string;
-    moderatorUserId: string;
+
+    // Legacy option that causes a startup error when supplied.
+    // Removed in favour of `moderatorUserIds`.
+    moderatorUserId?: string;
+    
+    moderatorUserIds: string[];
     livestream: {
         auditoriumUrl: string;
         talkUrl: string;
@@ -76,7 +81,8 @@ export interface IConfig {
             [name: string]: {
                 displayName: string;
                 alias: string;
-                prefixes: string[];
+                prefixes?: string[];
+                trackTypes?: string[];
             };
         };
     };
@@ -104,6 +110,18 @@ export interface IPrefixConfig {
     };
 }
 
+export enum JsonScheduleFormat {
+    /**
+     * Our original JSON schedule format.
+     */
+    Original = "original",
+
+    /**
+     * The FOSDEM-specific schedule format, available on the `/p/matrix` endpoint.
+     */
+    FOSDEM = "fosdem",
+}
+
 export interface IJsonScheduleBackendConfig {
     backend: "json";
     /**
@@ -112,18 +130,19 @@ export interface IJsonScheduleBackendConfig {
     scheduleDefinition: string;
 
     /**
-     * Slightly awful, but this works around some type errors in places that don't get hit if you're using a JSON schedule.
+     * What JSON schedule format to use.
+     * Defaults to original.
      */
-    database: undefined;
-}
+    scheduleFormat?: JsonScheduleFormat;
 
-export interface IPentaScheduleBackendConfig {
-    backend: "penta";
     /**
-     * HTTP(S) URL to schedule.
+     * Map of request headers to send when requesting the schedule definition.
+     * Useful for authenticating requests.
+     * Required for the FOSDEM-format schedules.
+     *
+     * Defaults to no headers.
      */
-    scheduleDefinition: string;
-    database: IPentaDbConfig;
+    scheduleRequestHeaders?: {[_: string]: string};
 }
 
 export enum PretalxScheduleFormat {
@@ -155,20 +174,7 @@ export interface IPretalxScheduleBackendConfig {
 }
 
 
-export type ScheduleBackendConfig = IJsonScheduleBackendConfig | IPentaScheduleBackendConfig | IPretalxScheduleBackendConfig;
-
-export interface IPentaDbConfig {
-    host: string;
-    port: number;
-    username: string;
-    password: string;
-    database: string;
-    sslmode: string;
-    tblPeople: string;
-    tblSchedule: string;
-    schedulePreBufferSeconds: number;
-    schedulePostBufferSeconds: number;
-}
+export type ScheduleBackendConfig = IJsonScheduleBackendConfig | IPretalxScheduleBackendConfig;
 
 const liveConfig: IConfig = {
     ...config,

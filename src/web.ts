@@ -23,7 +23,6 @@ import { sha256 } from "./utils";
 import * as dns from "dns";
 import { Scoreboard } from "./Scoreboard";
 import { LiveWidget } from "./models/LiveWidget";
-import { IDbTalk } from "./backends/penta/db/DbTalk";
 import { Conference } from "./Conference";
 import { IConfig } from "./config";
 
@@ -56,35 +55,6 @@ export function renderAuditoriumWidget(req: Request, res: Response, conference: 
     });
 }
 
-const TALK_CACHE_DURATION = 60 * 1000; // ms
-const dbTalksCache: {
-    [talkId: string]: {
-        talk: Promise<IDbTalk | null>,
-        cachedAt: number, // ms
-    },
-} = {};
-
-/**
- * Gets the Pentabarf database record for a talk, with a cache.
- * @param talkId The talk ID.
- * @returns The database record for the talk, if it exists; `null` otherwise.
- */
-async function getDbTalk(talkId: string, conference: Conference): Promise<IDbTalk | null> {
-    const now = Date.now();
-    if (!(talkId in dbTalksCache) ||
-        now - dbTalksCache[talkId].cachedAt > TALK_CACHE_DURATION) {
-        const db = await conference.getPentaDb();
-        if (db === null) return null;
-
-        dbTalksCache[talkId] = {
-            talk: db.getTalk(talkId),
-            cachedAt: now,
-        };
-    }
-
-    return dbTalksCache[talkId].talk;
-}
-
 export async function renderTalkWidget(req: Request, res: Response, conference: Conference, talkUrl: string, jitsiDomain: string) {
     const audId = req.query?.['auditoriumId'] as string;
     if (!audId || Array.isArray(audId)) {
@@ -105,28 +75,25 @@ export async function renderTalkWidget(req: Request, res: Response, conference: 
         return res.sendStatus(404);
     }
 
-    if (await talk.getAuditoriumId() !== await aud.getId()) {
+    if (talk.getAuditoriumId() !== aud.getId()) {
         return res.sendStatus(404);
     }
 
-    // Fetch the corresponding talk from Pentabarf. We cache the `IDbTalk` to avoid hitting the
-    // Pentabarf database for every visiting attendee once talk rooms are opened to the public.
-    const dbTalk = await getDbTalk(talkId, conference);
-
     const streamUrl = template(talkUrl, {
         audId: audId.toLowerCase(),
-        slug: (await talk.getDefinition()).slug.toLowerCase(),
+        id: talk.getId(),
         jitsi: base32.stringify(Buffer.from(talk.roomId), { pad: false }).toLowerCase(),
     });
 
     return res.render('talk.liquid', {
         theme: req.query?.['theme'] === 'dark' ? 'dark' : 'light',
         videoUrl: streamUrl,
-        roomName: await talk.getName(),
+        roomName: talk.getName(),
         conferenceDomain: jitsiDomain,
         conferenceId: base32.stringify(Buffer.from(talk.roomId), { pad: false }).toLowerCase(),
-        livestreamStartTime: dbTalk?.livestream_start_datetime ?? "",
-        livestreamEndTime: dbTalk?.livestream_end_datetime ?? "",
+        // TODO These are broken/redundant as they relied on PentaDb
+        livestreamStartTime: "",
+        livestreamEndTime: "",
     });
 }
 
@@ -183,13 +150,13 @@ export async function rtmpRedirect(req: Request, res: Response, conference: Conf
 
         // Redirect to RTMP URL
         const hostname = template(cfg.rtmpHostnameTemplate, {
-            squishedAudId: (await talk.getAuditoriumId()).replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
+            squishedAudId: (talk.getAuditoriumId()).replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
         });
         const ip = await dns.promises.resolve(hostname);
         const uri = template(config.livestream.onpublish.rtmpUrlTemplate, {
             // Use first returned IP.
             hostname: ip[0],
-            saltedHash: sha256((await talk.getId()) + '.' + config.livestream.onpublish.salt),
+            saltedHash: sha256((talk.getId()) + '.' + config.livestream.onpublish.salt),
         });
         return res.redirect(uri);
     } catch (e) {
@@ -213,7 +180,7 @@ export async function renderScoreboardWidget(req: Request, res: Response, confer
         return res.sendStatus(404);
     }
 
-    if (!(await aud.getDefinition()).isPhysical) {
+    if (!aud.getDefinition().isPhysical) {
         // For physical auditoriums, the widget sits in the backstage room and so there isn't any talk ID to cross-reference, so skip
         // these checks for physical auditoriums.
         // I'm not sure why we want to check a talk ID anyway — 'security'?
@@ -229,7 +196,7 @@ export async function renderScoreboardWidget(req: Request, res: Response, confer
             return res.sendStatus(404);
         }
 
-        if (await talk.getAuditoriumId() !== await aud.getId()) {
+        if (talk.getAuditoriumId() !== aud.getId()) {
             return res.sendStatus(404);
         }
     }

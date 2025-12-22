@@ -50,13 +50,11 @@ import { MatrixRoom } from "./models/MatrixRoom";
 import { Auditorium, AuditoriumBackstage } from "./models/Auditorium";
 import { Talk } from "./models/Talk";
 import { ResolvedPersonIdentifier, resolveIdentifiers } from "./invites";
-import { PentaDb } from "./backends/penta/db/PentaDb";
 import { PermissionsCommand } from "./commands/PermissionsCommand";
 import { InterestRoom } from "./models/InterestRoom";
 import { IStateEvent } from "./models/room_state";
 import { logMessage } from "./LogProxy";
 import { IScheduleBackend } from "./backends/IScheduleBackend";
-import { PentaBackend } from "./backends/penta/PentaBackend";
 import { setUnion } from "./utils/sets";
 import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
 import { Gauge } from "prom-client";
@@ -66,8 +64,6 @@ const attendeeTotalGauge = new Gauge({ name: "confbot_attendee_total", help: "Th
 export class Conference {
     private rootSpace: Space | null;
     private dbRoom: MatrixRoom | null;
-    // TODO This shouldn't be here.
-    private pentaDb: PentaDb | null = null;
     private subspaces: {
         [subspaceId: string]: Space
     } = {};
@@ -205,11 +201,6 @@ export class Conference {
 
     public async construct() {
         this.reset();
-
-        if (this.backend instanceof PentaBackend) {
-            // TODO this is not nice.
-            this.pentaDb = this.backend.db;
-        }
 
         // Locate all the rooms for the conference
         const roomIds = await this.client.getJoinedRooms();
@@ -357,12 +348,6 @@ export class Conference {
         }
     }
 
-    public async getPentaDb(): Promise<PentaDb | null> {
-        if (this.pentaDb === null) return null;
-        await this.pentaDb.connect();
-        return this.pentaDb;
-    }
-
     public async getSpace(): Promise<Space | null> {
         return this.rootSpace;
     }
@@ -394,7 +379,7 @@ export class Conference {
                         this.client,
                         mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
                             room_alias_name: (new RoomAlias(alias)).localpart,
-                            invite: [this.config.moderatorUserId],
+                            invite: this.config.moderatorUserIds,
                         }),
                     );
                     await rootSpace.addChildRoom(roomId);
@@ -433,7 +418,7 @@ export class Conference {
             subspace = await this.client.createSpace({
                 isPublic: true,
                 name: name,
-                invites: [this.config.moderatorUserId],
+                invites: this.config.moderatorUserIds,
             });
             this.subspaces[subspaceId] = subspace;
 
@@ -448,9 +433,11 @@ export class Conference {
                 roomId: subspace.roomId,
             } as IStoredSubspace);
 
-            // Grants PL100 to the moderator in the subspace.
+            // Grants PL100 to the moderators in the subspace.
             // We can't do this directly with `createSpace` unfortunately, as we could for plain rooms.
-            await this.client.setUserPowerLevel(this.config.moderatorUserId, subspace.roomId, 100);
+            for (let moderator of this.config.moderatorUserIds) {
+                await this.client.setUserPowerLevel(moderator, subspace.roomId, 100);
+            }
         } else {
             subspace = this.subspaces[subspaceId];
         }
@@ -481,7 +468,7 @@ export class Conference {
                 );
             } else {
                 // Create a new interest room.
-                roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(SPECIAL_INTEREST_CREATION_TEMPLATE(this.config.moderatorUserId), {
+                roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(SPECIAL_INTEREST_CREATION_TEMPLATE(this.config.moderatorUserIds), {
                     creation_content: {
                         [RSC_CONFERENCE_ID]: this.id,
                         [RSC_SPECIAL_INTEREST_ID]: interestRoom.id,
@@ -571,7 +558,7 @@ export class Conference {
 
         await parentSpace.addChildSpace(audSpace, { order: `auditorium-${auditorium.id}` });
 
-        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_CREATION_TEMPLATE(this.config.moderatorUserId), {
+        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_CREATION_TEMPLATE(this.config.moderatorUserIds), {
             creation_content: {
                 [RSC_CONFERENCE_ID]: this.id,
                 [RSC_AUDITORIUM_ID]: auditorium.id,
@@ -629,12 +616,12 @@ export class Conference {
         }
 
         if (!this.talks[talk.id]) {
-            roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(TALK_CREATION_TEMPLATE(this.config.moderatorUserId), {
+            roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(TALK_CREATION_TEMPLATE(this.config.moderatorUserIds), {
                 name: talk.title,
                 creation_content: {
                     [RSC_CONFERENCE_ID]: this.id,
                     [RSC_TALK_ID]: talk.id,
-                    [RSC_AUDITORIUM_ID]: await auditorium.getId(),
+                    [RSC_AUDITORIUM_ID]: auditorium.getId(),
                 },
                 initial_state: [
                     makeTalkLocator(this.id, talk.id),
@@ -650,7 +637,8 @@ export class Conference {
 
         // Calculate all the aliases the room should have, then update the list of bot-assigned aliases to match
         const wantedBaseNames = [
-            (await auditorium.getSlug()) + '-' + talk.slug,
+            // Talk slugs no longer exist. But if we ever use this feature again, we probably want to reinstate them.
+            // (await auditorium.getSlug()) + '-' + talk.slug,
             'talk-' + talk.id,
         ];
         const wantedPrefixedNames = wantedBaseNames.flatMap(baseName => applyAllAliasPrefixes(baseName, this.config.conference.prefixes.aliases));
@@ -684,6 +672,19 @@ export class Conference {
 
     /**
      * Determines the space in which an auditorium space or interest room should reside.
+     *
+     * For both auditoria and interest rooms, this is based off a set of configured prefixes for the
+     * auditorium or interest room ID.
+     *
+     * For auditoria, there is the additional option to match on the track type (with a set of configured
+     * mappings).
+     *
+     * ## Historical notes
+     *
+     * Matching on track types was added for FOSDEM 2025. Previously, only prefixes were available
+     * as a matching mechanism but the track type support was needed once auditoria were changed to
+     * represent tracks instead of being 1:1 mapped to physical in-person rooms.
+     *
      * @param auditoriumOrInterestRoom The description of the auditorium or interest room.
      * @returns The space in which the auditorium or interest room should reside.
      */
@@ -698,12 +699,19 @@ export class Conference {
         const id = auditoriumOrInterestRoom.id;
 
         for (const [subspaceId, subspaceConfig] of Object.entries(this.config.conference.subspaces)) {
-            for (const prefix of subspaceConfig.prefixes) {
-                if (id.startsWith(prefix)) {
-                    if (!(subspaceId in this.subspaces)) {
-                        throw new Error(`The ${subspaceId} subspace has not been created yet!`);
+            if (subspaceConfig.prefixes !== undefined) {
+                for (const prefix of subspaceConfig.prefixes) {
+                    if (id.startsWith(prefix)) {
+                        if (!(subspaceId in this.subspaces)) {
+                            throw new Error(`The ${subspaceId} subspace has not been created yet!`);
+                        }
+                        return this.subspaces[subspaceId];
                     }
+                }
+            }
 
+            if (subspaceConfig.trackTypes !== undefined && 'trackType' in auditoriumOrInterestRoom) {
+                if (subspaceConfig.trackTypes.includes(auditoriumOrInterestRoom.trackType)) {
                     return this.subspaces[subspaceId];
                 }
             }
@@ -718,32 +726,21 @@ export class Conference {
     }
 
     public async getPeopleForAuditorium(auditorium: Auditorium): Promise<IPerson[]> {
-        const audit = await auditorium.getDefinition();
+        const audit = auditorium.getDefinition();
         const people: IPerson[] = [];
         for (const t of this.backend.talks.values()) {
             if (t.auditoriumId == audit.id) {
                 people.push(...t.speakers);
             }
         }
+        people.push(...audit.extraPeople);
         return people;
     }
 
-    public async getPeopleForTalk(talk: Talk): Promise<IPerson[]> {
-        const db = await this.getPentaDb();
-        if (db !== null) {
-            return await this.resolvePeople(await db.findAllPeopleForTalk(await talk.getId()));
-        }
-
-        return talk.getSpeakers();
-    }
-
+    /**
+     * @deprecated This always returns `[]`.
+     */
     public async getPeopleForInterest(int: InterestRoom): Promise<IPerson[]> {
-        const db = await this.getPentaDb();
-        if (db !== null) {
-            // Yes, an interest room is an auditorium to Penta.
-            return await this.resolvePeople(await db.findAllPeopleForAuditorium(await int.getId()));
-        }
-
         return [];
     }
 
@@ -777,7 +774,7 @@ export class Conference {
     }
 
     public async getInviteTargetsForTalk(talk: Talk): Promise<IPerson[]> {
-        const people = await this.getPeopleForTalk(talk);
+        const people = talk.getSpeakers();
         const roles = [Role.Speaker, Role.Host, Role.Coordinator];
         return people.filter(p => roles.includes(p.role));
     }
@@ -795,7 +792,7 @@ export class Conference {
     }
 
     public async getModeratorsForTalk(talk: Talk): Promise<IPerson[]> {
-        const people = await this.getPeopleForTalk(talk);
+        const people = talk.getSpeakers();
         const roles = [Role.Coordinator, Role.Speaker, Role.Host];
         return people.filter(p => roles.includes(p.role));
     }
@@ -828,6 +825,15 @@ export class Conference {
         return this.auditoriums[audId];
     }
 
+    public getAuditoriumBySlug(audSlug: string): Auditorium | null {
+        for (let auditorium of Object.values(this.auditoriums)) {
+            if (auditorium.getSlug() === audSlug) {
+                return auditorium;
+            }
+        }
+        return null;
+    }
+
     public getAuditoriumBackstage(audId: string): AuditoriumBackstage {
         return this.auditoriumBackstages[audId];
     }
@@ -840,6 +846,25 @@ export class Conference {
         return this.interestRooms[intId];
     }
 
+    public getInterestById(audSlug: string): InterestRoom | null {
+        for (let interest of Object.values(this.interestRooms)) {
+            if (interest.getId() === audSlug) {
+                return interest;
+            }
+        }
+        return null;
+    }
+
+    public getAuditoriumOrInterestByIdOrSlug(audOrInterestIdOrSlug: string): Auditorium | InterestRoom | null {
+        if (this.auditoriums[audOrInterestIdOrSlug]) {
+            return this.auditoriums[audOrInterestIdOrSlug];
+        }
+        if (this.interestRooms[audOrInterestIdOrSlug]) {
+            return this.interestRooms[audOrInterestIdOrSlug];
+        }
+        return this.getAuditoriumBySlug(audOrInterestIdOrSlug);
+    }
+
     public async ensurePermissionsFor(people: ResolvedPersonIdentifier[], roomId: string): Promise<void> {
         const mxids = people.filter(t => !!t.mxid).map(r => r.mxid!);
 
@@ -848,7 +873,9 @@ export class Conference {
         // we'll be unable to do promotions/demotions in the future.
         const pls = await this.client.getRoomStateEvent(roomId, "m.room.power_levels", "");
         pls['users'][await this.client.getUserId()] = 100;
-        pls['users'][this.config.moderatorUserId] = 100;
+        for (let moderator of this.config.moderatorUserIds) {
+            pls['users'][moderator] = 100;
+        }
         for (const userId of mxids) {
             if (pls['users'][userId]) continue;
             pls['users'][userId] = 50;
@@ -889,13 +916,10 @@ export class Conference {
         return this.getUpcomingTalksByLambda(talk => talk.endTime, inNextMinutes, minBefore);
     }
 
+    /**
+     * @deprecated This always returns `[]` and should be removed or fixed.
+     */
     public async findPeopleWithId(personId: string): Promise<IPerson[]> {
-        // TODO
-        const db = await this.getPentaDb();
-        if (db !== null) {
-            return await db.findPeopleWithId(personId);
-        }
-
         return [];
     }
 
@@ -916,7 +940,9 @@ export class Conference {
             this.membersInRooms[roomId] = joinedOrLeftMembers;
             const total = new Set(Object.values(this.membersInRooms).flat());
             total.delete(myUserId);
-            total.delete(this.config.moderatorUserId);
+            for (let moderator of this.config.moderatorUserIds) {
+                total.delete(moderator);
+            }
             attendeeTotalGauge.set(total.size);
         } catch (ex) {
             LogService.warn("Conference", `Failed to recalculate room membership for ${roomId}`, ex);

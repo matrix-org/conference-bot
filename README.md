@@ -63,3 +63,18 @@ The conference bot uses the following terminology for defining what purpose a Ma
 * `Special Interest` - These are rooms where subject matter is usually specific and the bot's concern
   with it is largely moderation and lightly scheduled events. These are most like stands at a physical
   conference, or places to hold larger discussions.
+
+## Running the end-to-end tests
+
+Before running the end-to-end tests you need to have a running homerunner instance.
+
+To do so, get a Complement checkout (`git clone https://github.com/matrix-org/complement`) and in the Complement directory,
+compile homerunner with `go build ./cmd/homerunner`.
+
+Now you can run `HOMERUNNER_SPAWN_HS_TIMEOUT_SECS=100 path/to/complement/homerunner` to start homerunner.
+
+With homerunner running, you can now run the tests with:
+
+```shell-commands
+npm run test:e2e
+```

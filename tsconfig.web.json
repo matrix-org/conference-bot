@@ -1,5 +1,5 @@
 {
-  "extends": "@tsconfig/node18",
+  "extends": "@tsconfig/node22",
   "compilerOptions": {
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
@@ -8,6 +8,7 @@
     "strictPropertyInitialization": false,
     "useUnknownInCatchVariables": false,
     "sourceMap": true,
+    "isolatedModules": true,
     "lib": ["DOM", "ES2019"]
   },
   "include": [

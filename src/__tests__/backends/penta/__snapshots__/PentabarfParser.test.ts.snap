@@ -3,6 +3,7 @@
 exports[`parsing pentabarf XML: overview: auditoriums 1`] = `
 [
   {
+    "extraPeople": [],
     "id": "A.01 (Someroom)",
     "isPhysical": false,
     "kind": "auditorium",
@@ -18,7 +19,6 @@ exports[`parsing pentabarf XML: overview: auditoriums 1`] = `
         "prerecorded": true,
         "pretalxCode": undefined,
         "qa_startTime": null,
-        "slug": "testcon_opening_remarks",
         "speakers": [
           {
             "email": "",
@@ -38,9 +38,9 @@ exports[`parsing pentabarf XML: overview: auditoriums 1`] = `
         "startTime": 1675501200000,
         "subtitle": "",
         "title": "Testcon01: Opening Remarks",
-        "track": "Track01",
       },
     },
+    "trackType": "",
   },
 ]
 `;
@@ -49,6 +49,7 @@ exports[`parsing pentabarf XML: overview: conference 1`] = `
 {
   "auditoriums": [
     {
+      "extraPeople": [],
       "id": "A.01 (Someroom)",
       "isPhysical": false,
       "kind": "auditorium",
@@ -64,7 +65,6 @@ exports[`parsing pentabarf XML: overview: conference 1`] = `
           "prerecorded": true,
           "pretalxCode": undefined,
           "qa_startTime": null,
-          "slug": "testcon_opening_remarks",
           "speakers": [
             {
               "email": "",
@@ -84,9 +84,9 @@ exports[`parsing pentabarf XML: overview: conference 1`] = `
           "startTime": 1675501200000,
           "subtitle": "",
           "title": "Testcon01: Opening Remarks",
-          "track": "Track01",
         },
       },
+      "trackType": "",
     },
   ],
   "interestRooms": [],
@@ -126,7 +126,6 @@ exports[`parsing pentabarf XML: overview: talks 1`] = `
     "prerecorded": true,
     "pretalxCode": undefined,
     "qa_startTime": null,
-    "slug": "testcon_opening_remarks",
     "speakers": [
       {
         "email": "",
@@ -146,7 +145,6 @@ exports[`parsing pentabarf XML: overview: talks 1`] = `
     "startTime": 1675501200000,
     "subtitle": "",
     "title": "Testcon01: Opening Remarks",
-    "track": "Track01",
   },
 ]
 `;
@@ -162,7 +160,6 @@ exports[`tracks that set a online qa value correctly apply to talks: talks 1`] =
     "prerecorded": true,
     "pretalxCode": undefined,
     "qa_startTime": 0,
-    "slug": "testcon_opening_remarks",
     "speakers": [
       {
         "email": "",
@@ -182,7 +179,6 @@ exports[`tracks that set a online qa value correctly apply to talks: talks 1`] =
     "startTime": 1675501200000,
     "subtitle": "",
     "title": "Testcon01: Opening Remarks",
-    "track": "TrackWithQA",
   },
   {
     "auditoriumId": "A.01 (Someroom)",
@@ -193,7 +189,6 @@ exports[`tracks that set a online qa value correctly apply to talks: talks 1`] =
     "prerecorded": true,
     "pretalxCode": undefined,
     "qa_startTime": 0,
-    "slug": "testcon_opening_remarks",
     "speakers": [
       {
         "email": "",
@@ -213,7 +208,6 @@ exports[`tracks that set a online qa value correctly apply to talks: talks 1`] =
     "startTime": 1675502100000,
     "subtitle": "",
     "title": "Testcon01: Opening Remarks",
-    "track": "TrackWithoutQA",
   },
   {
     "auditoriumId": "A.01 (Someroom)",
@@ -224,7 +218,6 @@ exports[`tracks that set a online qa value correctly apply to talks: talks 1`] =
     "prerecorded": true,
     "pretalxCode": undefined,
     "qa_startTime": null,
-    "slug": "testcon_opening_remarks",
     "speakers": [
       {
         "email": "",
@@ -244,7 +237,6 @@ exports[`tracks that set a online qa value correctly apply to talks: talks 1`] =
     "startTime": 1675503000000,
     "subtitle": "",
     "title": "Testcon01: Opening Remarks",
-    "track": "UnspecifiedTrack",
   },
   {
     "auditoriumId": "AQ.5 (QA Room)",
@@ -255,7 +247,6 @@ exports[`tracks that set a online qa value correctly apply to talks: talks 1`] =
     "prerecorded": true,
     "pretalxCode": undefined,
     "qa_startTime": 0,
-    "slug": "testcon_opening_remarks",
     "speakers": [
       {
         "email": "",
@@ -275,7 +266,6 @@ exports[`tracks that set a online qa value correctly apply to talks: talks 1`] =
     "startTime": 1675503900000,
     "subtitle": "",
     "title": "Testcon01: Opening Remarks",
-    "track": "UnspecifiedTrack",
   },
 ]
 `;

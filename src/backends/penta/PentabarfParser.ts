@@ -211,7 +211,9 @@ export class PentabarfParser {
                     name: metadata.name,
                     kind: metadata.kind,
                     talks: new Map(),
-                    isPhysical: isPhysical
+                    extraPeople: [],
+                    isPhysical: isPhysical,
+                    trackType: '',
                 };
                 const existingAuditorium = this.auditoriums.find(r => r.id === auditorium.id);
                 if (existingAuditorium) {
@@ -221,7 +223,7 @@ export class PentabarfParser {
                 }
 
                 const roomQaEnabled = prefixConfig.qaAuditoriumRooms.find(p => auditorium.id.startsWith(p)) !== undefined;
-            
+
                 for (const pEvent of arrayLike(pRoom.event)) {
                     if (!pEvent) continue;
                     const talkId = pEvent.attr?.["@_id"];
@@ -246,10 +248,8 @@ export class PentabarfParser {
                         dateTs: dateTs,
                         startTime: startTime.valueOf(),
                         endTime: endTime.valueOf(),
-                        slug: pEvent.slug,
                         title: pEvent.title,
                         subtitle: pEvent.subtitle,
-                        track: pEvent.track,
                         speakers: [],
                         prerecorded: true,
                         auditoriumId: auditorium.id,
