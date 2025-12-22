@@ -81,9 +81,9 @@ export interface IAuditorium {
     isPhysical: boolean;
 
     /**
-     * A 'type' of track that this auditorium is in.
+     * The 'type' of track that this auditorium is in, e.g. "devroom", "maintrack".
      * May be an empty string if there is no concept of types.
-     * This string will not be human-readable.
+     * This string will not be exposed to end users.
      */
     trackType: string;
 }
