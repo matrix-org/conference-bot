@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import {LogService, MatrixClient, MatrixEvent} from "matrix-bot-sdk";
+import { LogService, MatrixClient, MatrixEvent } from "matrix-bot-sdk";
 import * as irc from "irc-upd";
 import { Auditorium } from "./models/Auditorium";
 import { InterestRoom } from "./models/InterestRoom";
@@ -62,7 +62,7 @@ export class IRCBridge {
     }
 
     public async deriveChannelName(auditorium: Auditorium) {
-        const name = auditorium.getName();
+        const name = auditorium.getSlug();
         if (!name) {
             throw Error('Auditorium name is empty');
         }
@@ -94,8 +94,12 @@ export class IRCBridge {
             this.botRoomId = data.roomId;
         }
 
-        // This should timeout if the connection is broken
-        await this.executeCommand("bridgeversion");
+        try {
+            // This should timeout if the connection is broken
+            await this.executeCommand("bridgeversion");
+        } catch (ex) {
+            LogService.warn(`IRCBridge`, "Failed to get IRC bridge version, it may be unreachable.");
+        }
 
         this.ircClient = new irc.Client(this.config.serverName, this.config.botNick, {
             port: this.config.port,
@@ -134,6 +138,10 @@ export class IRCBridge {
         await this.ircClient.join(channel);
         const result = await this.executeCommand(`plumb ${roomId} ${this.config.serverName} ${channel}`);
         const resultText = result.content.body;
+        if (resultText.match(/Room mapping already exists/)) {
+            // Already bridged
+            return;
+        }
         if (resultText !== 'Room plumbed.') {
             throw Error(`IRC bridge gave an error: ${resultText}`);
         }

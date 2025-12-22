@@ -21,8 +21,9 @@ import { IRCBridge } from "../IRCBridge";
 import { logMessage } from "../LogProxy";
 import { KickPowerLevel } from "../models/room_kinds";
 import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
+import { PowerLevelAction } from "matrix-bot-sdk/lib/models/PowerLevelAction";
 
-const PLUMB_WAIT_MS = 1000;
+const PLUMB_WAIT_MS = 10000;
 
 export class IrcPlumbCommand implements ICommand {
     public readonly prefixes = ["plumb-irc"];
@@ -34,7 +35,7 @@ export class IrcPlumbCommand implements ICommand {
         for (const auditorium of this.conference.storedAuditoriums) {
             const channelName = await this.ircBridge.deriveChannelName(auditorium);
             try {
-                await this.plumbOne(this.client, channelName, auditorium.roomId);
+                await this.plumbOne(this.client, auditorium.roomId, channelName);
                 // Wait before plumbing the next one so as to not overwhelm the poor bridge.
                 await new Promise(r => setTimeout(r, PLUMB_WAIT_MS));
             } catch (ex) {
@@ -45,7 +46,7 @@ export class IrcPlumbCommand implements ICommand {
         for (const interest of this.conference.storedInterestRooms) {
             const channelName = await this.ircBridge.deriveChannelNameSI(interest);
             try {
-                await this.plumbOne(this.client, channelName, interest.roomId);
+                await this.plumbOne(this.client, interest.roomId, channelName);
                 // Wait before plumbing the next one so as to not overwhelm the poor bridge.
                 await new Promise(r => setTimeout(r, PLUMB_WAIT_MS));
             } catch (ex) {
@@ -71,8 +72,10 @@ export class IrcPlumbCommand implements ICommand {
         }
 
         try {
-            // The bridge needs the ability to kick KLINED users.
-            await client.setUserPowerLevel(this.ircBridge.botUserId, resolvedRoomId, KickPowerLevel);
+            if (!await client.userHasPowerLevelForAction(this.ircBridge.botUserId, resolvedRoomId, PowerLevelAction.Kick)) {
+                // The bridge needs the ability to kick KLINED users.
+                await client.setUserPowerLevel(this.ircBridge.botUserId, resolvedRoomId, KickPowerLevel);
+            }
         } catch (ex) {
             LogService.warn("IrcPlumbCommand", ex);
             return logMessage(LogLevel.WARN, "IrcPlumbCommand", `Could not plumb channel to room ${resolvedRoomId}: could not set AS power level`, this.client);
