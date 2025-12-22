@@ -136,8 +136,8 @@
           "person_id": 0,
           "event_role": "coordinator",
           "name": "Bert Boss",
-          "email": "bert@example.org",
-          "matrix_id": "@bert:example.org"
+          "email": "",
+          "matrix_id": ""
         }
       ]
     }
