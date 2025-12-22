@@ -132,9 +132,9 @@ Map {
   "7" => {
     "extraPeople": [
       {
-        "email": "bert@example.org",
+        "email": "",
         "id": "0",
-        "matrix_id": "@bert:example.org",
+        "matrix_id": "",
         "name": "Bert Boss",
         "role": "coordinator",
       },
