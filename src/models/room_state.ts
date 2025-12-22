@@ -76,6 +76,12 @@ export const RS_ASSOCIATED_SPACE = "org.matrix.confbot.space";
 export interface IAssociatedSpace {
     roomId: string;
 }
+
+/**
+ * @deprecated This is now only used for putting talk rooms into the right space.
+ * (Previously it located the auditorium container space for an auditorium, but those have been removed.)
+ * When we strip out support for physical auditoria, this has no reason to exist.
+ */
 export function makeAssociatedSpace(roomId: string): IStateEvent<IAssociatedSpace> {
     return {
         type: RS_ASSOCIATED_SPACE,

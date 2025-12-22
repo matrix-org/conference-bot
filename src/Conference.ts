@@ -607,6 +607,10 @@ export class Conference {
         return this.auditoriumBackstages[auditorium.id];
     }
 
+    /**
+     * @deprecated Due to non-usage, we will only support 'physical auditoria' in the future,
+     * which means we will no longer create rooms for talks.
+     */
     public async createTalk(talk: ITalk, auditorium: Auditorium): Promise<MatrixRoom> {
         let roomId: string;
 
