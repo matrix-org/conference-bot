@@ -225,8 +225,15 @@ conference:
     #stands:
     #  displayName: Stands
     #  alias: stands
-    #  # The prefixes of rooms which belong in the subspace
+    #
+    #  ### MATCHING RULES ###
+    #  # Each space should only be matched by one subspace's `prefixes` and `trackTypes` config,
+    #  # otherwise the result is undefined and may not be deterministic.
+    #
+    #  # The prefixes of the schedule IDs of auditorium and interests rooms which belong in the subspace
     #  prefixes: ["S."]
+    #  # The types of tracks which belong in the subspace
+    #  trackTypes: ["stands"]
 
 # Options related to the IRC bridge. Set to null if you don't use an IRC bridge.
 ircBridge: null

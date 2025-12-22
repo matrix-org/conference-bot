@@ -3,6 +3,15 @@
 exports[`JsonScheduleBackend can parse a FOSDEM JSON format: auditoriums 1`] = `
 Map {
   "5" => {
+    "extraPeople": [
+      {
+        "email": "conal@example.org",
+        "id": "1",
+        "matrix_id": "@conal:example.org",
+        "name": "Conal Coordinator",
+        "role": "coordinator",
+      },
+    ],
     "id": "5",
     "isPhysical": true,
     "kind": "auditorium",
@@ -46,8 +55,18 @@ Map {
         "title": "Panacea3D: The Final Word in Open Source 3D Solid Modelling",
       },
     },
+    "trackType": "devroom",
   },
   "6" => {
+    "extraPeople": [
+      {
+        "email": "chloe@example.org",
+        "id": "246",
+        "matrix_id": "@chloe:example.org",
+        "name": "Chloé Coordinator",
+        "role": "coordinator",
+      },
+    ],
     "id": "6",
     "isPhysical": true,
     "kind": "auditorium",
@@ -112,8 +131,18 @@ Map {
         "title": "Devising a Blended Federation Topology that reaches Cosmique Perfection",
       },
     },
+    "trackType": "devroom",
   },
   "7" => {
+    "extraPeople": [
+      {
+        "email": "",
+        "id": "0",
+        "matrix_id": "",
+        "name": "Bert Boss",
+        "role": "coordinator",
+      },
+    ],
     "id": "7",
     "isPhysical": true,
     "kind": "auditorium",
@@ -121,6 +150,7 @@ Map {
     "name": "Keynotes (TALKS NOT ANNOUNCED YET)",
     "slug": "key_notes",
     "talks": Map {},
+    "trackType": "maintrack",
   },
 }
 `;

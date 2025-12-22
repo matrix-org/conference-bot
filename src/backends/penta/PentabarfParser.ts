@@ -211,7 +211,9 @@ export class PentabarfParser {
                     name: metadata.name,
                     kind: metadata.kind,
                     talks: new Map(),
+                    extraPeople: [],
                     isPhysical: isPhysical,
+                    trackType: '',
                     livestreamId: '',
                 };
                 const existingAuditorium = this.auditoriums.find(r => r.id === auditorium.id);
@@ -222,7 +224,7 @@ export class PentabarfParser {
                 }
 
                 const roomQaEnabled = prefixConfig.qaAuditoriumRooms.find(p => auditorium.id.startsWith(p)) !== undefined;
-            
+
                 for (const pEvent of arrayLike(pRoom.event)) {
                     if (!pEvent) continue;
                     const talkId = pEvent.attr?.["@_id"];

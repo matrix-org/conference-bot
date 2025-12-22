@@ -672,6 +672,19 @@ export class Conference {
 
     /**
      * Determines the space in which an auditorium space or interest room should reside.
+     *
+     * For both auditoria and interest rooms, this is based off a set of configured prefixes for the
+     * auditorium or interest room ID.
+     *
+     * For auditoria, there is the additional option to match on the track type (with a set of configured
+     * mappings).
+     *
+     * ## Historical notes
+     *
+     * Matching on track types was added for FOSDEM 2025. Previously, only prefixes were available
+     * as a matching mechanism but the track type support was needed once auditoria were changed to
+     * represent tracks instead of being 1:1 mapped to physical in-person rooms.
+     *
      * @param auditoriumOrInterestRoom The description of the auditorium or interest room.
      * @returns The space in which the auditorium or interest room should reside.
      */
@@ -686,12 +699,19 @@ export class Conference {
         const id = auditoriumOrInterestRoom.id;
 
         for (const [subspaceId, subspaceConfig] of Object.entries(this.config.conference.subspaces)) {
-            for (const prefix of subspaceConfig.prefixes) {
-                if (id.startsWith(prefix)) {
-                    if (!(subspaceId in this.subspaces)) {
-                        throw new Error(`The ${subspaceId} subspace has not been created yet!`);
+            if (subspaceConfig.prefixes !== undefined) {
+                for (const prefix of subspaceConfig.prefixes) {
+                    if (id.startsWith(prefix)) {
+                        if (!(subspaceId in this.subspaces)) {
+                            throw new Error(`The ${subspaceId} subspace has not been created yet!`);
+                        }
+                        return this.subspaces[subspaceId];
                     }
+                }
+            }
 
+            if (subspaceConfig.trackTypes !== undefined && 'trackType' in auditoriumOrInterestRoom) {
+                if (subspaceConfig.trackTypes.includes(auditoriumOrInterestRoom.trackType)) {
                     return this.subspaces[subspaceId];
                 }
             }
@@ -713,6 +733,7 @@ export class Conference {
                 people.push(...t.speakers);
             }
         }
+        people.push(...audit.extraPeople);
         return people;
     }
 

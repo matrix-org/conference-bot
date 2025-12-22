@@ -81,7 +81,8 @@ export interface IConfig {
             [name: string]: {
                 displayName: string;
                 alias: string;
-                prefixes: string[];
+                prefixes?: string[];
+                trackTypes?: string[];
             };
         };
     };

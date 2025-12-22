@@ -140,8 +140,10 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
                 name: description,
                 kind: kind,
                 talks: new Map(),
+                extraPeople: [],
                 isPhysical: isPhysical,
                 qaEnabled: qaEnabled,
+                trackType: '',
                 livestreamId: '',
             };
             auditoriums.set(room.name, auditorium);

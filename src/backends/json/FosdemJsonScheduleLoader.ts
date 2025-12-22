@@ -128,6 +128,7 @@ export class FosdemJsonScheduleLoader {
     }
 
     private convertAuditorium(track: FOSDEMTrack): IAuditorium {
+        const extraPeople: IPerson[] = track.managers.map(person => this.convertPerson(person));
         return {
             id: track.id.toString(),
             slug: track.slug,
@@ -137,6 +138,8 @@ export class FosdemJsonScheduleLoader {
             talks: new Map(),
             // Hardcoded: FOSDEM is always physical now.
             isPhysical: true,
+            extraPeople,
+            trackType: track.type,
             // This will be populated afterwards, with the value of one of the talks.
             livestreamId: '',
         };
