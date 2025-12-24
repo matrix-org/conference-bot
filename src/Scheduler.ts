@@ -283,18 +283,8 @@ export class Scheduler {
     }
 
     private async _execute(task: ITask) {
-        // This is undefined when we're either just plain missing a talk room when we shouldn't,
-        // or when the auditorium is physical (in which case talks don't have rooms).
-        const confTalk: Talk | undefined = this.conference.getTalk(task.talk.id);
         const confAud = this.conference.getAuditorium(task.talk.auditoriumId);
         const confAudBackstage = this.conference.getAuditoriumBackstage(task.talk.auditoriumId);
-
-        // If we don't have a talk room and the talk isn't physical, we're missing a talk room,=.
-        const isMissingTalkRoom = (!confTalk) && !confAud.getDefinition().isPhysical;
-
-        if (isMissingTalkRoom) {
-            LogService.warn("Scheduler", `Skipping task ${task.id} - Cannot find talk room`);
-        }
 
         if (!confAud || !confAudBackstage) {
             // probably a special interest room
@@ -305,9 +295,6 @@ export class Scheduler {
         if (task.type === ScheduledTaskType.TalkStart) {
             await this.scoreboard.resetScoreboard(confAud.roomId);
             if (!task.talk.prerecorded) {
-                if (confTalk !== undefined) {
-                    await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk is not pre-recorded.</h3><p>You are entering the Q&A for your talk's duration now.</p>`);
-                }
                 await this.client.sendHtmlText(
                     confAud.roomId,
                     `<h3>${task.talk.title}</h3>` +
@@ -315,9 +302,6 @@ export class Scheduler {
                     `The questions with the most 👍 votes are most visible to the speaker.` : ''),
                 );
                 return;
-            }
-            if (confTalk !== undefined) {
-                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk is starting shortly.</h3>`);
             }
             await this.client.sendHtmlText(
                 confAud.roomId,
@@ -327,34 +311,13 @@ export class Scheduler {
             );
         } else if (task.type === ScheduledTaskType.TalkQA) {
             if (!task.talk.prerecorded) return;
-            if (confTalk !== undefined) {
-                await this.client.sendHtmlText(
-                    confTalk.roomId,
-                    `<h3>Your Q&A is starting NOW</h3>` +
-                    `<p>Remember that the broadcast feed is buffered and lags many seconds behind. ` +
-                    `Do not wait for it to finish, otherwise you will create a long pause!</p>`,
-                );
-            }
             await this.client.sendHtmlText(
                 confAud.roomId,
                 `<h3>Q&A is starting shortly</h3>` +
                 `<p>Ask questions in this room for the speakers - the questions with the most 👍 votes are most visible to the speaker.</p>`,
             );
         } else if (task.type === ScheduledTaskType.TalkEnd) {
-            if (confTalk !== undefined) {
-                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk has ended.</h3>`);
-                const widget = await LiveWidget.forTalk(confTalk, this.client, this.config.livestream.widgetAvatar, this.config.webserver.publicBaseUrl);
-                const layout = await LiveWidget.layoutForTalk(widget, null);
-                const scoreboard = await LiveWidget.scoreboardForTalk(confTalk, this.client, this.conference, this.config.livestream.widgetAvatar, this.config.webserver.publicBaseUrl);
-                await this.client.sendStateEvent(confTalk.roomId, widget.type, widget.state_key, widget.content);
-                await this.client.sendStateEvent(confTalk.roomId, scoreboard.type, scoreboard.state_key, {});
-                await this.client.sendStateEvent(confTalk.roomId, layout.type, layout.state_key, layout.content);
-                await makeRoomPublic(confTalk.roomId, this.client);
-                const talkPill = await MentionPill.forRoom(confTalk.roomId, this.client);
-                await this.client.sendHtmlText(confAud.roomId, `<h3>The talk will end shortly</h3>`);
-            } else {
-                await this.client.sendHtmlText(confAud.roomId, `<h3>The talk will end shortly</h3>`);
-            }
+            await this.client.sendHtmlText(confAud.roomId, `<h3>The talk will end shortly</h3>`);
         } else if (task.type === ScheduledTaskType.TalkQA5M) {
             if (getStartTime(task)! < task.talk.startTime) {
                 // Don't do anything if this talk hasn't started yet, otherwise things get confusing
@@ -365,20 +328,8 @@ export class Scheduler {
             }
 
             if (!task.talk.prerecorded) return;
-            if (confTalk !== undefined) {
-                await this.client.sendHtmlText(
-                    confTalk.roomId,
-                    `<h3>Your Q&A starts in 5 minutes</h3>` +
-                    `<p>The upvoted questions appear in the "Upvoted messages" widget next to the Jitsi conference. Prepare your answers!</p>` +
-                    `<p>Remember that the broadcast feed is buffered and lags many seconds behind. ` +
-                    `Do not wait for it to finish, otherwise you will create a long pause!</p>`,
-                );
-            }
             await this.scoreboard.showQACountdown(confAud.roomId, task.talk.qa_startTime!);
         } else if (task.type === ScheduledTaskType.TalkEnd5M) {
-            if (confTalk !== undefined) {
-                await this.client.sendHtmlText(confTalk.roomId, `<h3>Your talk ends in about 5 minutes</h3><p>The next talk will start automatically after yours.</p>`);
-            }
             await this.client.sendHtmlText(confAud.roomId, `<h3>This talk ends in about 5 minutes</h3>` + (task.talk.qa_startTime !== null ? `<p>Ask questions here for the speakers!</p>`: ''));
         } else {
             await logMessage(LogLevel.WARN, "Scheduler", `Unknown task type for execute(): ${task.type}`, this.client);
