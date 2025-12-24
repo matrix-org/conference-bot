@@ -18,7 +18,6 @@ import { LogLevel, LogService, MatrixClient } from "matrix-bot-sdk";
 import { ResolvedPersonIdentifier, resolveIdentifiers } from "../../invites";
 import { Auditorium } from "../../models/Auditorium";
 import { Conference } from "../../Conference";
-import { asyncFilter } from "../../utils";
 import { InterestRoom } from "../../models/InterestRoom";
 import { ConferenceMatrixClient } from "../../ConferenceMatrixClient";
 import { logMessage } from "../../LogProxy";
@@ -33,7 +32,6 @@ export async function doAuditoriumResolveAction(
     aud: Auditorium,
     conference: Conference,
     backstageOnly = false,
-    skipTalks = false,
     isInvite = true,
 ): Promise<void> {
     const audId = aud.getId();
@@ -67,30 +65,6 @@ export async function doAuditoriumResolveAction(
 
     const resolvedAudPeopleOnly = resolvedAudPeople.filter(p => !!p);
     await action(client, realAud.roomId, resolvedAudPeopleOnly as ResolvedPersonIdentifier[]);
-
-    if (!skipTalks) {
-        const talks = await asyncFilter(
-            conference.storedTalks,
-            async t => t.getAuditoriumId() === aud.getId(),
-        );
-        for (const talk of talks) {
-            const talkPeople = isInvite
-                ? await conference.getInviteTargetsForTalk(talk)
-                : await conference.getModeratorsForTalk(talk);
-            const resolvedTalkPeople = talkPeople.map(
-                p => allPossiblePeople.find(b => p.id === b.person.id)
-            );
-            if (resolvedTalkPeople.some(p => !p)) {
-                const unresolveable = talkPeople.filter(
-                    p => allPossiblePeople.find(b => p.id === b.person.id) === undefined
-                )
-                logMessage(LogLevel.WARN, "people", `Failed to resolve all targets for talk ${talk.getId()}: ` + JSON.stringify(unresolveable), client);
-            }
-
-            const resolvedTalkPeopleOnly = resolvedTalkPeople.filter(p => !!p);
-            await action(client, talk.roomId, resolvedTalkPeopleOnly as ResolvedPersonIdentifier[]);
-        }
-    }
 }
 
 export async function doInterestResolveAction(action: IAction, client: ConferenceMatrixClient, int: InterestRoom, conference: Conference, isInvite = true): Promise<void> {
