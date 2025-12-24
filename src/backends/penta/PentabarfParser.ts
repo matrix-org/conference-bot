@@ -205,6 +205,9 @@ export class PentabarfParser {
                 if (metadata.kind !== RoomKind.Auditorium) continue;
                 const audId = pRoom.attr?.["@_name"];
                 const isPhysical = prefixConfig.physicalAuditoriumRooms.find(p => audId.startsWith(p)) !== undefined;
+                if (!isPhysical) {
+                    throw new Error("Non-physical auditorium support was removed in 2025.");
+                }
                 let auditorium: IAuditorium = {
                     id: audId,
                     slug: slugify(metadata.name),
@@ -212,7 +215,6 @@ export class PentabarfParser {
                     kind: metadata.kind,
                     talks: new Map(),
                     extraPeople: [],
-                    isPhysical: isPhysical,
                     trackType: '',
                     livestreamId: '',
                 };

@@ -7,7 +7,10 @@ const path = require("path");
 
 const prefixConfig: IPrefixConfig = {
     // Unused here.
-    aliases: "", displayNameSuffixes: {}, suffixes: {}, physicalAuditoriumRooms: [],
+    aliases: "", displayNameSuffixes: {}, suffixes: {},
+
+    // Make all auditoria physical
+    physicalAuditoriumRooms: [""],
 
     auditoriumRooms: [
         "A.",

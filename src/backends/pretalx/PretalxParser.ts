@@ -133,15 +133,17 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
             interestRooms.set(spiRoom.id, spiRoom);
         } else if (kind === RoomKind.Auditorium) {
             const isPhysical = prefixConfig.physicalAuditoriumRooms.some(p => room.description.startsWith(p));
+            if (!isPhysical) {
+                throw new Error("Non-physical auditorium support was removed in 2025.");
+            }
             const qaEnabled = prefixConfig.qaAuditoriumRooms.some(p => room.description.startsWith(p));
-            const auditorium = {
+            const auditorium: IAuditorium & {qaEnabled: boolean} = {
                 id: room.name,
                 slug: slugify(room.name),
                 name: description,
                 kind: kind,
                 talks: new Map(),
                 extraPeople: [],
-                isPhysical: isPhysical,
                 qaEnabled: qaEnabled,
                 trackType: '',
                 livestreamId: '',
