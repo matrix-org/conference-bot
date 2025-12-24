@@ -3,7 +3,7 @@ import { PretalxScheduleBackend } from "../../../backends/pretalx/PretalxBackend
 import { Server, createServer } from "node:http";
 import { AddressInfo } from "node:net";
 import path from "node:path";
-import { IPrefixConfig, PretalxScheduleFormat } from "../../../config";
+import { IPrefixConfig } from "../../../config";
 
 const pretalxSpeakers = [{
     code: "37RA83",
@@ -132,40 +132,11 @@ describe('PretalxBackend', () => {
         const pretalxServ = await fakePretalxServer();
         const backend = await PretalxScheduleBackend.new("/dev/null", {
             backend: "pretalx",
-            scheduleFormat: PretalxScheduleFormat.Pretalx,
             scheduleDefinition: path.join(__dirname, 'anyconf.json'),
             pretalxAccessToken: "123456",
             pretalxApiEndpoint: `http://127.0.0.1:${(pretalxServ.address() as AddressInfo).port}`,
         }, prefixConfig);
         expect(backend.conference.title).toBe('AnyConf 2024');
         expect(backend.conference.auditoriums).toHaveLength(7);
-    });
-
-    test.only("can parse a FOSDEM format", async () => {
-        const pretalxServ = await fakePretalxServer();
-        const backend = await PretalxScheduleBackend.new("/dev/null", {
-            backend: "pretalx",
-            scheduleDefinition: path.join(__dirname, 'fosdemformat.xml'),
-            scheduleFormat: PretalxScheduleFormat.FOSDEM,
-            pretalxAccessToken: "123456",
-            pretalxApiEndpoint: `http://127.0.0.1:${(pretalxServ.address() as AddressInfo).port}`,
-        }, prefixConfig);
-        expect(backend.conference.title).toBe('AnyConf 2024');
-        expect(backend.conference.auditoriums).toHaveLength(1);
-        const talks = [...backend.conference.auditoriums[0].talks.values()];
-        // Check that we got the information correctly.
-        expect(talks[0].speakers).toEqual([{
-            "email": "staff@anyconf.example.com",
-            "id": "2",
-            "matrix_id": "",
-            "name": "AnyConf Staff",
-            "role": "coordinator"
-        }, {
-            "email": "alice@anyconf.example.com",
-            "id": "1324",
-            "matrix_id": "@alice:anyconf.example.com",
-            "name": "Alice AnyConf",
-            "role": "host"
-        }]);
     });
 });
