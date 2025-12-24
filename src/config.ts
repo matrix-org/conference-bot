@@ -96,6 +96,7 @@ export interface IConfig {
 export interface IPrefixConfig {
     auditoriumRooms: string[];
     qaAuditoriumRooms: string[];
+    // TODO This should be removed soon, as we won't support non-physical auditoria
     physicalAuditoriumRooms: string[];
     interestRooms: string[];
     aliases: string | string[];
