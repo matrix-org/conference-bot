@@ -87,13 +87,7 @@ export class PretalxScheduleBackend implements IScheduleBackend {
                 throw "Double fault whilst trying to load JSON schedule";
             }
         }
-        let data: PretalxData;
-        // FOSDEM-team prefers us to use the PentaXML rather than Pretalx's
-        // JSON schedule.
-        // This is because the websites and apps are all based off this XML
-        // description and so it is considered authoritative.
-        // Other than that, the information seems to all be available in Pretalx.
-        data = await parseFromJSON(jsonOrXMLDesc, prefixCfg);
+        const data: PretalxData = await parseFromJSON(jsonOrXMLDesc, prefixCfg);
 
         return {data, cached};
     }

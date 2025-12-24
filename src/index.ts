@@ -72,7 +72,7 @@ export class ConferenceBot {
             case "json":
                 return await JsonScheduleBackend.new(config.dataPath, config.conference.schedule, config);
             default:
-                throw new Error(`Unknown scheduling backend: choose penta, pretalx or json!`)
+                throw new Error(`Unknown scheduling backend: choose pretalx or json!`)
         }
     }
 
