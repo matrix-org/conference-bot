@@ -118,6 +118,9 @@ export class Conference {
                             const people = await this.findPeopleWithId(emailInvite[RS_3PID_PERSON_ID]);
                             if (people?.length) {
                                 // Finally, associate the users.
+                                // Pick out the first person entry from the list, they should all represent the same person
+                                // and have the same ID (they just represent different rooms), but we don't want to repeat
+                                // the association as that would just involve sending duplicate state events.
                                 let person = people[0];
                                 const clonedPerson = objectFastClone(person);
                                 clonedPerson.matrix_id = event['state_key'];
