@@ -58,14 +58,6 @@ export class InviteMeCommand implements ICommand {
             addToGroup(audSlug + ":public", aud.roomId);
             addToGroup("public", aud.roomId);
             addToGroup("*", aud.roomId);
-
-            // Auditoriums have a wrapping space, which should be auto-invited if needed.
-            const space = await aud.getAssociatedSpace();
-            addToGroup(audSlug + ":*", space.roomId);
-            addToGroup(audSlug + ":public", space.roomId);
-            addToGroup(audSlug + ":space", space.roomId);
-            addToGroup("public", space.roomId);
-            addToGroup("*", space.roomId);
         }
 
         for (const audBack of this.conference.storedAuditoriumBackstages) {
