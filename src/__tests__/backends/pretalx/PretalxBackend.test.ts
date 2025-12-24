@@ -96,9 +96,6 @@ const prefixConfig: IPrefixConfig = {
     // Unused here.
     aliases: "", displayNameSuffixes: {}, suffixes: {},
 
-    // Make all auditoria physical
-    physicalAuditoriumRooms: [""],
-
     auditoriumRooms: [
         "AW1.",
         "D.",
