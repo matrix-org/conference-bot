@@ -62,7 +62,6 @@ export enum RoomKind {
     ConferenceSpace = "conference_space", // TODO
     Auditorium = "auditorium",
     AuditoriumBackstage = "auditorium_backstage",
-    Talk = "talk",
     SpecialInterest = "other",
 }
 
@@ -73,7 +72,6 @@ export const RS_LOCATOR = "org.matrix.confbot.locator";
 
 export const RSC_CONFERENCE_ID = "conferenceId";
 export const RSC_AUDITORIUM_ID = "auditoriumId";
-export const RSC_TALK_ID = "talkId";
 export const RSC_SPECIAL_INTEREST_ID = "interestId";
 
 export const CONFERENCE_ROOM_CREATION_TEMPLATE: RoomCreateOptions = {
@@ -114,20 +112,6 @@ export const AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE: RoomCreateOptions = {
     },
     power_level_content_override: PRIVATE_ROOM_POWER_LEVELS_TEMPLATE,
 };
-
-export const TALK_CREATION_TEMPLATE = (moderatorUserIds: string[]) => ({ // before being opened up to the public
-    preset: 'private_chat',
-    visibility: 'private',
-    initial_state: [
-        {type: "m.room.guest_access", state_key: "", content: {guest_access: "forbidden"}},
-        {type: "m.room.history_visibility", state_key: "", content: {history_visibility: "invited"}},
-    ],
-    creation_content: {
-        [RSC_ROOM_KIND_FLAG]: RoomKind.Talk,
-    },
-    power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE(moderatorUserIds),
-    invite: moderatorUserIds,
-} satisfies RoomCreateOptions);
 
 export const SPECIAL_INTEREST_CREATION_TEMPLATE = (moderatorUserIds: string[]) => {
     let template = PUBLIC_ROOM_POWER_LEVELS_TEMPLATE(moderatorUserIds);
