@@ -3,9 +3,9 @@ The conductor for your orchestra^Wconference
 
 ## Development
 
-1. `yarn install`
+1. `pnpm install`
 2. Copy `config/default.yaml` to `config/development.yaml` and edit accordingly.
-3. `yarn start:dev`
+3. `pnpm start:dev`
 
 The project is a TypeScript bot based off the concepts of [Mjolnir](https://github.com/matrix-org/mjolnir),
 using [matrix-bot-sdk](https://github.com/turt2live/matrix-bot-sdk) as a base.
@@ -76,5 +76,5 @@ Now you can run `HOMERUNNER_SPAWN_HS_TIMEOUT_SECS=100 path/to/complement/homerun
 With homerunner running, you can now run the tests with:
 
 ```shell-commands
-npm run test:e2e
+pnpm run test:e2e
 ```

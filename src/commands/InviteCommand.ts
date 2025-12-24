@@ -54,7 +54,10 @@ export class InviteCommand implements ICommand {
                 newPeople.push(p);
             }
         });
-        await this.createInvites(newPeople, this.config.conference.supportRooms.speakers);
+        const speakersRoom = this.config.conference.supportRooms?.speakers;
+        if (speakersRoom) {
+            await this.createInvites(newPeople, speakersRoom);
+        }
     }
 
     private async runCoordinatorsSupport(): Promise<void> {
@@ -77,7 +80,10 @@ export class InviteCommand implements ICommand {
                 newPeople.push(p);
             }
         });
-        await this.createInvites(newPeople, this.config.conference.supportRooms.coordinators);
+        const coordinatorsRoom = this.config.conference.supportRooms?.coordinators;
+        if (coordinatorsRoom) {
+            await this.createInvites(newPeople, coordinatorsRoom);
+        }
     }
 
     private async runSpecialInterestSupport(): Promise<void> {
@@ -85,7 +91,10 @@ export class InviteCommand implements ICommand {
         for (const sir of this.conference.storedInterestRooms) {
             people.push(...await this.conference.getInviteTargetsForInterest(sir));
         }
-        await this.createInvites(people, this.config.conference.supportRooms.specialInterest);
+        const siRoom = this.config.conference.supportRooms?.specialInterest;
+        if (siRoom) {
+            await this.createInvites(people, siRoom);
+        }
     }
 
     public async run(managementRoomId: string, event: any, args: string[]) {
