@@ -30,7 +30,6 @@ import {
 import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from "./models/schedule";
 import {
     IStoredSubspace,
-    makeAssociatedSpace,
     makeAuditoriumBackstageLocator,
     makeAuditoriumLocator,
     makeDbLocator,
@@ -508,11 +507,6 @@ export class Conference {
             },
             initial_state: [
                 makeAuditoriumLocator(this.id, auditorium.id),
-                // This no longer matches the exact original intention: auditoria were previously
-                // associated with their 'container space', but we no longer wrap them in container
-                // spaces.
-                // TODO: We should remove associated spaces and remove this.
-                makeAssociatedSpace(parentSpace.roomId),
             ],
             name: auditorium.name,
         }));

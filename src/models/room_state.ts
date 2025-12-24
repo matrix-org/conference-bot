@@ -63,34 +63,6 @@ export function makeStoredPersonOverride(person: IPerson): IStateEvent<IPerson> 
 }
 
 /**
- * Associated space: a canonical definition of which space is 'associated' with this room.
- *
- * List of valid use cases:
- * - In an auditorium room, points to the auditorium's space.
- * - TODO more?
- *
- * Begrudgingly m.space.parent isn't very useful in these scenarios because the state key is the parent of the room
- * and they're not easily canonical. (This can probably be worked around, but I can only rework so much at once!)
- */
-export const RS_ASSOCIATED_SPACE = "org.matrix.confbot.space";
-export interface IAssociatedSpace {
-    roomId: string;
-}
-
-/**
- * @deprecated This is now only used for putting talk rooms into the right space.
- * (Previously it located the auditorium container space for an auditorium, but those have been removed.)
- * When we strip out support for physical auditoria, this has no reason to exist.
- */
-export function makeAssociatedSpace(roomId: string): IStateEvent<IAssociatedSpace> {
-    return {
-        type: RS_ASSOCIATED_SPACE,
-        state_key: "",
-        content: {roomId: roomId},
-    };
-}
-
-/**
  * See RS_LOCATOR.
  */
 export type ILocator = IConferenceLocator | IAuditoriumLocator | IInterestLocator
