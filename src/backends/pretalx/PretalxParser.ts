@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import { IInterestRoom, IAuditorium, ITalk, Role } from "../../models/schedule";
-import { decodePrefix } from "../penta/PentabarfParser";
 import { IPrefixConfig } from "../../config";
 import { simpleTimeParse } from "../common";
 import { RoomKind } from "../../models/room_kinds";
@@ -104,6 +103,31 @@ export interface PretalxSchema {
      */
     talks: Map<string, ITalk>;
     title: string;
+}
+
+/**
+ * Given a event-room ID (not a Matrix ID; a room from the Pentabarf XML),
+ * decodes that to figure out what type of event-room it is
+ * and also returns the unprefixed version.
+ */
+export function decodePrefix(id: string, prefixConfig: IPrefixConfig): {kind: RoomKind, name: string} | null {
+    const override = prefixConfig.nameOverrides[id];
+
+    const auditoriumPrefix = prefixConfig.auditoriumRooms.find(p => id.startsWith(p));
+    if (auditoriumPrefix) {
+        // TODO(FOSDEM 2023): don't strip the prefix, because on FOSDEM's end they are not stripped in the livestream IDs.
+        //     It would be good to figure out why we wanted to strip prefixes originally and whether we need finer controls.
+        //return {kind: RoomKind.Auditorium, name: override || id.substring(auditoriumPrefix.length)};
+        return {kind: RoomKind.Auditorium, name: override || id };
+    }
+
+    const interestPrefix = prefixConfig.interestRooms.find(p => id.startsWith(p));
+    if (interestPrefix) {
+        return {kind: RoomKind.SpecialInterest, name: override || id.substring(interestPrefix.length)};
+    }
+
+    // Rooms in the schedule not matching a prefix should not be treated as special interests.
+    return null;
 }
 
 /**

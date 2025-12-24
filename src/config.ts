@@ -34,7 +34,7 @@ export interface IConfig {
     // Legacy option that causes a startup error when supplied.
     // Removed in favour of `moderatorUserIds`.
     moderatorUserId?: string;
-    
+
     moderatorUserIds: string[];
     livestream: {
         auditoriumUrl: string;
@@ -144,26 +144,8 @@ export interface IJsonScheduleBackendConfig {
     scheduleRequestHeaders?: {[_: string]: string};
 }
 
-export enum PretalxScheduleFormat {
-    /**
-     * Standard pretalx support, uses no custom extensions.
-     */
-    Pretalx = "pretalx",
-    /**
-     * Expects a pentabarf (+ extensions)
-     * format schedule. Extends standard pretalx API client.
-     */
-    FOSDEM = "fosdem",
-}
-
 export interface IPretalxScheduleBackendConfig {
     backend: "pretalx";
-    /**
-     * Is the schedule in fosdem or pretalx format? For legacy reasons
-     * some conferences prefer "fosdem" which can contain extensions.
-     * Defaults to "pretalx".
-     */
-    scheduleFormat?: PretalxScheduleFormat;
     /**
      * HTTP(S) URL to schedule XML.
      */
