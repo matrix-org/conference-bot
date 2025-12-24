@@ -187,7 +187,6 @@ export class E2ETestEnv {
                     displayNameSuffixes: {},
                     suffixes: {},
                     qaAuditoriumRooms: [],
-                    physicalAuditoriumRooms: [],
                     nameOverrides: {},
                 },
                 schedule: {
