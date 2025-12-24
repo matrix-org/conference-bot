@@ -45,7 +45,7 @@ import {
 } from "./models/room_state";
 import { applySuffixRules, objectFastClone, safeCreateRoom } from "./utils";
 import { addAndDeleteManagedAliases, applyAllAliasPrefixes, assignAliasVariations, calculateAliasVariations } from "./utils/aliases";
-import { IConfig } from "./config";
+import { IConfig, RunMode } from "./config";
 import { MatrixRoom } from "./models/MatrixRoom";
 import { Auditorium, AuditoriumBackstage } from "./models/Auditorium";
 import { Talk } from "./models/Talk";
@@ -101,7 +101,8 @@ export class Conference {
             // On any member event, recaulculate the membership.
             this.enqueueRecalculateRoomMembership(roomId);
 
-            if (event['content']?.['third_party_invite']) {
+            // Only process 3pid invites when running as the bot, not the web interface
+            if (event['content']?.['third_party_invite'] && config.mode === RunMode.normal) {
                 const emailInviteToken = event['content']['third_party_invite']['signed']?.['token'];
                 const emailInvite = await this.client.getRoomStateEvent(roomId, "m.room.third_party_invite", emailInviteToken);
                 if (emailInvite[RS_3PID_PERSON_ID]) {
@@ -117,12 +118,14 @@ export class Conference {
                             const people = await this.findPeopleWithId(emailInvite[RS_3PID_PERSON_ID]);
                             if (people?.length) {
                                 // Finally, associate the users.
-                                for (const person of people) {
-                                    const clonedPerson = objectFastClone(person);
-                                    clonedPerson.matrix_id = event['state_key'];
-                                    await this.createUpdatePerson(clonedPerson);
-                                    LogService.info("Conference", `Updated ${clonedPerson.id} to be associated with ${clonedPerson.matrix_id}`);
-                                }
+                                // Pick out the first person entry from the list, they should all represent the same person
+                                // and have the same ID (they just represent different rooms), but we don't want to repeat
+                                // the association as that would just involve sending duplicate state events.
+                                let person = people[0];
+                                const clonedPerson = objectFastClone(person);
+                                clonedPerson.matrix_id = event['state_key'];
+                                await this.createUpdatePerson(clonedPerson);
+                                LogService.info("Conference", `Updated ${clonedPerson.id} to be associated with ${clonedPerson.matrix_id}`);
 
                                 // Update permissions while we're here (if we can identify the room kind)
                                 const aud = this.storedAuditoriums.find(a => a.roomId === roomId);
@@ -917,10 +920,31 @@ export class Conference {
     }
 
     /**
-     * @deprecated This always returns `[]` and should be removed or fixed.
+     * Return a list of all people with the given person ID.
+     *
+     * TODO does not support interest rooms
      */
     public async findPeopleWithId(personId: string): Promise<IPerson[]> {
-        return [];
+        let out: IPerson[] = [];
+
+        for (let auditorium of Object.values(this.auditoriums)) {
+            let audDef = auditorium.getDefinition();
+            for (let talk of audDef.talks.values()) {
+                for (let person of talk.speakers) {
+                    if (person.id === personId) {
+                        out.push(person);
+                    }
+                }
+            }
+
+            for (let person of audDef.extraPeople) {
+                if (person.id === personId) {
+                    out.push(person);
+                }
+            }
+        }
+
+        return out;
     }
 
     /**
