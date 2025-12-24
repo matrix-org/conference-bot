@@ -93,16 +93,11 @@ export function makeAssociatedSpace(roomId: string): IStateEvent<IAssociatedSpac
 /**
  * See RS_LOCATOR.
  */
-export type ILocator = IConferenceLocator | ITalkLocator | IAuditoriumLocator | IInterestLocator
+export type ILocator = IConferenceLocator | IAuditoriumLocator | IInterestLocator
 
 export interface IConferenceLocator {
     [RSC_ROOM_KIND_FLAG]: RoomKind.ConferenceDb | RoomKind.ConferenceSpace;
     conferenceId: string;
-}
-export interface ITalkLocator {
-    [RSC_ROOM_KIND_FLAG]: RoomKind.Talk;
-    conferenceId: string;
-    talkId: TalkId;
 }
 export interface IAuditoriumLocator {
     [RSC_ROOM_KIND_FLAG]: RoomKind.Auditorium | RoomKind.AuditoriumBackstage;
@@ -133,18 +128,6 @@ export function makeDbLocator(conferenceId: string): IStateEvent<IConferenceLoca
         content: {
             [RSC_ROOM_KIND_FLAG]: RoomKind.ConferenceDb,
             conferenceId,
-        },
-    };
-}
-
-export function makeTalkLocator(conferenceId: string, talkId: TalkId): IStateEvent<ITalkLocator> {
-    return {
-        type: RS_LOCATOR,
-        state_key: "",
-        content: {
-            [RSC_ROOM_KIND_FLAG]: RoomKind.Talk,
-            conferenceId,
-            talkId,
         },
     };
 }
