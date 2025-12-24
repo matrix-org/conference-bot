@@ -21,7 +21,7 @@ import { COLOR_GREEN, COLOR_RED } from "../models/colors";
 import { IPerson } from "../models/schedule";
 import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
-const BROKEN_WARNING = "<a href='https://github.com/matrix-org/conference-bot/issues/245'>This command is somewhat broken/misleading.</a> Accepted = percentage of invites that are Matrix and accepted. Emails = percentage of invites that are e-mail (regardless of whether they are accepted or not).";
+const BROKEN_WARNING = "<a href='https://github.com/matrix-org/conference-bot/issues/245'>This command may be broken.</a>";
 
 export class AttendanceCommand implements ICommand {
     public readonly prefixes = ["attendance"];
@@ -56,14 +56,21 @@ export class AttendanceCommand implements ICommand {
             // all Matrix members of the room
             const joinedMembers = await this.client.getJoinedRoomMembers(roomId);
 
-            // all invite targets that were e-mail invited, by virtue of not having a registered MXID
+            // All invite targets that were e-mail invited, by virtue of not having a registered MXID
+            // Notably: excludes e-mail invitees that have since become discoverable on Matrix
+            // (thanks to the Stored Person Override system)
+            // So these are 'unaccepted' e-mail invites.
             const emailInvites = inviteTargets.filter(i => !i.mxid).length;
-            // all Matrix targets that have also joined
+            // all Matrix targets that have also joined.
+            // Should include e-mail invitees that became discoverable on Matrix, by means of the
+            // Stored Person Override system.
+            // So these are all joined/accepted invites.
             const joined = inviteTargets.filter(i => i.mxid && joinedMembers.includes(i.mxid)).length;
 
-            // percentage of invites that are both Matrix and accepted
+            // percentage of invites that are accepted
             const acceptedPct = Math.round((joined / inviteTargets.length) * 100);
-            // percentage of invites that are e-mail invites. Regardless of whether they are accepted.
+            // percentage of invites that are STILL e-mail invites, in other words have not been accepted,
+            // as at that point they would become Matrix invites (by means of the Stored Person Override system)
             const emailPct = Math.round((emailInvites / inviteTargets.length) * 100);
 
             totalInvites += inviteTargets.length;
@@ -123,7 +130,13 @@ export class AttendanceCommand implements ICommand {
         const acceptedPct = Math.round((totalJoined / totalInvites) * 100);
         const emailPct = Math.round((totalEmails / totalInvites) * 100);
 
-        html = `<b>Summary:</b> ${htmlNum(acceptedPct)} have joined, ${htmlNum(emailPct, true)} have pending emails. ${targetAudId ? '<hr />' : ''}${html}`;
+        let header = `<b>Summary:</b> ${htmlNum(acceptedPct)} have joined, ${htmlNum(emailPct, true)} have pending emails.`;
+        header += `<br>total joined: ${totalJoined}, total invites: ${totalInvites}`;
+        if (targetAudId) {
+            header += '<hr/>';
+        }
+
+        html = `${header}${html}`;
 
         await this.client.replyHtmlNotice(roomId, event, html);
     }
