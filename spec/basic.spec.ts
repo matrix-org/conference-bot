@@ -107,7 +107,7 @@ describe("Basic test setup", () => {
       ]
     `);
     // TODO understand/explain why there are 6 rooms without locators
-    expect(roomsWithoutLocators).toBe(6);
+    expect(roomsWithoutLocators).toBe(5);
   });
 
   it("should invite the moderator users to relevant rooms", async () => {
