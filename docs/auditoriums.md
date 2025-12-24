@@ -20,23 +20,6 @@ containers.
 
 **Historical note (talk rooms):** In previous conferences, the conference-bot has previously created 1 room per talk. Talk rooms are private initially, but made public once the talk has completed. This is intended to allow 'hallway' conversations between the speaker and interested members of the audience once the talk has finished, whilst avoiding disturbing subsequent talks in the auditorium. Talk rooms have not been used since at least 2023. They are likely to be removed.
 
-## Physical Auditoriums
-
-An auditorium can be declared to be 'physical', by having its name match a prefix set in the configuration (see `physicalAuditoriumRooms`).
-The intended purpose of this is for talks which are livestreamed from a physical venue.
-
-Physical Auditoriums have the following differences to regular Auditoriums:
-
-- Talks do not get a dedicated room in the auditorium space (talk coordination is expected to happen in the real world)
-    - The speaker will not be nagged to 'check in'; speakers are expected to be present in the real world.
-    - Scheduled announcements do not instruct audience members to join a talk room after a talk ends
-
-Physical Auditoriums do still have backstage rooms for speakers and volunteers to coordinate in.
-
-**Physical auditoriums are supported in the Penta and Pretalx backends.**
-
-**Note: Physical auditoriums will likely become the *only* supported type of auditorium.**
-
 ## Q&A (Questions and Answers)
 
 Q&A will only be enabled for auditoriums that match the `qaAuditoriumRooms` prefix.
