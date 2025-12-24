@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { IPrefixConfig, IPretalxScheduleBackendConfig, PretalxScheduleFormat } from "../../config";
+import { IPrefixConfig, IPretalxScheduleBackendConfig } from "../../config";
 import { IConference, ITalk, IAuditorium, IInterestRoom, Role } from "../../models/schedule";
 import { AuditoriumId, InterestId, IScheduleBackend, TalkId } from "../IScheduleBackend";
 import * as fetch from "node-fetch";
@@ -23,8 +23,6 @@ import { LogService } from "matrix-bot-sdk";
 import { PretalxSchema as PretalxData, parseFromJSON } from "./PretalxParser";
 import { readFile, writeFile } from "fs/promises";
 import { PretalxApiClient } from "./PretalxApiClient";
-import { PentabarfParser } from "../penta/PentabarfParser";
-import { FOSDEMPretalxApiClient } from "./FOSDEMPretalxApiClient";
 
 
 const MIN_TIME_BEFORE_REFRESH_MS = 60000;
@@ -38,12 +36,7 @@ export class PretalxScheduleBackend implements IScheduleBackend {
         private data: PretalxData,
         private wasFromCache: boolean,
         private readonly dataPath: string) {
-            if (cfg.scheduleFormat === PretalxScheduleFormat.FOSDEM) {
-                this.apiClient = new FOSDEMPretalxApiClient(cfg.pretalxApiEndpoint, cfg.pretalxAccessToken);
-            } else {
-                this.apiClient = new PretalxApiClient(cfg.pretalxApiEndpoint, cfg.pretalxAccessToken);
-            }
-        
+        this.apiClient = new PretalxApiClient(cfg.pretalxApiEndpoint, cfg.pretalxAccessToken);
     }
 
     wasLoadedFromCache(): boolean {
@@ -69,7 +62,7 @@ export class PretalxScheduleBackend implements IScheduleBackend {
             try {
                 await writeFile(cachedSchedulePath, jsonOrXMLDesc);
             } catch (ex) {
-                // Allow this to fail, 
+                // Allow this to fail,
                 LogService.warn("PretalxScheduleBackend", "Failed to cache copy of schedule.", ex);
             }
         } catch (e) {
@@ -100,17 +93,7 @@ export class PretalxScheduleBackend implements IScheduleBackend {
         // This is because the websites and apps are all based off this XML
         // description and so it is considered authoritative.
         // Other than that, the information seems to all be available in Pretalx.
-        if (cfg.scheduleFormat === PretalxScheduleFormat.FOSDEM) {
-            const pentaData = new PentabarfParser(jsonOrXMLDesc, prefixCfg);
-            data = {
-                talks: new Map(pentaData.talks.map(v => [v.id, v])),
-                auditoriums: new Map(pentaData.auditoriums.map(v => [v.name, v])),
-                interestRooms: new Map(pentaData.interestRooms.map(v => [v.id, v])),
-                title: pentaData.conference.title,
-            }
-        } else {
-            data = await parseFromJSON(jsonOrXMLDesc, prefixCfg);
-        }
+        data = await parseFromJSON(jsonOrXMLDesc, prefixCfg);
 
         return {data, cached};
     }
@@ -123,25 +106,6 @@ export class PretalxScheduleBackend implements IScheduleBackend {
     }
 
     private async hydrateFromApi() {
-        if (this.apiClient instanceof FOSDEMPretalxApiClient) {
-            for (const apiTalk of await this.apiClient.getFOSDEMTalks()) {
-                const localTalk = this.talks.get(apiTalk.event_id.toString());
-                if (!localTalk) {
-                    LogService.warn("PretalxScheduleBackend", `Talk missing from public schedule ${apiTalk.event_id}.`);
-                    continue;
-                }
-                localTalk.speakers = apiTalk.persons.map(speaker => ({
-                    id: speaker.person_id.toString(),
-                    // Set emails for all the speakers.
-                    email: speaker.email,
-                    matrix_id: speaker.matrix_id,
-                    name: speaker.name,
-                    role: speaker.event_role,
-                }));
-            }
-            return;
-        }
-        // Otherwise, use standard API.
         for await (const apiTalk of this.apiClient.getAllTalks()) {
             if (apiTalk.state !== "confirmed") {
                 continue;
@@ -163,7 +127,7 @@ export class PretalxScheduleBackend implements IScheduleBackend {
     }
 
     async refresh(): Promise<void> {
-        this.lastRefresh = Date.now(); 
+        this.lastRefresh = Date.now();
         this.data = (await PretalxScheduleBackend.loadConferenceFromCfg(this.dataPath, this.cfg, this.prefixCfg, false)).data;
         await this.hydrateFromApi();
         // If we managed to load anything, this isn't from the cache anymore.
@@ -173,7 +137,7 @@ export class PretalxScheduleBackend implements IScheduleBackend {
     async refreshShortTerm(): Promise<void> {
         // We don't have a way to partially refresh yet, so do a full refresh since
         // it's currently only two API calls.
-        
+
         // We still want to prevent rapid refreshing, so this should only happen periodically.
         if (Date.now() - this.lastRefresh  < MIN_TIME_BEFORE_REFRESH_MS) {
             return;
