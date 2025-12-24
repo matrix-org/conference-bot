@@ -64,7 +64,6 @@ export class StatusCommand implements ICommand {
         html += `<li>Conference 'database room' located: <strong>${this.conference.hasDbRoom}</strong></li>`;
         html += `<li>№ auditoriums located: <strong>${this.conference.storedAuditoriums.length}</strong></li>`;
         html += `<li>№ auditorium backstages located: <strong>${this.conference.storedAuditoriumBackstages.length}</strong></li>`;
-        html += `<li>№ talk rooms located: <strong>${this.conference.storedTalks.length}</strong></li>`;
 
         html += "</ul>";
 

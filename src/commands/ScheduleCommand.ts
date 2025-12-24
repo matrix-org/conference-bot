@@ -46,10 +46,8 @@ export class ScheduleCommand implements ICommand {
         const upcoming = sortTasks(this.scheduler.inspect());
         let html = "Upcoming tasks:<ul>";
         for (const task of upcoming) {
-            const hasTalkRoom = this.conference.getTalk(task.talk.id) !== undefined;
-            
             const taskStart = getStartTime(task);
-            
+
             const formattedTimestamp = taskStart === null ? '<not runnable>' : formatISO(taskStart, {format: 'extended'});
             const relativeTimestamp = taskStart === null ? '' : intlFormatDistance(taskStart, new Date());
 
@@ -60,8 +58,7 @@ export class ScheduleCommand implements ICommand {
                 html = "…<ul>";
             }
 
-            const hasRoomIndicator = hasTalkRoom ? 'has talk room' : 'no talk room';
-            html += `<li>${formattedTimestamp}: <b>${task.type} on ${task.talk.title}</b> (<code>${task.id}</code>, ${hasRoomIndicator}) ${relativeTimestamp}</li>`;
+            html += `<li>${formattedTimestamp}: <b>${task.type} on ${task.talk.title}</b> (<code>${task.id}</code>) ${relativeTimestamp}</li>`;
         }
         html += "</ul>";
         await this.client.sendHtmlNotice(roomId, html);
