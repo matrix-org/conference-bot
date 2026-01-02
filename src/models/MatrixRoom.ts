@@ -25,6 +25,10 @@ export class MatrixRoom {
     constructor(public readonly roomId: string, protected client: MatrixClient, protected conference: Conference) {
     }
 
+    /**
+     * @deprecated This is only used for putting talks into their rooms.
+     * But when we only support physical auditoria, we won't have talk rooms.
+     */
     public async getAssociatedSpace(): Promise<Space> {
         if (this.space) {
             return this.space;

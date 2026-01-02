@@ -514,7 +514,7 @@ export class Conference {
     }
 
     /**
-     * Creates an auditorium space, room and backstage room.
+     * Creates an auditorium room and auditorium backstage room.
      *
      * The auditorium space's children are ordered as follows:
      *  1. auditorium room
@@ -530,36 +530,6 @@ export class Conference {
         }
 
         const parentSpace = await this.getDesiredParentSpace(auditorium);
-        let audSpace;
-        try {
-            audSpace = await this.client.createSpace({
-                isPublic: true,
-                name: applySuffixRules(
-                    auditorium.name, auditorium.id, this.config.conference.prefixes.displayNameSuffixes
-                ),
-            });
-
-            await assignAliasVariations(
-                this.client,
-                audSpace.roomId,
-                applyAllAliasPrefixes("space-" + auditorium.slug, this.config.conference.prefixes.aliases),
-                this.config.conference.prefixes.suffixes,
-                auditorium.id
-            );
-
-            // Ensure that the space can be viewed by guest users.
-            await this.client.sendStateEvent(
-                audSpace.roomId,
-                "m.room.guest_access",
-                "",
-                {guest_access:"can_join"},
-            );
-        } catch (e) {
-            await logMessage(LogLevel.ERROR, "utils", `Can't create auditorium space for ${auditorium.slug}: ${e}!`, this.client);
-            throw e;
-        }
-
-        await parentSpace.addChildSpace(audSpace, { order: `auditorium-${auditorium.id}` });
 
         const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_CREATION_TEMPLATE(this.config.moderatorUserIds), {
             creation_content: {
@@ -568,7 +538,11 @@ export class Conference {
             },
             initial_state: [
                 makeAuditoriumLocator(this.id, auditorium.id),
-                makeAssociatedSpace(audSpace.roomId),
+                // This no longer matches the exact original intention: auditoria were previously
+                // associated with their 'container space', but we no longer wrap them in container
+                // spaces.
+                // TODO: We should remove associated spaces and remove this.
+                makeAssociatedSpace(parentSpace.roomId),
             ],
             name: auditorium.name,
         }));
@@ -580,11 +554,11 @@ export class Conference {
         // const widget = await LiveWidget.forAuditorium(this.auditoriums[auditorium.id], this.client);
         // await this.client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
 
-        await audSpace.addChildRoom(roomId, { order: "1-auditorium" });
+        await parentSpace.addChildRoom(roomId, { order: `auditorium-${auditorium.id}-1-front` });
 
         // Now create the backstage
         const backstage = await this.createAuditoriumBackstage(auditorium);
-        await audSpace.addChildRoom(backstage.roomId, { order: "2-backstage" });
+        await parentSpace.addChildRoom(backstage.roomId, { order: `auditorium-${auditorium.id}-2-backstage` });
 
         return this.auditoriums[auditorium.id];
     }
@@ -602,6 +576,7 @@ export class Conference {
             initial_state: [
                 makeAuditoriumBackstageLocator(this.id, auditorium.id),
             ],
+            name: `[BACKSTAGE] ${auditorium.name}`,
         }));
         await assignAliasVariations(this.client, roomId, applyAllAliasPrefixes(auditorium.slug + "-backstage", this.config.conference.prefixes.aliases),
         this.config.conference.prefixes.suffixes, auditorium.id);
@@ -610,6 +585,10 @@ export class Conference {
         return this.auditoriumBackstages[auditorium.id];
     }
 
+    /**
+     * @deprecated Due to non-usage, we will only support 'physical auditoria' in the future,
+     * which means we will no longer create rooms for talks.
+     */
     public async createTalk(talk: ITalk, auditorium: Auditorium): Promise<MatrixRoom> {
         let roomId: string;
 

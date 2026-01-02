@@ -91,9 +91,18 @@ describe("Basic test setup", () => {
         );
         allLocators.push(describeLocator(roomLocator));
       } catch (error) {
-        // This room doesn't have a locator
-        console.warn("room without locator: ", joinedRoomId);
+        // This room doesn't have a locator.
         roomsWithoutLocators += 1;
+        console.warn("room without locator: ", joinedRoomId);
+        try {
+            // Get room state to help identify it from the logs
+            const roomState = await testEnv.confbotClient.getRoomState(
+                joinedRoomId,
+            );
+            console.debug("room ", joinedRoomId, " has state:\n", roomState);
+        } catch (_) {
+            // pass
+        }
       }
     }
 
@@ -106,8 +115,18 @@ describe("Basic test setup", () => {
         "(test-conf) talk talkId=1",
       ]
     `);
-    // TODO understand/explain why there are 6 rooms without locators
-    expect(roomsWithoutLocators).toBe(6);
+
+    // These rooms without locators are:
+    // - the control room (no name), with @admin:confbot present
+    // - canonical alias #speakers:confbot,
+    //   with m.room.create content: { kind: 'auditorium_backstage', room_version: '10', creator: '@conf_bot:confbot' }
+    // - canonical alias #coordinators:confbot,
+    //   with m.room.create content: { kind: 'auditorium_backstage', room_version: '10', creator: '@conf_bot:confbot' }
+    // - canonical alias #specialInterest:confbot,
+    //   with m.room.create content: { kind: 'auditorium_backstage', room_version: '10', creator: '@conf_bot:confbot' }
+    // - canonical alias #space-mysubspace:confbot,
+    //   with m.room.create content { type: 'm.space', room_version: '10', creator: '@conf_bot:confbot' }
+    expect(roomsWithoutLocators).toBe(5);
   });
 
   it("should invite the moderator users to relevant rooms", async () => {
