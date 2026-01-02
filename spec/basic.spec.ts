@@ -91,9 +91,18 @@ describe("Basic test setup", () => {
         );
         allLocators.push(describeLocator(roomLocator));
       } catch (error) {
-        // This room doesn't have a locator
-        console.warn("room without locator: ", joinedRoomId);
+        // This room doesn't have a locator.
         roomsWithoutLocators += 1;
+        console.warn("room without locator: ", joinedRoomId);
+        try {
+            // Get room state to help identify it from the logs
+            const roomState = await testEnv.confbotClient.getRoomState(
+                joinedRoomId,
+            );
+            console.debug("room ", joinedRoomId, " has state:\n", roomState);
+        } catch (_) {
+            // pass
+        }
       }
     }
 
@@ -106,7 +115,8 @@ describe("Basic test setup", () => {
         "(test-conf) talk talkId=1",
       ]
     `);
-    // TODO understand/explain why there are 6 rooms without locators
+
+    // TODO understand/explain why there are rooms without locators
     expect(roomsWithoutLocators).toBe(5);
   });
 
