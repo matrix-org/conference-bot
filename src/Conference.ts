@@ -360,9 +360,9 @@ export class Conference {
      */
     public async createSupportRooms() {
         const roomAliases = [
-            this.config.conference.supportRooms.speakers,
-            this.config.conference.supportRooms.specialInterest,
-            this.config.conference.supportRooms.coordinators,
+            this.config.conference.supportRooms?.speakers,
+            this.config.conference.supportRooms?.specialInterest,
+            this.config.conference.supportRooms?.coordinators,
         ];
 
         const rootSpace = await this.getSpace();
@@ -372,7 +372,7 @@ export class Conference {
 
         for (const alias of roomAliases) {
             // Skip aliases that aren't configured.
-            if (alias == null) continue;
+            if (!alias) continue;
             try {
                 await this.client.resolveRoom(alias);
             } catch (e1) {

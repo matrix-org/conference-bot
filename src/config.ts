@@ -68,10 +68,10 @@ export interface IConfig {
         schedule: ScheduleBackendConfig;
         timezone: string;
         lookaheadMinutes: number;
-        supportRooms: {
-            speakers: string;
-            coordinators: string;
-            specialInterest: string;
+        supportRooms?: {
+            speakers?: string;
+            coordinators?: string;
+            specialInterest?: string;
         };
         prefixes: IPrefixConfig;
         existingInterestRooms: {

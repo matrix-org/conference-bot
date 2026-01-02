@@ -20,7 +20,11 @@ managementRoom: "!room:example.org"
 # The identity server to use to send email invites to any participants. The
 # bot will accept all terms of service automatically - please ensure that it
 # has legal capability to do so before running the bot in this way.
-idServerDomain: "vector.im"
+#
+# Comment out this option to disable identity services.
+# Disabling IS services is usually required for running in non-publicly-reachable environments,
+# like in development.
+# idServerDomain: "vector.im"
 
 # The brand to supply to the identity server when performing actions which may
 # result in emails or other communications to the user.
