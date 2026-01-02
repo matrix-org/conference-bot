@@ -538,7 +538,7 @@ export class Conference {
                 // This no longer matches the exact original intention: auditoria were previously
                 // associated with their 'container space', but we no longer wrap them in container
                 // spaces.
-                // We should remove associated spaces and remove this.
+                // TODO: We should remove associated spaces and remove this.
                 makeAssociatedSpace(parentSpace.roomId),
             ],
             name: auditorium.name,
