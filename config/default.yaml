@@ -21,8 +21,8 @@ managementRoom: "!room:example.org"
 # bot will accept all terms of service automatically - please ensure that it
 # has legal capability to do so before running the bot in this way.
 #
-# Omit this option to disable identity services.
-# This is usually required for running on non-publicly-reachable environments,
+# Comment out this option to disable identity services.
+# Disabling IS services is usually required for running in non-publicly-reachable environments,
 # like in development.
 # idServerDomain: "vector.im"
 
