@@ -103,8 +103,6 @@ export class JsonScheduleLoader {
             kind: RoomKind.Auditorium,
             talks,
             extraPeople: [],
-            // TODO Support physical auditoriums in the JSON schedule backend
-            isPhysical: false,
             trackType: '',
             livestreamId: '',
         };

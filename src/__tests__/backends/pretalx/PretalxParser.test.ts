@@ -6,7 +6,7 @@ import { IPrefixConfig } from "../../../config";
 
 const prefixConfig: IPrefixConfig = {
     // Unused here.
-    aliases: "", displayNameSuffixes: {}, suffixes: {}, physicalAuditoriumRooms: [],
+    aliases: "", displayNameSuffixes: {}, suffixes: {},
 
     auditoriumRooms: [
         "AW1.",

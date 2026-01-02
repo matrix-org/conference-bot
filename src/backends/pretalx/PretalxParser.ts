@@ -110,8 +110,8 @@ export interface PretalxSchema {
  * This will parse a schedule JSON file and attempt to fill in some of the fields. As the JSON
  * only contains some (public) data, consumers should expect to find additional information through
  * the API.
- * @param rawXml 
- * @returns 
+ * @param rawXml
+ * @returns
  */
 export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig): Promise<PretalxSchema> {
     const { conference } = (JSON.parse(rawJson) as PretalxData).schedule;
@@ -132,16 +132,14 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
             };
             interestRooms.set(spiRoom.id, spiRoom);
         } else if (kind === RoomKind.Auditorium) {
-            const isPhysical = prefixConfig.physicalAuditoriumRooms.some(p => room.description.startsWith(p));
             const qaEnabled = prefixConfig.qaAuditoriumRooms.some(p => room.description.startsWith(p));
-            const auditorium = {
+            const auditorium: IAuditorium & {qaEnabled: boolean} = {
                 id: room.name,
                 slug: slugify(room.name),
                 name: description,
                 kind: kind,
                 talks: new Map(),
                 extraPeople: [],
-                isPhysical: isPhysical,
                 qaEnabled: qaEnabled,
                 trackType: '',
                 livestreamId: '',
@@ -167,7 +165,7 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
                     (durationHours * 1000 * 60 * 60)
                     + (durationMinutes * 1000 * 60)
                 );
-                
+
                 if (event.type === 'Talk') {
                     // Tediously, we need the "code" to map to pretalx. The "code"
                     // is only available via the URL.
