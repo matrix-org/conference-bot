@@ -116,7 +116,16 @@ describe("Basic test setup", () => {
       ]
     `);
 
-    // TODO understand/explain why there are rooms without locators
+    // These rooms without locators are:
+    // - the control room (no name), with @admin:confbot present
+    // - canonical alias #speakers:confbot,
+    //   with m.room.create content: { kind: 'auditorium_backstage', room_version: '10', creator: '@conf_bot:confbot' }
+    // - canonical alias #coordinators:confbot,
+    //   with m.room.create content: { kind: 'auditorium_backstage', room_version: '10', creator: '@conf_bot:confbot' }
+    // - canonical alias #specialInterest:confbot,
+    //   with m.room.create content: { kind: 'auditorium_backstage', room_version: '10', creator: '@conf_bot:confbot' }
+    // - canonical alias #space-mysubspace:confbot,
+    //   with m.room.create content { type: 'm.space', room_version: '10', creator: '@conf_bot:confbot' }
     expect(roomsWithoutLocators).toBe(5);
   });
 
