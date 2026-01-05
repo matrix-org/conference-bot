@@ -68,7 +68,7 @@ export class VerifyCommand implements ICommand {
                 const isMod = mods.some(m => m.id === target.id);
                 html += `<li>${target.name} (${target.role}${isMod ? ' + room moderator' : ''})`;
 
-                let state =peopleToStates.get(target.id);
+                let state = peopleToStates.get(target.id);
                 if (state) {
                     html += ` (best method: <u>${state.bestKind}</u>; membership: <u>${state.membership}</u>)`;
                 } else {
