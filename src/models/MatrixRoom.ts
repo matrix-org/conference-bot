@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import { LogService, MatrixClient, Space } from "matrix-bot-sdk";
-import { RS_ASSOCIATED_SPACE } from "./room_state";
 import { Conference } from "../Conference";
 
 export class MatrixRoom {
@@ -23,19 +22,6 @@ export class MatrixRoom {
     protected canonicalAlias: string;
 
     constructor(public readonly roomId: string, protected client: MatrixClient, protected conference: Conference) {
-    }
-
-    /**
-     * @deprecated This is only used for putting talks into their rooms.
-     * But when we only support physical auditoria, we won't have talk rooms.
-     */
-    public async getAssociatedSpace(): Promise<Space> {
-        if (this.space) {
-            return this.space;
-        }
-        const spaceState = await this.client.getRoomStateEvent(this.roomId, RS_ASSOCIATED_SPACE, "");
-        this.space = await this.client.getSpace(spaceState.roomId);
-        return this.space;
     }
 
     public async getCanonicalAlias(): Promise<string | null> {
@@ -56,4 +42,3 @@ export class MatrixRoom {
         return null;
     }
 }
-

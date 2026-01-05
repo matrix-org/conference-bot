@@ -19,9 +19,7 @@ import { IWidget } from "matrix-widget-api";
 import { sha256 } from "../utils";
 import { Auditorium } from "./Auditorium";
 import { MatrixClient } from "matrix-bot-sdk";
-import { Talk } from "./Talk";
 import template from "../utils/template";
-import { Conference } from "../Conference";
 
 export interface ILayout {
     widgets: {
@@ -58,28 +56,6 @@ export class LiveWidget {
         };
     }
 
-    public static async forTalk(talk: Talk, client: MatrixClient, avatar: string, baseUrl: string): Promise<IStateEvent<IWidget>> {
-        const widgetId = sha256(JSON.stringify(talk.getDefinition()));
-        return {
-            type: "im.vector.modular.widgets",
-            state_key: widgetId,
-            content: {
-                creatorUserId: await client.getUserId(),
-                id: widgetId,
-                type: "m.custom",
-                waitForIframeLoad: true,
-                name: "Livestream / Q&A",
-                avatar_url: avatar,
-                url: baseUrl + "/widgets/talk.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&talkId=$talkId&theme=$theme#displayName=$matrix_display_name&avatarUrl=$matrix_avatar_url&userId=$matrix_user_id&roomId=$matrix_room_id&auth=openidtoken-jwt",
-                data: {
-                    title: talk.getName(),
-                    auditoriumId: talk.getAuditoriumId(),
-                    talkId: talk.getId(),
-                },
-            } as IWidget,
-        };
-    }
-
     public static async hybridForRoom(roomId: string, client: MatrixClient, avatar: string, url: string): Promise<IStateEvent<IWidget>> {
         const widgetId = sha256(JSON.stringify({roomId, kind: "hybrid"}));
         return {
@@ -100,17 +76,9 @@ export class LiveWidget {
         };
     }
 
-    public static async scoreboardForTalk(talk: Talk, client: MatrixClient, conference: Conference, avatar: string, url: string): Promise<IStateEvent<IWidget>> {
-        const aud = conference.getAuditorium(talk.getAuditoriumId());
-        if (aud === undefined) {
-            throw new Error(`No auditorium ${talk.getAuditoriumId()} for talk ${talk.getId()}`);
-        }
-        return this.scoreboardForAuditorium(aud, client, avatar, url, talk);
-    }
-
-    public static async scoreboardForAuditorium(aud: Auditorium, client: MatrixClient, avatar: string, url: string, talk?: Talk): Promise<IStateEvent<IWidget>> {
-        // note: this is a little bit awkward, but there's nothing special about the widget ID, it just needs to be unique
-        const widgetId = sha256(JSON.stringify([aud.getId(), (talk?.getId()) ?? '' ]) + "_SCOREBOARD");
+    public static async scoreboardForAuditorium(aud: Auditorium, client: MatrixClient, avatar: string, url: string): Promise<IStateEvent<IWidget>> {
+        // There's nothing special about the widget ID, it just needs to be unique
+        const widgetId = `AUDITORIUM_${aud.getId()}_SCOREBOARD`;
         const title = `Messages from ${await aud.getCanonicalAlias()}`;
         return {
             type: "im.vector.modular.widgets",
@@ -122,11 +90,10 @@ export class LiveWidget {
                 waitForIframeLoad: true,
                 name: "Upvoted messages",
                 avatar_url: avatar,
-                url: url + "/widgets/scoreboard.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&talkId=$talkId&theme=$theme",
+                url: url + "/widgets/scoreboard.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&theme=$theme",
                 data: {
                     title: title,
                     auditoriumId: aud.getId(),
-                    talkId: talk ? talk.getId() : null
                 },
             } as IWidget,
         };
