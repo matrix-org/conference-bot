@@ -75,7 +75,7 @@ export class VerifyCommand implements ICommand {
                     html += " (unknown state)";
                 }
                 
-                `</li>`;
+                html += `</li>`;
             }
         };
 
