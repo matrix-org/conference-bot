@@ -119,6 +119,7 @@ export class VerifyCommand implements ICommand {
                 const members: MembershipEvent[] = state.filter(s => s.type === "m.room.member").map(s => new MembershipEvent(s));
                 // List of Matrix user IDs that have already joined
                 const effectiveJoinedUserIds: string[] = members.filter(m => m.effectiveMembership === "join").map(m => m.membershipFor);
+                // List of Matrix user IDs that have been invited by MXID
                 const effectiveInvitedUserIds: string[] = members.filter(m => m.effectiveMembership === "invite").map(m => m.membershipFor);
                 for (const person of resolved) {
                     let bestKind: 'matrix' | 'e-mail' | 'uncontactable' = 'uncontactable';
