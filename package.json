@@ -23,7 +23,7 @@
     "test:e2e": "jest spec/"
   },
   "dependencies": {
-    "matrix-bot-sdk": "git+https://github.com/reivilibre/fork-matrix-bot-sdk#rei/fd25_dms-catch",
+    "matrix-bot-sdk": "git+https://github.com/element-hq/matrix-bot-sdk#rei/fd25_dms-catch",
     "await-lock": "^2.1.0",
     "config": "^3.3.3",
     "date-fns": "^4.1.0",
