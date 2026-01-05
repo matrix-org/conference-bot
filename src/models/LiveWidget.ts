@@ -78,7 +78,6 @@ export class LiveWidget {
 
     public static async scoreboardForAuditorium(aud: Auditorium, client: MatrixClient, avatar: string, url: string): Promise<IStateEvent<IWidget>> {
         // There's nothing special about the widget ID, it just needs to be unique
-        // The empty string was previously the talk ID, if there was a talk.
         const widgetId = `AUDITORIUM_${aud.getId()}_SCOREBOARD`;
         const title = `Messages from ${await aud.getCanonicalAlias()}`;
         return {
