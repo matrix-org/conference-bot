@@ -28,9 +28,9 @@ import { LogService, MembershipEvent } from "matrix-bot-sdk";
 interface PersonState {
     // what's the best contact method we have for the person?
     bestKind: 'matrix' | 'e-mail' | 'uncontactable',
-    
+
     // what's the current state of this person in this room?
-    membership: 'invited' | 'joined' | 'missing' | 'invited-but-by-e-mail'
+    membership: 'invited-by-mxid' | 'invited-by-e-mail' | 'joined' | 'missing'
 }
 
 export class VerifyCommand implements ICommand {
@@ -73,7 +73,7 @@ export class VerifyCommand implements ICommand {
                 } else {
                     html += " (unknown state)";
                 }
-                
+
                 html += `</li>`;
             }
         };
@@ -121,22 +121,27 @@ export class VerifyCommand implements ICommand {
                 // List of Matrix user IDs that have been invited by MXID
                 const effectiveInvitedUserIds: string[] = members.filter(m => m.effectiveMembership === "invite").map(m => m.membershipFor);
                 for (const person of resolved) {
-                    let bestKind: 'matrix' | 'e-mail' | 'uncontactable' = 'uncontactable';
-                    let state: 'invited' | 'joined' | 'missing' | 'invited-but-by-e-mail' = 'missing';
+                    let bestKind: PersonState["bestKind"] = 'uncontactable';
+                    let state: PersonState["membership"] = 'missing';
 
+                    if (person.emails) {
+                        bestKind = 'e-mail';
+                        if (emailInvitePersonIds.includes(person.person.id)) {
+                            state = 'invited-by-e-mail';
+                        }
+                    }
+
+                    // MXID state will override the state determined from e-mail
+                    // Note that we can, if the invite command has not been re-run,
+                    // have a MXID on record for someone yet only have invited by e-mail.
                     if (person.mxid) {
                         bestKind = 'matrix';
                         if (effectiveJoinedUserIds.includes(person.mxid)) {
                             state = 'joined';
                         } else if (effectiveInvitedUserIds.includes(person.mxid)) {
-                            state = 'invited';
-                        } else if (emailInvitePersonIds.includes(person.person.id)) {
-                            state = 'invited-but-by-e-mail';
-                        }
-                    } else if (person.emails) {
-                        bestKind = 'e-mail';
-                        if (emailInvitePersonIds.includes(person.person.id)) {
-                            state = 'invited';
+                            // It's OK if this overwrites `invited-by-e-mail` because
+                            // this is more interesting to us.
+                            state = 'invited-by-mxid';
                         }
                     }
 
