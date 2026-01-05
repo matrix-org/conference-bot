@@ -152,11 +152,14 @@ export class InviteCommand implements ICommand {
             if (target.mxid) {
                 if (effectiveJoinedUserIds.includes(target.mxid)) continue;
             } else {
-                // Notably: don't stop Matrix-inviting a user just because they had
-                // previously been e-mail-invited
+                // The user does not have an MXID on record. If we've already
+                // invited them by email, continue to the next user.
                 if (emailInvitePersonIds.includes(target.person.id)) continue;
             }
-            
+
+            // Notably, we DO try to invite users by MXID (when known) even if
+            // we've already invited them by email.
+
             try {
                 await invitePersonToRoom(this.client, target, roomId, this.config);
             } catch (e) {
