@@ -112,7 +112,6 @@ describe("Basic test setup", () => {
         "(test-conf) auditorium_backstage auditoriumId=main_stream",
         "(test-conf) conference",
         "(test-conf) conference_space",
-        "(test-conf) talk talkId=1",
       ]
     `);
 
@@ -137,7 +136,6 @@ describe("Basic test setup", () => {
       // `#test-conf:${testEnv.homeserver.domain}`, -- not invited to the root space
       `#main_stream:${testEnv.homeserver.domain}`,
       // `#main_stream-backstage:${testEnv.homeserver.domain}` -- not invited to the backstage,
-      `#talk-1:${testEnv.homeserver.domain}`,
     ];
     const moderatorUserId = `@modbot:${testEnv.homeserver.domain}`;
 

@@ -3,7 +3,7 @@ import { PretalxScheduleBackend } from "../../../backends/pretalx/PretalxBackend
 import { Server, createServer } from "node:http";
 import { AddressInfo } from "node:net";
 import path from "node:path";
-import { PretalxScheduleFormat } from "../../../config";
+import { IPrefixConfig, PretalxScheduleFormat } from "../../../config";
 
 const pretalxSpeakers = [{
     code: "37RA83",
@@ -92,9 +92,9 @@ function fakePretalxServer() {
     })});
 }
 
-const prefixConfig = {
+const prefixConfig: IPrefixConfig = {
     // Unused here.
-    aliases: "", displayNameSuffixes: {}, suffixes: {}, physicalAuditoriumRooms: [],
+    aliases: "", displayNameSuffixes: {}, suffixes: {},
 
     auditoriumRooms: [
         "AW1.",

@@ -38,10 +38,6 @@ export function decodePrefix(id: string, prefixConfig: IPrefixConfig): {kind: Ro
 
     const auditoriumPrefix = prefixConfig.auditoriumRooms.find(p => id.startsWith(p));
     if (auditoriumPrefix) {
-        if (prefixConfig.physicalAuditoriumRooms.find(p => id.startsWith(p))) {
-            // For physical auditoriums: don't strip the prefix. For e.g. K.1.102 the `K` is a building name and is important!
-            return {kind: RoomKind.Auditorium, name: override || id};
-        }
         // TODO(FOSDEM 2023): don't strip the prefix, because on FOSDEM's end they are not stripped in the livestream IDs.
         //     It would be good to figure out why we wanted to strip prefixes originally and whether we need finer controls.
         //return {kind: RoomKind.Auditorium, name: override || id.substring(auditoriumPrefix.length)};
@@ -204,7 +200,6 @@ export class PentabarfParser {
                 }
                 if (metadata.kind !== RoomKind.Auditorium) continue;
                 const audId = pRoom.attr?.["@_name"];
-                const isPhysical = prefixConfig.physicalAuditoriumRooms.find(p => audId.startsWith(p)) !== undefined;
                 let auditorium: IAuditorium = {
                     id: audId,
                     slug: slugify(metadata.name),
@@ -212,7 +207,6 @@ export class PentabarfParser {
                     kind: metadata.kind,
                     talks: new Map(),
                     extraPeople: [],
-                    isPhysical: isPhysical,
                     trackType: '',
                     livestreamId: '',
                 };

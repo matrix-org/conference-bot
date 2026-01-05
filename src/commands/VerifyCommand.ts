@@ -16,7 +16,6 @@ limitations under the License.
 
 import { ICommand } from "./ICommand";
 import { Conference } from "../Conference";
-import { asyncFilter } from "../utils";
 import { Auditorium } from "../models/Auditorium";
 import { PhysicalRoom } from "../models/PhysicalRoom";
 import { InterestRoom } from "../models/InterestRoom";
@@ -151,17 +150,6 @@ export class VerifyCommand implements ICommand {
             html += "</ul><b>Backstage room:</b><ul>";
             appendPeople(audBackstageToInvite, audToMod, peopleToStates);
             html += "</ul>";
-
-            const talks = await asyncFilter(this.conference.storedTalks, async t => t.getAuditoriumId() === room!.getId());
-            for (const talk of talks) {
-                const talkToInvite = await this.conference.getInviteTargetsForTalk(talk);
-                const talkToMod = await this.conference.getModeratorsForTalk(talk);
-                if (talkToMod.length || talkToInvite.length) {
-                    html += `<b>Talk: ${talk.getName()} (${talk.getId()})</b><ul>`;
-                    appendPeople(talkToInvite, talkToMod, new Map());
-                    html += "</ul>";
-                }
-            }
         }
 
         await this.client.sendHtmlNotice(controlRoomId, html);

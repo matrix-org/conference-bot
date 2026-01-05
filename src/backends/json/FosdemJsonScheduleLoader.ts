@@ -136,8 +136,6 @@ export class FosdemJsonScheduleLoader {
             kind: RoomKind.Auditorium,
             // This will be populated afterwards
             talks: new Map(),
-            // Hardcoded: FOSDEM is always physical now.
-            isPhysical: true,
             extraPeople,
             trackType: track.type,
             // This will be populated afterwards, with the value of one of the talks.
