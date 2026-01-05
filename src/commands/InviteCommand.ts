@@ -135,7 +135,7 @@ export class InviteCommand implements ICommand {
     public async ensureInvited(roomId: string, people: ResolvedPersonIdentifier[]) {
         // We don't want to invite anyone we have already invited or that has joined though, so
         // avoid those people. We do this by querying the room state and filtering.
-        let state: any[];
+        let state: Awaited<ReturnType<MatrixClient["getRoomState"]>>
         try {
             state = await this.client.getRoomState(roomId);
         }
