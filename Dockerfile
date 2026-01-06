@@ -8,12 +8,13 @@ COPY . /app
 WORKDIR /app
 
 FROM base AS prod-deps
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
+RUN --mount=type=cache,id=pnpm-prod,target=/pnpm/store pnpm install --prod --frozen-lockfile
 
-FROM prod-deps AS build
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
-# Must not set until after install
-ENV NODE_ENV=production
+# MUST fork off base, not prod-deps, because `--prod` will cause `matrix-bot-sdk` to not
+# emit `.d.ts` type declaration files in its built package (and it won't be rebuilt).
+FROM base AS build
+# Separate cache from the `--prod` install, for the same reason:
+RUN --mount=type=cache,id=pnpm-build,target=/pnpm/store pnpm install --frozen-lockfile
 RUN pnpm run build
 
 FROM base
