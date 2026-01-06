@@ -131,16 +131,16 @@ export class VerifyCommand implements ICommand {
                         }
                     }
 
-                    // MXID state will override the state determined from e-mail
-                    // Note that we can, if the invite command has not been re-run,
-                    // have a MXID on record for someone yet only have invited by e-mail.
+                    // MXID state will override the state determined from e-mail.
+                    // Note that until the invite command has been re-run, it's valid to have an
+                    // MXID on record for someone, yet only have invited them by e-mail.
                     if (person.mxid) {
                         bestKind = 'matrix';
                         if (effectiveJoinedUserIds.includes(person.mxid)) {
                             state = 'joined';
                         } else if (effectiveInvitedUserIds.includes(person.mxid)) {
                             // It's OK if this overwrites `invited-by-e-mail` because
-                            // this is more interesting to us.
+                            // we prefer direct invites by MXID rather than by e-mail.
                             state = 'invited-by-mxid';
                         }
                     }
