@@ -135,19 +135,31 @@ export class InviteCommand implements ICommand {
     public async ensureInvited(roomId: string, people: ResolvedPersonIdentifier[]) {
         // We don't want to invite anyone we have already invited or that has joined though, so
         // avoid those people. We do this by querying the room state and filtering.
-        let state;
+        let state: Awaited<ReturnType<MatrixClient["getRoomState"]>>
         try {
             state = await this.client.getRoomState(roomId);
         }
         catch (error) {
             throw Error(`Error fetching state for room ${roomId}`, {cause: error})
         }
-        const emailInvitePersonIds = state.filter(s => s.type === "m.room.third_party_invite").map(s => s.content?.[RS_3PID_PERSON_ID]).filter(i => !!i);
-        const members = state.filter(s => s.type === "m.room.member").map(s => new MembershipEvent(s));
-        const effectiveJoinedUserIds = members.filter(m => m.effectiveMembership === "join").map(m => m.membershipFor);
+        // List of IDs of people that have already been invited by e-mail
+        const emailInvitePersonIds: string[] = state.filter(s => s.type === "m.room.third_party_invite").map(s => s.content?.[RS_3PID_PERSON_ID]).filter(i => !!i);
+        // List of state events that are m.room.member events.
+        const members: MembershipEvent[] = state.filter(s => s.type === "m.room.member").map(s => new MembershipEvent(s));
+        // List of Matrix user IDs that have already joined
+        const effectiveJoinedUserIds: string[] = members.filter(m => m.effectiveMembership === "join").map(m => m.membershipFor);
         for (const target of people) {
-            if (target.mxid && effectiveJoinedUserIds.includes(target.mxid)) continue;
-            if (emailInvitePersonIds.includes(target.person.id)) continue;
+            if (target.mxid) {
+                if (effectiveJoinedUserIds.includes(target.mxid)) continue;
+            } else {
+                // The user does not have an MXID on record. If we've already
+                // invited them by email, continue to the next user.
+                if (emailInvitePersonIds.includes(target.person.id)) continue;
+            }
+
+            // Notably, we DO try to invite users by MXID (when known) even if
+            // we've already invited them by email.
+
             try {
                 await invitePersonToRoom(this.client, target, roomId, this.config);
             } catch (e) {
