@@ -128,7 +128,7 @@ conference:
 
 
   # You must specifiy a backend for your schedule.
-  # It may either be "json", "penta", or "pretalx". Remember to only
+  # It may either be "json" or "pretalx". Remember to only
   # specify *one*.
 
   # sample schedule configuration for using the json backend.
@@ -141,25 +141,9 @@ conference:
     # the JSON schema of the JSON schedule format.
     scheduleDefinition: "path/to/local/file"
 
-  # sample schedule configuration for using the penta backend.
-  # schedule:
-    # backend: "penta"
-    # The URL to the XML which is updated with conference information.
-    # This is read and parsed by the bot during the early stages of
-    # setting up the conference.
-    # scheduleDefinition: "https://fosdem.org/2021/schedule/xml"
-
-  # sample schedule configuration for using the pretalx backend. 
+  # sample schedule configuration for using the pretalx backend.
   # schedule:
     # backend: "pretalx"
-    # The format the scheduleDefinition is in. Use "pretalx" if you are loading the
-    # JSON export from pretalx directly, or "fosdem" for the specific pentabarf-xml-format
-    # they use instead.
-    # scheduleFormat: "fosdem"|"pretalx"
-    # The URL to the XML which is updated with conference information.
-    # This is read and parsed by the bot during the early stages of
-    # setting up the conference.
-    # scheduleDefinition: "https://fosdem.org/2021/schedule/xml"
     # The endpoint to reach the base API path of the conference.
     # pretalxApiEndpoint: "https://pretalx.example.com/api/events/example-2021/"
     # Access token for accessing the Pretalx API
