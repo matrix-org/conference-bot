@@ -60,15 +60,10 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: conference-bot
-      # Setup node & run tests
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version-file: conference-bot/.node-version
-      - name: Run Homerunner tests
+      - name: Build test image
+        run: |
+          docker build --target build -t conference-bot-test:local ./conference-bot
+      - name: Run Homerunner tests (docker)
         timeout-minutes: 10
         env:
           HOMERUNNER_IMAGE: ghcr.io/element-hq/synapse/complement-synapse:latest
@@ -76,7 +71,10 @@ jobs:
           NODE_OPTIONS: --dns-result-order ipv4first
         run: |
           docker pull $HOMERUNNER_IMAGE
-          cd conference-bot
-          pnpm install --frozen-lockfile
-          ../homerunner &
-          bash -ic 'pnpm run test:e2e'
+          ./homerunner &
+          docker run --rm --network=host \
+            -e HOMERUNNER_IMAGE \
+            -e HOMERUNNER_SPAWN_HS_TIMEOUT_SECS \
+            -e NODE_OPTIONS \
+            conference-bot-test:local \
+            bash -lc "pnpm run test:e2e"
