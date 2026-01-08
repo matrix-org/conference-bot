@@ -65,9 +65,6 @@ describe("Basic test setup", () => {
     // Check that we're generally okay.
     expect(event.content.body).toMatch("Scheduled tasks yet to run: 0");
     expect(event.content.body).toMatch("Schedule source healthy: true");
-
-    // TEMP: Force a failure.
-    expect(false).toBe(true);
   });
   it("should be able to build successfully", async () => {
     await buildConference(testEnv);
