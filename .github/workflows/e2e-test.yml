@@ -62,7 +62,7 @@ jobs:
           path: conference-bot
       - name: Build test image
         run: |
-          docker build --target build -t conference-bot-test:local ./conference-bot
+          docker build -t conference-bot-test:local ./conference-bot
       # Regression test for https://github.com/matrix-org/conference-bot/pull/264.
       - name: Check the matrix-bot-sdk was built correctly
         run: |
