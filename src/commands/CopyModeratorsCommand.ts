@@ -16,7 +16,6 @@ limitations under the License.
 
 import { ICommand } from "./ICommand";
 import {MatrixClient, MembershipEvent, PowerLevelsEventContent} from "matrix-bot-sdk";
-import { Conference } from "../Conference";
 
 export class CopyModeratorsCommand implements ICommand {
     public readonly prefixes = ["copymods", "copymoderators", "copy_mods", "copy_moderators"];

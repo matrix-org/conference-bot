@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { LogLevel, LogService, RoomAlias, Space } from "matrix-bot-sdk";
+import { LogService, RoomAlias, Space } from "matrix-bot-sdk";
 import {
     AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE,
     AUDITORIUM_CREATION_TEMPLATE,
@@ -40,7 +40,7 @@ import {
     RS_STORED_PERSON,
     RS_STORED_SUBSPACE,
 } from "./models/room_state";
-import { applyAllAliasPrefixes, assignAliasVariations, calculateAliasVariations } from "./utils/aliases";
+import { applyAllAliasPrefixes, assignAliasVariations } from "./utils/aliases";
 import { safeCreateRoom } from "./utils";
 import { IConfig, RunMode } from "./config";
 import { MatrixRoom } from "./models/MatrixRoom";
@@ -49,9 +49,7 @@ import { ResolvedPersonIdentifier, resolveIdentifiers } from "./invites";
 import { PermissionsCommand } from "./commands/PermissionsCommand";
 import { InterestRoom } from "./models/InterestRoom";
 import { IStateEvent } from "./models/room_state";
-import { logMessage } from "./LogProxy";
 import { IScheduleBackend } from "./backends/IScheduleBackend";
-import { setUnion } from "./utils/sets";
 import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
 import { Gauge } from "prom-client";
 

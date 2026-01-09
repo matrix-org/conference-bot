@@ -1,6 +1,5 @@
 import { ComplementHomeServer, createHS, destroyHS } from "./homerunner";
 import { MatrixClient, PowerLevelsEventContent, RoomEvent, TextualMessageEventContent } from "matrix-bot-sdk";
-import dns from 'node:dns';
 import { mkdtemp, rm } from "node:fs/promises";
 import { IConfig, RunMode } from "../../src/config";
 import { ConferenceBot } from "../../src/index";

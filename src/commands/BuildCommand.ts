@@ -15,12 +15,9 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { LogLevel, LogService, MentionPill, RichReply } from "matrix-bot-sdk";
-import { Auditorium } from "../models/Auditorium";
-import { ITalk } from "../models/schedule";
+import { LogService, MentionPill, RichReply } from "matrix-bot-sdk";
 import { IConfig } from "../config";
 import { Conference } from "../Conference";
-import { logMessage } from "../LogProxy";
 import { editNotice } from "../utils";
 import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
