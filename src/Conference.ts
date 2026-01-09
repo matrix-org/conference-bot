@@ -681,24 +681,6 @@ export class Conference {
         return people.filter(p => roles.includes(p.role));
     }
 
-    private async resolvePeople(people: IPerson[]): Promise<IPerson[]> {
-        // Clone people from the DB to avoid accidentally mutating caches
-        people = people.map(p => objectFastClone(p))
-
-        // Fill in any details we have that the database doesn't
-        for (const person of people) {
-            if (person.matrix_id) continue;
-            const storedPerson = this.getPerson(person.id);
-            if (storedPerson?.matrix_id) {
-                person.matrix_id = storedPerson.matrix_id;
-            }
-        }
-
-        // We don't do the final resolution because that can take too much time at this level
-        // in the call chain
-        return people;
-    }
-
     public getAuditorium(audId: string): Auditorium {
         return this.auditoriums[audId];
     }
