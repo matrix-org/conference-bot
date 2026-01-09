@@ -41,7 +41,7 @@ import {
     RS_STORED_SUBSPACE,
 } from "./models/room_state";
 import { applySuffixRules, objectFastClone, safeCreateRoom } from "./utils";
-import { addAndDeleteManagedAliases, applyAllAliasPrefixes, assignAliasVariations, calculateAliasVariations } from "./utils/aliases";
+import { applyAllAliasPrefixes, assignAliasVariations, calculateAliasVariations } from "./utils/aliases";
 import { IConfig, RunMode } from "./config";
 import { MatrixRoom } from "./models/MatrixRoom";
 import { Auditorium, AuditoriumBackstage } from "./models/Auditorium";
@@ -349,7 +349,7 @@ export class Conference {
                 try {
                     const roomId = await safeCreateRoom(
                         this.client,
-                        mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
+                        mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE(this.config.moderatorUserIds), {
                             room_alias_name: (new RoomAlias(alias)).localpart,
                             invite: this.config.moderatorUserIds,
                         }),
@@ -532,7 +532,7 @@ export class Conference {
             return this.auditoriumBackstages[auditorium.id];
         }
 
-        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
+        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE(this.config.moderatorUserIds), {
             creation_content: {
                 [RSC_CONFERENCE_ID]: this.id,
                 [RSC_AUDITORIUM_ID]: auditorium.id,

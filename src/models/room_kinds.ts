@@ -19,7 +19,7 @@ import { RoomCreateOptions } from "matrix-bot-sdk";
 
 export const KickPowerLevel = 50;
 
-export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = (moderatorUserIds: string[]) => ({
+export const ROOM_POWER_LEVELS_TEMPLATE = (moderatorUserIds: string[]) => ({
     ban: 50,
     events_default: 0,
     invite: 50,
@@ -42,11 +42,6 @@ export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = (moderatorUserIds: string[]) =>
     },
     users: Object.fromEntries(moderatorUserIds.map(moderator => [moderator, 100])),
 });
-
-export const PRIVATE_ROOM_POWER_LEVELS_TEMPLATE = {
-    ...PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
-    invite: 0,
-};
 
 /**
  * Key in a RS_LOCATOR event that identifies what kind of room it is.
@@ -86,7 +81,7 @@ export const CONFERENCE_ROOM_CREATION_TEMPLATE: RoomCreateOptions = {
     },
 };
 
-export const AUDITORIUM_CREATION_TEMPLATE = (moderatorUserIds: string[]) => ({
+export const AUDITORIUM_CREATION_TEMPLATE = (moderatorUserIds: string[]): RoomCreateOptions => ({
     preset: 'public_chat',
     visibility: 'public',
     initial_state: [
@@ -96,11 +91,11 @@ export const AUDITORIUM_CREATION_TEMPLATE = (moderatorUserIds: string[]) => ({
     creation_content: {
         [RSC_ROOM_KIND_FLAG]: RoomKind.Auditorium,
     },
-    power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE(moderatorUserIds),
+    power_level_content_override: ROOM_POWER_LEVELS_TEMPLATE(moderatorUserIds),
     invite: moderatorUserIds,
 } satisfies RoomCreateOptions);
 
-export const AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE: RoomCreateOptions = {
+export const AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE = (moderatorUserIds: string[]): RoomCreateOptions => ({
     preset: 'private_chat',
     visibility: 'private',
     initial_state: [
@@ -110,11 +105,11 @@ export const AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE: RoomCreateOptions = {
     creation_content: {
         [RSC_ROOM_KIND_FLAG]: RoomKind.AuditoriumBackstage,
     },
-    power_level_content_override: PRIVATE_ROOM_POWER_LEVELS_TEMPLATE,
-};
+    power_level_content_override: ROOM_POWER_LEVELS_TEMPLATE(moderatorUserIds),
+});
 
-export const SPECIAL_INTEREST_CREATION_TEMPLATE = (moderatorUserIds: string[]) => {
-    let template = PUBLIC_ROOM_POWER_LEVELS_TEMPLATE(moderatorUserIds);
+export const SPECIAL_INTEREST_CREATION_TEMPLATE = (moderatorUserIds: string[]):RoomCreateOptions  => {
+    let template = ROOM_POWER_LEVELS_TEMPLATE(moderatorUserIds);
     return ({
         preset: 'public_chat',
         visibility: 'public',
