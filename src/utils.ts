@@ -166,7 +166,7 @@ export function readJsonFileAsync(path: string): Promise<object> {
  * @param replacer: If specified, a function that is passed to JSON.stringify to replace unknown objects.
  */
 export async function writeJsonFileAsync(path: string, data: object, replacer: any | undefined = undefined): Promise<void> {
-    const tempPath = path + ".part"
+    const tempPath = `${path}.part`
     // First write to the temporary file
     await new Promise<void>((resolve, reject) => {
         writeFile(tempPath, JSON.stringify(data, replacer), (err) => {

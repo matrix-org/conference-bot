@@ -118,7 +118,7 @@ function stripAliasToLocalpart(alias: string): string {
 const STATE_EVENT_MANAGED_ALIAS: string = "org.matrix.confbot.managed_alias";
 
 async function listManagedAliasLocalpartsInRoom(client: MatrixClient, roomId: string): Promise<Set<string>> {
-    const localAliases = await client.doRequest("GET", "/_matrix/client/v3/rooms/" + encodeURIComponent(roomId) + "/aliases");
+    const localAliases = await client.doRequest("GET", `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/aliases`);
     const aliases: string[] = localAliases["aliases"];
 
     const presentLocalparts: Set<string> = new Set();

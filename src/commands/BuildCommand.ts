@@ -60,8 +60,8 @@ export class BuildCommand implements ICommand {
         const spacePill = await MentionPill.forRoom((await this.conference.getSpace())!.roomId, this.client);
         const messagePrefix = "Conference prepared! Making rooms for later use (this will take a while)...";
         const reply = RichReply.createFor(roomId, event,
-            messagePrefix + "\n\nYour conference's space is at " + spacePill.text,
-            messagePrefix + "<br /><br />Your conference's space is at " + spacePill.html);
+            `${messagePrefix}\n\nYour conference's space is at ${spacePill.text}`,
+            `${messagePrefix}<br /><br />Your conference's space is at ${spacePill.html}`);
         reply["msgtype"] = "m.notice";
         await this.client.sendMessage(roomId, reply);
 

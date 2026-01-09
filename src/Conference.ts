@@ -399,7 +399,7 @@ export class Conference {
             await assignAliasVariations(
                 this.client,
                 subspace.roomId,
-                applyAllAliasPrefixes("space-" + aliasLocalpart, this.config.conference.prefixes.aliases),
+                applyAllAliasPrefixes(`space-${aliasLocalpart}`, this.config.conference.prefixes.aliases),
                 this.config.conference.prefixes.suffixes,
             );
 
@@ -544,7 +544,7 @@ export class Conference {
             ],
             name: `[BACKSTAGE] ${auditorium.name}`,
         }));
-        await assignAliasVariations(this.client, roomId, applyAllAliasPrefixes(auditorium.slug + "-backstage", this.config.conference.prefixes.aliases),
+        await assignAliasVariations(this.client, roomId, applyAllAliasPrefixes(`${auditorium.slug}-backstage`, this.config.conference.prefixes.aliases),
         this.config.conference.prefixes.suffixes, auditorium.id);
         this.auditoriumBackstages[auditorium.id] = new AuditoriumBackstage(roomId, auditorium, this.client, this);
 

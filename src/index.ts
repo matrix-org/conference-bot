@@ -270,12 +270,12 @@ export class ConferenceBot {
             const prefixes = [
                 "!conference",
                 "!c",
-                localpart + ":",
-                displayName + ":",
-                userId + ":",
-                localpart + " ",
-                displayName + " ",
-                userId + " ",
+                `${localpart}:`,
+                `${displayName}:`,
+                `${userId}:`,
+                `${localpart} `,
+                `${displayName} `,
+                `${userId} `,
             ];
 
             const prefixUsed = prefixes.find(p => content['body'].startsWith(p));
