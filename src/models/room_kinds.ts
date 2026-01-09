@@ -54,7 +54,7 @@ export enum RoomKind {
      * This is *not* the public space for the conference.
      */
     ConferenceDb = "conference",
-    ConferenceSpace = "conference_space", // TODO
+    ConferenceSpace = "conference_space",
     Auditorium = "auditorium",
     AuditoriumBackstage = "auditorium_backstage",
     SpecialInterest = "other",
