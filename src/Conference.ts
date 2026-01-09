@@ -205,27 +205,30 @@ export class Conference {
                                 this.dbRoom = new MatrixRoom(roomId, this.client, this);
                                 this.recalculateRoomMembership(roomId);
                                 break;
-                            case RoomKind.Auditorium:
+                            case RoomKind.Auditorium: {
                                 const auditoriumId = locatorEvent[RSC_AUDITORIUM_ID];
                                 if (this.backend.auditoriums.has(auditoriumId)) {
                                     this.auditoriums[auditoriumId] = new Auditorium(roomId, this.backend.auditoriums.get(auditoriumId)!, this.client, this);
                                     this.recalculateRoomMembership(roomId);
                                 }
                                 break;
-                            case RoomKind.AuditoriumBackstage:
+                            }
+                            case RoomKind.AuditoriumBackstage: {
                                 const auditoriumBsId = locatorEvent[RSC_AUDITORIUM_ID];
                                 if (this.backend.auditoriums.has(auditoriumBsId)) {
                                     this.auditoriumBackstages[auditoriumBsId] = new AuditoriumBackstage(roomId, this.backend.auditoriums.get(auditoriumBsId)!, this.client, this);
                                     this.recalculateRoomMembership(roomId);
                                 }
                                 break;
-                            case RoomKind.SpecialInterest:
+                            }
+                            case RoomKind.SpecialInterest: {
                                 const interestId = locatorEvent[RSC_SPECIAL_INTEREST_ID];
                                 if (this.backend.interestRooms.has(interestId)) {
                                     this.interestRooms[interestId] = new InterestRoom(roomId, this.client, this, interestId, this.config.conference.prefixes);
                                     this.recalculateRoomMembership(roomId);
                                 }
                                 break;
+                            }
                             default:
                                 break;
                         }

@@ -42,7 +42,7 @@ export async function replaceRoomIdsWithPills(client: ConferenceMatrixClient, te
     };
 
     const escapeRegex = (v: string): string => {
-        return v.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        return v.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
     };
 
     const viaServers = [(new UserID(await client.getUserId())).domain];
