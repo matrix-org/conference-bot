@@ -26,7 +26,7 @@ export interface ICanonicalAliasContent {
     alt_aliases: string[];
 }
 
-export async function getCanonicalAliasInfo(client: MatrixClient, roomId: string): Promise<ICanonicalAliasContent> {
+async function getCanonicalAliasInfo(client: MatrixClient, roomId: string): Promise<ICanonicalAliasContent> {
     try {
         return await client.getRoomStateEvent(roomId, "m.room.canonical_alias", "");
     } catch (e) {
@@ -36,7 +36,7 @@ export async function getCanonicalAliasInfo(client: MatrixClient, roomId: string
     }
 }
 
-export async function safeAssignAlias(client: ConferenceMatrixClient, roomId: string, localpart: string): Promise<void> {
+async function safeAssignAlias(client: ConferenceMatrixClient, roomId: string, localpart: string): Promise<void> {
     try {
         // yes, we reuse the variable despite the contents changing. This is to make sure that the log message
         // gives a sense of what request failed.
@@ -134,7 +134,7 @@ async function listManagedAliasLocalpartsInRoom(client: MatrixClient, roomId: st
     return presentLocalparts;
 }
 
-export async function addAndDeleteManagedAliases(client: ConferenceMatrixClient, roomId: string, desiredLocalparts: Set<string>): Promise<void> {
+async function addAndDeleteManagedAliases(client: ConferenceMatrixClient, roomId: string, desiredLocalparts: Set<string>): Promise<void> {
     const presentLocalparts: Set<string> = await listManagedAliasLocalpartsInRoom(client, roomId);
 
     const localpartsToBeAdded = setDifference(desiredLocalparts, presentLocalparts);

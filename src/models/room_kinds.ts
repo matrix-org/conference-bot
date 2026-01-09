@@ -19,7 +19,7 @@ import { RoomCreateOptions } from "matrix-bot-sdk";
 
 export const KickPowerLevel = 50;
 
-export const ROOM_POWER_LEVELS_TEMPLATE = (moderatorUserIds: string[]) => ({
+const ROOM_POWER_LEVELS_TEMPLATE = (moderatorUserIds: string[]) => ({
     ban: 50,
     events_default: 0,
     invite: 50,
