@@ -35,7 +35,7 @@ export class PowerLevelCommand implements ICommand {
         console.log(roomGroups)
 
         if (!args.length) {
-            return this.client.replyHtmlNotice(managementRoomId, event, "Please specify a room ID or alias, or one of the room groups:\n" + IM.prettyGroupNameList(roomGroups));
+            return this.client.replyHtmlNotice(managementRoomId, event, `Please specify a room ID or alias, or one of the room groups:\n${IM.prettyGroupNameList(roomGroups)}`);
         }
 
         if (roomGroups.has(args[1])) {

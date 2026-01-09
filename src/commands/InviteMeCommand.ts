@@ -54,8 +54,8 @@ export class InviteMeCommand implements ICommand {
         for (const aud of this.conference.storedAuditoriums) {
             addToGroup("auditorium", aud.roomId);
             const audSlug = aud.getSlug();
-            addToGroup(audSlug + ":*", aud.roomId);
-            addToGroup(audSlug + ":public", aud.roomId);
+            addToGroup(`${audSlug}:*`, aud.roomId);
+            addToGroup(`${audSlug}:public`, aud.roomId);
             addToGroup("public", aud.roomId);
             addToGroup("*", aud.roomId);
         }
@@ -63,8 +63,8 @@ export class InviteMeCommand implements ICommand {
         for (const audBack of this.conference.storedAuditoriumBackstages) {
             addToGroup("auditorium_backstage", audBack.roomId);
             const audSlug = audBack.getSlug();
-            addToGroup(audSlug + ":*", audBack.roomId);
-            addToGroup(audSlug + ":private", audBack.roomId);
+            addToGroup(`${audSlug}:*`, audBack.roomId);
+            addToGroup(`${audSlug}:private`, audBack.roomId);
             addToGroup("private", audBack.roomId);
             addToGroup("*", audBack.roomId);
         }

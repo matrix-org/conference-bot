@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import { doAuditoriumResolveAction, doInterestResolveAction, IAction } from "./people";
-import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../../Conference";
 import { ConferenceMatrixClient } from "../../ConferenceMatrixClient";
 

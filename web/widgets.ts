@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-export const urlParams = (new URL(window.location.href)).searchParams;
+const urlParams = (new URL(window.location.href)).searchParams;
 export const widgetId = urlParams.get("widgetId");
 export const isWidget = widgetId && widgetId !== "$matrix_widget_id";
 

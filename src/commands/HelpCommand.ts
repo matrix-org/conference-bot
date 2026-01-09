@@ -16,7 +16,6 @@ limitations under the License.
 
 import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
-import { Conference } from "../Conference";
 
 export class HelpCommand implements ICommand {
     public readonly prefixes = ["help", "?"];

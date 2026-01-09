@@ -50,7 +50,7 @@ export class PermissionsCommand implements ICommand {
         for (const person of people) {
             if (!person.mxid) continue;
 
-            if (! /^@[^:]+:[^\.]+\..+$/.test(person.mxid)) {
+            if (! /^@[^:]+:[^.]+\..+$/.test(person.mxid)) {
                 LogService.warn("PermissionsCommand", `ignoring invalid MXID ${person.mxid}`);
                 continue;
             }

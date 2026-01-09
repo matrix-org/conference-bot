@@ -102,7 +102,7 @@ export class PretalxApiClient {
     }
 
     async getSpeaker(code: string) {
-        const url = new URL(this.baseUri + `/speakers/${code}/`);
+        const url = new URL(`${this.baseUri}/speakers/${code}/`);
         const req = await fetch(url, this.requestInit);
         if (!req.ok) {
             const reason = await req.text();
@@ -113,7 +113,7 @@ export class PretalxApiClient {
     }
 
     async getSpeakers(offset: number, limit: number) {
-        const url = new URL(this.baseUri + '/speakers/');
+        const url = new URL(`${this.baseUri}/speakers/`);
         url.searchParams.set('offset', offset.toString());
         url.searchParams.set('limit', limit.toString());
         const req = await fetch(url, this.requestInit);
@@ -125,7 +125,7 @@ export class PretalxApiClient {
         const nextValue = result.next && new URL(result.next).searchParams.get('offset');
         return {
             speakers: result.results,
-            next: nextValue ? parseInt(nextValue) : null,
+            next: nextValue ? parseInt(nextValue, 10) : null,
         };
     }
 
@@ -141,7 +141,7 @@ export class PretalxApiClient {
     }
 
     async getTalks(offset: number, limit: number) {
-        const url = new URL(this.baseUri + '/talks/');
+        const url = new URL(`${this.baseUri}/talks/`);
         url.searchParams.set('offset', offset.toString());
         url.searchParams.set('limit', limit.toString());
         const req = await fetch(url, this.requestInit);
@@ -153,7 +153,7 @@ export class PretalxApiClient {
         const nextValue = result.next && new URL(result.next).searchParams.get('offset');
         return {
             talks: result.results,
-            next: nextValue ? parseInt(nextValue) : null,
+            next: nextValue ? parseInt(nextValue, 10) : null,
         };
     }
 

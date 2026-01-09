@@ -22,9 +22,7 @@ import { InterestRoom } from "../../models/InterestRoom";
 import { ConferenceMatrixClient } from "../../ConferenceMatrixClient";
 import { logMessage } from "../../LogProxy";
 
-export interface IAction {
-    (client: MatrixClient, roomId: string, people: ResolvedPersonIdentifier[]): Promise<void>;
-}
+export type IAction = (client: MatrixClient, roomId: string, people: ResolvedPersonIdentifier[]) => Promise<void>
 
 export async function doAuditoriumResolveAction(
     action: IAction,

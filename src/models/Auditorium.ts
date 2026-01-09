@@ -44,7 +44,4 @@ export class Auditorium extends MatrixRoom implements PhysicalRoom {
 
 // It's the same but different
 export class AuditoriumBackstage extends Auditorium {
-    constructor(roomId: string, definition: IAuditorium, client: MatrixClient, conference: Conference) {
-        super(roomId, definition, client, conference);
-    }
 }

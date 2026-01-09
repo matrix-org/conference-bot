@@ -3,7 +3,7 @@ import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from ".
 import { FOSDEMSpecificJSONSchedule, FOSDEMPerson, FOSDEMTrack, FOSDEMTalk } from "./jsontypes/FosdemJsonSchedule.schema";
 import { AuditoriumId, InterestId, TalkId } from "../IScheduleBackend";
 import { IConfig } from "../../config";
-import { addMinutes, getTime, getUnixTime, parseISO, startOfDay } from "date-fns";
+import { addMinutes, getTime, parseISO, startOfDay } from "date-fns";
 
 /**
  * Loader and holder for FOSDEM-specific JSON schedules, acquired from the

@@ -31,10 +31,10 @@ const liveBannerLongText = document.getElementById("liveBannerLongText")!;
 const joinButton = document.getElementById('joinButton')!;
 
 const livestreamStartTime = getAttr('org.matrix.confbot.livestream_start_time') ?
-    parseInt(getAttr('org.matrix.confbot.livestream_start_time')!) :
+    parseInt(getAttr('org.matrix.confbot.livestream_start_time')!, 10) :
     null;
 const livestreamEndTime = getAttr('org.matrix.confbot.livestream_end_time') ?
-    parseInt(getAttr('org.matrix.confbot.livestream_end_time')!) :
+    parseInt(getAttr('org.matrix.confbot.livestream_end_time')!, 10) :
     null;
 
 let widgetApi: WidgetApi | null = null;

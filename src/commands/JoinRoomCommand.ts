@@ -16,9 +16,6 @@ limitations under the License.
 
 import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
-import { Conference } from "../Conference";
-import { invitePersonToRoom, ResolvedPersonIdentifier } from "../invites";
-import { logMessage } from "../LogProxy";
 
 export class JoinCommand implements ICommand {
     public readonly prefixes = ["join"];

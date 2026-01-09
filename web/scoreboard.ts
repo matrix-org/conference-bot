@@ -52,7 +52,7 @@ if (widgetId) {
 const forRoomId = getAttr('org.matrix.confbot.room_id')!;
 
 function innerText(tag: string, clazz: string, text: string): [string, string[]] {
-    const id = Date.now() + '-' + (Math.random() * Number.MAX_SAFE_INTEGER) + '-text';
+    const id = `${Date.now()}-${Math.random() * Number.MAX_SAFE_INTEGER}-text`;
 
     return [
         `<${tag} class="${clazz}" id="${id}"><!-- populated --></${tag}>`,

@@ -88,7 +88,7 @@ export class ConferenceBot {
         const storage = new SimpleFsStorageProvider(path.join(config.dataPath, "bot.json"));
         const client = await ConferenceMatrixClient.create(config, storage);
         client.impersonateUserId(config.userId);       
-        const backend = await this.loadBackend(config);
+        const backend = await ConferenceBot.loadBackend(config);
         const conference = new Conference(backend, config.conference.id, client, config);
         const checkins = new CheckInMap(client, config);
         const scoreboard = new Scoreboard(conference, client, config);
@@ -270,12 +270,12 @@ export class ConferenceBot {
             const prefixes = [
                 "!conference",
                 "!c",
-                localpart + ":",
-                displayName + ":",
-                userId + ":",
-                localpart + " ",
-                displayName + " ",
-                userId + " ",
+                `${localpart}:`,
+                `${displayName}:`,
+                `${userId}:`,
+                `${localpart} `,
+                `${displayName} `,
+                `${userId} `,
             ];
 
             const prefixUsed = prefixes.find(p => content['body'].startsWith(p));

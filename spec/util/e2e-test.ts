@@ -1,6 +1,5 @@
 import { ComplementHomeServer, createHS, destroyHS } from "./homerunner";
 import { MatrixClient, PowerLevelsEventContent, RoomEvent, TextualMessageEventContent } from "matrix-bot-sdk";
-import dns from 'node:dns';
 import { mkdtemp, rm } from "node:fs/promises";
 import { IConfig, RunMode } from "../../src/config";
 import { ConferenceBot } from "../../src/index";
@@ -135,7 +134,7 @@ export class E2ETestMatrixClient extends MatrixClient {
 
 export class E2ETestEnv {
     static async createTestEnv(opts: Opts): Promise<E2ETestEnv> {
-        const workerID = parseInt(process.env.JEST_WORKER_ID ?? '0');
+        const workerID = parseInt(process.env.JEST_WORKER_ID ?? '0', 10);
         const { matrixLocalparts, config: providedConfig  } = opts;
         const tmpDir = await mkdtemp('confbot-test');
 
@@ -153,7 +152,7 @@ export class E2ETestEnv {
         await adminUser.client.joinRoom(mgmntRoom);
 
         // Configure JSON schedule
-        const scheduleDefinition = path.resolve(__dirname, '..', 'fixtures', opts.fixture + ".json");
+        const scheduleDefinition = path.resolve(__dirname, '..', 'fixtures', `${opts.fixture}.json`);
 
         const config: IConfig = {
             livestream: {
