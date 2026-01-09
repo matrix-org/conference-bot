@@ -40,8 +40,8 @@ import {
     RS_STORED_PERSON,
     RS_STORED_SUBSPACE,
 } from "./models/room_state";
-import { applySuffixRules, objectFastClone, safeCreateRoom } from "./utils";
 import { applyAllAliasPrefixes, assignAliasVariations, calculateAliasVariations } from "./utils/aliases";
+import { safeCreateRoom } from "./utils";
 import { IConfig, RunMode } from "./config";
 import { MatrixRoom } from "./models/MatrixRoom";
 import { Auditorium, AuditoriumBackstage } from "./models/Auditorium";
@@ -115,10 +115,9 @@ export class Conference {
                                 // and have the same ID (they just represent different rooms), but we don't want to repeat
                                 // the association as that would just involve sending duplicate state events.
                                 let person = people[0];
-                                const clonedPerson = objectFastClone(person);
-                                clonedPerson.matrix_id = event['state_key'];
-                                await this.createUpdatePerson(clonedPerson);
-                                LogService.info("Conference", `Updated ${clonedPerson.id} to be associated with ${clonedPerson.matrix_id}`);
+                                const updatedPerson = { ...person, matrix_id: event['state_key'] };
+                                await this.createUpdatePerson(updatedPerson);
+                                LogService.info("Conference", `Updated ${updatedPerson.id} to be associated with ${updatedPerson.matrix_id}`);
 
                                 // Update permissions while we're here (if we can identify the room kind)
                                 const aud = this.storedAuditoriums.find(a => a.roomId === roomId);
