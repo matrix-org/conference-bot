@@ -63,23 +63,6 @@ export async function replaceRoomIdsWithPills(client: ConferenceMatrixClient, te
     return content;
 }
 
-export function objectFastCloneWithout<T extends object>(obj: T, keys: (keyof T)[]): T | Partial<T> {
-    const repl = <T>{};
-    for (const key of <(keyof T)[]>Object.keys(obj)) {
-        if (keys.includes(key)) continue;
-        repl[key] = obj[key];
-    }
-    return repl;
-}
-
-export function objectFastClone<T extends object>(obj: T): T {
-    const repl = <T>{};
-    for (const key of <(keyof T)[]>Object.keys(obj)) {
-        repl[key] = obj[key];
-    }
-    return repl;
-}
-
 export async function safeCreateRoom(client: MatrixClient, opts: any): Promise<string> {
     if (opts) {
         opts = JSON.parse(JSON.stringify(opts)); // clone for safety
@@ -110,36 +93,6 @@ export async function safeCreateRoom(client: MatrixClient, opts: any): Promise<s
 
 export function sha256(str: string): string {
     return crypto.createHash('sha256').update(str).digest('hex');
-}
-
-export interface IEncrypted {
-    iv: string;
-    content: string;
-}
-
-export async function asyncFind<T>(a: T[], fn: (i: T) => Promise<boolean>): Promise<T | null> {
-    for (const i of a) {
-        if (await fn(i)) {
-            return i;
-        }
-    }
-    return null;
-}
-
-export async function asyncFilter<T>(a: T[], fn: (i: T) => Promise<boolean>): Promise<T[]> {
-    const r: T[] = [];
-    for (const i of a) {
-        if (await fn(i)) {
-            r.push(i);
-        }
-    }
-    return r;
-}
-
-export async function makeRoomPublic(roomId: string, client: MatrixClient) {
-    await client.sendStateEvent(roomId, "m.room.guest_access", "", {guest_access: "can_join"});
-    await client.sendStateEvent(roomId, "m.room.history_visibility", "", {history_visibility: "world_readable"});
-    await client.sendStateEvent(roomId, "m.room.join_rules", "", {join_rule: "public"});
 }
 
 /**
@@ -237,11 +190,4 @@ export async function writeJsonFileAsync(path: string, data: object, replacer: a
             resolve();
         }
     }));
-}
-
-export function jsonReplacerMapToObject(_key: any, input: any): any {
-    if (input instanceof Map) {
-        return Object.fromEntries(input);
-    }
-    return input;
 }
