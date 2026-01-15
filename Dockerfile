@@ -7,18 +7,18 @@ RUN corepack enable
 COPY . /app
 WORKDIR /app
 
-FROM base AS prod-deps
-RUN --mount=type=cache,id=pnpm-prod,target=/pnpm/store pnpm install --prod --frozen-lockfile
-
-# MUST fork off base, not prod-deps, because `--prod` will cause `matrix-bot-sdk` to not
-# emit `.d.ts` type declaration files in its built package (and it won't be rebuilt).
 FROM base AS build
-# Separate cache from the `--prod` install, for the same reason:
 RUN --mount=type=cache,id=pnpm-build,target=/pnpm/store pnpm install --frozen-lockfile
+# Run a full build (of dev and prod dependencies).
+# We can't just use `pnpm install --prod`, otherwise `matrix-bot-sdk` won't get
+# built.
+# TODO: add a postinstall script to matrix-bot-sdk to build on install.
 RUN pnpm run build
+# Prune dev dependencies to reduce final image size.
+RUN pnpm prune --prod
 
 FROM base
-COPY --from=prod-deps /app/node_modules /app/node_modules
+COPY --from=build /app/node_modules /app/node_modules
 COPY --from=build /app/lib /app/lib
 COPY --from=build /app/srv /app/srv
 COPY --from=build /app/package.json /app/package.json
