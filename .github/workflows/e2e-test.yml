@@ -81,4 +81,4 @@ jobs:
             -e HOMERUNNER_SPAWN_HS_TIMEOUT_SECS \
             -e NODE_OPTIONS \
             conference-bot-test:local \
-            bash -lc "pnpm run test:e2e"
+            pnpm run test:e2e
