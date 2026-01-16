@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { AuditoriumId, InterestId, TalkId } from "../backends/IScheduleBackend";
+import { AuditoriumId, InterestId } from "../backends/IScheduleBackend";
 import { RoomKind, RSC_ROOM_KIND_FLAG, RS_LOCATOR } from "./room_kinds";
 import { IPerson } from "./schedule";
 

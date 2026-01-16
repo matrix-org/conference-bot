@@ -47,7 +47,7 @@ export class LiveWidget {
                 waitForIframeLoad: true,
                 name: "Livestream",
                 avatar_url: avatar,
-                url: baseUrl + "/widgets/auditorium.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&theme=$theme",
+                url: `${baseUrl}/widgets/auditorium.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&theme=$theme`,
                 data: {
                     title: aud.getName(),
                     auditoriumId: aud.getId(),
@@ -68,7 +68,7 @@ export class LiveWidget {
                 waitForIframeLoad: true,
                 name: "Livestream / Q&A",
                 avatar_url: avatar,
-                url: url + "/widgets/hybrid.html?widgetId=$matrix_widget_id&roomId=$matrix_room_id&theme=$theme#displayName=$matrix_display_name&avatarUrl=$matrix_avatar_url&userId=$matrix_user_id&roomId=$matrix_room_id&auth=openidtoken-jwt",
+                url: `${url}/widgets/hybrid.html?widgetId=$matrix_widget_id&roomId=$matrix_room_id&theme=$theme#displayName=$matrix_display_name&avatarUrl=$matrix_avatar_url&userId=$matrix_user_id&roomId=$matrix_room_id&auth=openidtoken-jwt`,
                 data: {
                     title: "Join the conference to ask questions",
                 },
@@ -90,7 +90,7 @@ export class LiveWidget {
                 waitForIframeLoad: true,
                 name: "Upvoted messages",
                 avatar_url: avatar,
-                url: url + "/widgets/scoreboard.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&theme=$theme",
+                url: `${url}/widgets/scoreboard.html?widgetId=$matrix_widget_id&auditoriumId=$auditoriumId&theme=$theme`,
                 data: {
                     title: title,
                     auditoriumId: aud.getId(),
@@ -100,7 +100,7 @@ export class LiveWidget {
     }
 
     public static async scheduleForAuditorium(aud: Auditorium, client: MatrixClient, avatar: string, scheduleUrl: string): Promise<IStateEvent<IWidget>> {
-        const widgetId = sha256(JSON.stringify(aud.getDefinition()) + "_AUDSCHED");
+        const widgetId = sha256(`${JSON.stringify(aud.getDefinition())}_AUDSCHED`);
         const widgetUrl = template(scheduleUrl, {
             audId: aud.getId(),
         });

@@ -77,7 +77,7 @@ export function getStartTime(task: ITask): number | null {
             if (task.talk.qa_startTime === null) return null;
             return task.talk.qa_startTime;
         default:
-            throw new Error("Unknown task type for getStartTime(): " + task.type);
+            throw new Error(`Unknown task type for getStartTime(): ${task.type}`);
     }
 }
 
@@ -164,7 +164,7 @@ export class Scheduler {
 
     private async runTasks() {
         try {
-            const now = (new Date()).getTime();
+            const now = Date.now();
             schedulerLastRunGauge.set(now);
             await this.lock.acquireAsync();
             LogService.info("Scheduler", "Scheduling tasks");
@@ -233,7 +233,7 @@ export class Scheduler {
                 let didAction = false;
                 for (const task of toExec) {
                     const taskId = task.id;
-                    LogService.info("Scheduler", "Running task: " + taskId);
+                    LogService.info("Scheduler", `Running task: ${taskId}`);
                     try {
                         await this._execute(task);
                     } catch (e) {

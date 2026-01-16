@@ -42,9 +42,6 @@ export class Auditorium extends MatrixRoom implements PhysicalRoom {
     }
 }
 
-// It's the same but different
+// Same properties, but treated as an independent type by the type system.
 export class AuditoriumBackstage extends Auditorium {
-    constructor(roomId: string, definition: IAuditorium, client: MatrixClient, conference: Conference) {
-        super(roomId, definition, client, conference);
-    }
 }

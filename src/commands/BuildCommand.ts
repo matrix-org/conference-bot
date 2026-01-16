@@ -15,12 +15,9 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { LogLevel, LogService, MentionPill, RichReply } from "matrix-bot-sdk";
-import { Auditorium } from "../models/Auditorium";
-import { ITalk } from "../models/schedule";
+import { LogService, MentionPill, RichReply } from "matrix-bot-sdk";
 import { IConfig } from "../config";
 import { Conference } from "../Conference";
-import { logMessage } from "../LogProxy";
 import { editNotice } from "../utils";
 import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
@@ -60,8 +57,8 @@ export class BuildCommand implements ICommand {
         const spacePill = await MentionPill.forRoom((await this.conference.getSpace())!.roomId, this.client);
         const messagePrefix = "Conference prepared! Making rooms for later use (this will take a while)...";
         const reply = RichReply.createFor(roomId, event,
-            messagePrefix + "\n\nYour conference's space is at " + spacePill.text,
-            messagePrefix + "<br /><br />Your conference's space is at " + spacePill.html);
+            `${messagePrefix}\n\nYour conference's space is at ${spacePill.text}`,
+            `${messagePrefix}<br /><br />Your conference's space is at ${spacePill.html}`);
         reply["msgtype"] = "m.notice";
         await this.client.sendMessage(roomId, reply);
 

@@ -37,7 +37,7 @@ export class CheckInMap {
             if (event['type'] === 'm.room.message' || event['type'] === 'm.reaction') {
                 await this.lock.acquireAsync();
                 try {
-                    this.checkedIn[event['sender']] = {expires: (new Date()).getTime() + CHECKIN_TIME};
+                    this.checkedIn[event['sender']] = {expires: Date.now() + CHECKIN_TIME};
                     await this.persist();
                 } finally {
                     this.lock.release();
@@ -80,7 +80,7 @@ export class CheckInMap {
         await this.lock.acquireAsync();
         try {
             if (!this.checkedIn[userId]) return;
-            this.checkedIn[userId] = {expires: (new Date()).getTime() + CHECKIN_TIME};
+            this.checkedIn[userId] = {expires: Date.now() + CHECKIN_TIME};
             await this.persist();
         } finally {
             this.lock.release();
@@ -89,6 +89,6 @@ export class CheckInMap {
 
     public isCheckedIn(userId: string): boolean {
         const checkin = this.checkedIn[userId];
-        return checkin && checkin.expires >= (new Date()).getTime();
+        return checkin && checkin.expires >= Date.now();
     }
 }

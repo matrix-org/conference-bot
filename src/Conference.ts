@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { LogLevel, LogService, RoomAlias, Space } from "matrix-bot-sdk";
+import { LogService, RoomAlias, Space } from "matrix-bot-sdk";
 import {
     AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE,
     AUDITORIUM_CREATION_TEMPLATE,
@@ -40,8 +40,8 @@ import {
     RS_STORED_PERSON,
     RS_STORED_SUBSPACE,
 } from "./models/room_state";
-import { applySuffixRules, objectFastClone, safeCreateRoom } from "./utils";
-import { addAndDeleteManagedAliases, applyAllAliasPrefixes, assignAliasVariations, calculateAliasVariations } from "./utils/aliases";
+import { applyAllAliasPrefixes, assignAliasVariations } from "./utils/aliases";
+import { safeCreateRoom } from "./utils";
 import { IConfig, RunMode } from "./config";
 import { MatrixRoom } from "./models/MatrixRoom";
 import { Auditorium, AuditoriumBackstage } from "./models/Auditorium";
@@ -49,9 +49,7 @@ import { ResolvedPersonIdentifier, resolveIdentifiers } from "./invites";
 import { PermissionsCommand } from "./commands/PermissionsCommand";
 import { InterestRoom } from "./models/InterestRoom";
 import { IStateEvent } from "./models/room_state";
-import { logMessage } from "./LogProxy";
 import { IScheduleBackend } from "./backends/IScheduleBackend";
-import { setUnion } from "./utils/sets";
 import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
 import { Gauge } from "prom-client";
 
@@ -115,10 +113,9 @@ export class Conference {
                                 // and have the same ID (they just represent different rooms), but we don't want to repeat
                                 // the association as that would just involve sending duplicate state events.
                                 let person = people[0];
-                                const clonedPerson = objectFastClone(person);
-                                clonedPerson.matrix_id = event['state_key'];
-                                await this.createUpdatePerson(clonedPerson);
-                                LogService.info("Conference", `Updated ${clonedPerson.id} to be associated with ${clonedPerson.matrix_id}`);
+                                const updatedPerson = { ...person, matrix_id: event['state_key'] };
+                                await this.createUpdatePerson(updatedPerson);
+                                LogService.info("Conference", `Updated ${updatedPerson.id} to be associated with ${updatedPerson.matrix_id}`);
 
                                 // Update permissions while we're here (if we can identify the room kind)
                                 const aud = this.storedAuditoriums.find(a => a.roomId === roomId);
@@ -206,27 +203,30 @@ export class Conference {
                                 this.dbRoom = new MatrixRoom(roomId, this.client, this);
                                 this.recalculateRoomMembership(roomId);
                                 break;
-                            case RoomKind.Auditorium:
+                            case RoomKind.Auditorium: {
                                 const auditoriumId = locatorEvent[RSC_AUDITORIUM_ID];
                                 if (this.backend.auditoriums.has(auditoriumId)) {
                                     this.auditoriums[auditoriumId] = new Auditorium(roomId, this.backend.auditoriums.get(auditoriumId)!, this.client, this);
                                     this.recalculateRoomMembership(roomId);
                                 }
                                 break;
-                            case RoomKind.AuditoriumBackstage:
+                            }
+                            case RoomKind.AuditoriumBackstage: {
                                 const auditoriumBsId = locatorEvent[RSC_AUDITORIUM_ID];
                                 if (this.backend.auditoriums.has(auditoriumBsId)) {
                                     this.auditoriumBackstages[auditoriumBsId] = new AuditoriumBackstage(roomId, this.backend.auditoriums.get(auditoriumBsId)!, this.client, this);
                                     this.recalculateRoomMembership(roomId);
                                 }
                                 break;
-                            case RoomKind.SpecialInterest:
+                            }
+                            case RoomKind.SpecialInterest: {
                                 const interestId = locatorEvent[RSC_SPECIAL_INTEREST_ID];
                                 if (this.backend.interestRooms.has(interestId)) {
                                     this.interestRooms[interestId] = new InterestRoom(roomId, this.client, this, interestId, this.config.conference.prefixes);
                                     this.recalculateRoomMembership(roomId);
                                 }
                                 break;
+                            }
                             default:
                                 break;
                         }
@@ -349,7 +349,7 @@ export class Conference {
                 try {
                     const roomId = await safeCreateRoom(
                         this.client,
-                        mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
+                        mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE(this.config.moderatorUserIds), {
                             room_alias_name: (new RoomAlias(alias)).localpart,
                             invite: this.config.moderatorUserIds,
                         }),
@@ -397,7 +397,7 @@ export class Conference {
             await assignAliasVariations(
                 this.client,
                 subspace.roomId,
-                applyAllAliasPrefixes("space-" + aliasLocalpart, this.config.conference.prefixes.aliases),
+                applyAllAliasPrefixes(`space-${aliasLocalpart}`, this.config.conference.prefixes.aliases),
                 this.config.conference.prefixes.suffixes,
             );
 
@@ -532,7 +532,7 @@ export class Conference {
             return this.auditoriumBackstages[auditorium.id];
         }
 
-        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
+        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE(this.config.moderatorUserIds), {
             creation_content: {
                 [RSC_CONFERENCE_ID]: this.id,
                 [RSC_AUDITORIUM_ID]: auditorium.id,
@@ -542,7 +542,7 @@ export class Conference {
             ],
             name: `[BACKSTAGE] ${auditorium.name}`,
         }));
-        await assignAliasVariations(this.client, roomId, applyAllAliasPrefixes(auditorium.slug + "-backstage", this.config.conference.prefixes.aliases),
+        await assignAliasVariations(this.client, roomId, applyAllAliasPrefixes(`${auditorium.slug}-backstage`, this.config.conference.prefixes.aliases),
         this.config.conference.prefixes.suffixes, auditorium.id);
         this.auditoriumBackstages[auditorium.id] = new AuditoriumBackstage(roomId, auditorium, this.client, this);
 
@@ -679,24 +679,6 @@ export class Conference {
         const people = await this.getPeopleForInterest(int);
         const roles = [Role.Host, Role.Coordinator];
         return people.filter(p => roles.includes(p.role));
-    }
-
-    private async resolvePeople(people: IPerson[]): Promise<IPerson[]> {
-        // Clone people from the DB to avoid accidentally mutating caches
-        people = people.map(p => objectFastClone(p))
-
-        // Fill in any details we have that the database doesn't
-        for (const person of people) {
-            if (person.matrix_id) continue;
-            const storedPerson = this.getPerson(person.id);
-            if (storedPerson?.matrix_id) {
-                person.matrix_id = storedPerson.matrix_id;
-            }
-        }
-
-        // We don't do the final resolution because that can take too much time at this level
-        // in the call chain
-        return people;
     }
 
     public getAuditorium(audId: string): Auditorium {
