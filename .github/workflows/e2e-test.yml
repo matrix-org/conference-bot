@@ -61,8 +61,11 @@ jobs:
         with:
           path: conference-bot
       - name: Build test image
+        # Set `build` as the target (rather than default to the final, prune'd
+        # stage), as `build` includes the dev dependencies which are needed for
+        # testing.
         run: |
-          docker build -t conference-bot-test:local ./conference-bot
+          docker build --target build -t conference-bot-test:local ./conference-bot
       # Regression test for https://github.com/matrix-org/conference-bot/pull/264.
       - name: Check the matrix-bot-sdk was built correctly
         run: |
