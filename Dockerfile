@@ -7,6 +7,7 @@ RUN corepack enable
 COPY . /app
 WORKDIR /app
 
+# Note that the E2E tests in CI run *this* stage, not *prod*.
 FROM base AS build
 RUN --mount=type=cache,id=pnpm-build,target=/pnpm/store pnpm install --frozen-lockfile
 # Run a full build (of dev and prod dependencies).
@@ -14,11 +15,13 @@ RUN --mount=type=cache,id=pnpm-build,target=/pnpm/store pnpm install --frozen-lo
 # built.
 # TODO: add a postinstall script to matrix-bot-sdk to build on install.
 RUN pnpm run build
+
+FROM build AS prod
 # Prune dev dependencies to reduce final image size.
 RUN pnpm prune --prod
 
 FROM base
-COPY --from=build /app/node_modules /app/node_modules
+COPY --from=prod /app/node_modules /app/node_modules
 COPY --from=build /app/lib /app/lib
 COPY --from=build /app/srv /app/srv
 COPY --from=build /app/package.json /app/package.json
