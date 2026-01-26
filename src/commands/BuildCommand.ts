@@ -15,12 +15,9 @@ limitations under the License.
 */
 
 import { ICommand } from "./ICommand";
-import { LogLevel, LogService, MentionPill, RichReply } from "matrix-bot-sdk";
-import { Auditorium } from "../models/Auditorium";
-import { ITalk } from "../models/schedule";
+import { LogService, MentionPill, RichReply } from "matrix-bot-sdk";
 import { IConfig } from "../config";
 import { Conference } from "../Conference";
-import { logMessage } from "../LogProxy";
 import { editNotice } from "../utils";
 import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 
@@ -60,8 +57,8 @@ export class BuildCommand implements ICommand {
         const spacePill = await MentionPill.forRoom((await this.conference.getSpace())!.roomId, this.client);
         const messagePrefix = "Conference prepared! Making rooms for later use (this will take a while)...";
         const reply = RichReply.createFor(roomId, event,
-            messagePrefix + "\n\nYour conference's space is at " + spacePill.text,
-            messagePrefix + "<br /><br />Your conference's space is at " + spacePill.html);
+            `${messagePrefix}\n\nYour conference's space is at ${spacePill.text}`,
+            `${messagePrefix}<br /><br />Your conference's space is at ${spacePill.html}`);
         reply["msgtype"] = "m.notice";
         await this.client.sendMessage(roomId, reply);
 
@@ -92,28 +89,7 @@ export class BuildCommand implements ICommand {
         }
 
 
-        if (args[0] === "talk") {
-            const audId = args[1];
-            const talkId = args[2];
-
-            const pentaAud = backend.auditoriums.get(audId);
-            if (!pentaAud) return await logMessage(LogLevel.ERROR, "BuildCommand", `Cannot find auditorium: ${audId}`, this.client);
-
-            if (pentaAud.isPhysical) {
-                // Physical auditoriums don't have any talk rooms
-                return await logMessage(LogLevel.ERROR, "BuildCommand", `Auditorium '${audId}' is physical and does not have talk rooms.`, this.client);
-            }
-
-            const pentaTalk = pentaAud.talks.get(talkId);
-            if (!pentaTalk) return await logMessage(LogLevel.ERROR, "BuildCommand", `Cannot find talk in room: ${audId} ${talkId}`, this.client);
-
-            await this.conference.createAuditoriumBackstage(pentaAud);
-            const aud = await this.conference.createAuditorium(pentaAud);
-            await this.conference.createTalk(pentaTalk, aud);
-
-            await this.client.sendNotice(roomId, "Talk room created");
-            return;
-        } else if (args[0] === "interest") {
+        if (args[0] === "interest") {
             const interestId = args[1];
 
             const interestRoom = backend.interestRooms.get(interestId);
@@ -158,7 +134,6 @@ export class BuildCommand implements ICommand {
                 }
             } else {
                 // Create auditoriums
-                const talks: [ITalk, Auditorium][] = [];
                 for (const auditorium of backend.auditoriums.values()) {
                     try {
                         const confAud = await this.conference.createAuditorium(auditorium);
@@ -169,44 +144,11 @@ export class BuildCommand implements ICommand {
                             statusEventId,
                             `${auditoriumsCreated}/${backend.auditoriums.size} auditoriums have been created`,
                         );
-
-                        if (! auditorium.isPhysical) {
-                            // Physical auditoriums don't have any talk rooms
-                            for (let talk of auditorium.talks.values()) {
-                                talks.push([talk, confAud]);
-                            }
-                        }
                     } catch (e) {
                         throw {
                             message: `Error whilst creating auditorium for ${auditorium.id}: ${JSON.stringify(e?.body)}.`,
                             cause: e,
                         };
-                    }
-                }
-
-                if (!args.includes("notalks")) {
-                    // Create talk rooms
-                    let talksCreated = 0;
-                    const statusEventId = await this.client.sendNotice(
-                        roomId,
-                        `0/${talks.length} talks have been created`,
-                    );
-                    for (const [talk, auditorium] of talks) {
-                        try {
-                            await this.conference.createTalk(talk, auditorium);
-                            talksCreated++;
-                            editNotice(
-                                this.client,
-                                roomId,
-                                statusEventId,
-                                `${talksCreated}/${talks.length} talks have been created`,
-                            );
-                        } catch (e) {
-                            throw {
-                                message: `Error whilst creating talk for ${talk.id}: ${JSON.stringify(e?.body)}.`,
-                                cause: e,
-                            };
-                        }
                     }
                 }
             }

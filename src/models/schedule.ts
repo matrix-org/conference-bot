@@ -51,11 +51,9 @@ export interface ITalk {
      * Start time of Q&A as a unix timestamp in ms, or null if Q&A is disabled for this talk.
      */
     qa_startTime: number | null;
-    livestream_endTime: number;
-    slug: string;
+    livestream_endTime: number; // ms
     title: string;
     subtitle: string;
-    track: string;
     /**
      * MISNOMER: This variable contains ALL people for the talk, NOT JUST speakers.
      * TODO rename (at a time when it's a less risky change to do...)
@@ -78,9 +76,25 @@ export interface IAuditorium {
     kind: RoomKind;
     talks: Map<TalkId, ITalk>;
     /**
-     * If true, this auditorium is just a virtual representation of a real-world physical auditorium.
+     * People, in addition to those mentioned in individual talks.
+     * People may be specified here, in talks, or in both.
+     *
+     * The motivation for this field is to allow coordinators to exist in the
+     * conference, even before any talks have been scheduled.
      */
-    isPhysical: boolean;
+    extraPeople: IPerson[];
+    /**
+     * Identifier that can be used as a template parameter for the video livestream URL.
+     * If not required by the conference backend, should be an empty string.
+     */
+    livestreamId: string;
+
+    /**
+     * The 'type' of track that this auditorium is in, e.g. "devroom", "maintrack".
+     * May be an empty string if there is no concept of types.
+     * This string will not be exposed to end users.
+     */
+    trackType: string;
 }
 
 export interface IConference {

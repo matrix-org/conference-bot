@@ -33,8 +33,6 @@ import {
     renderHybridWidget,
     renderScoreboard,
     renderScoreboardWidget,
-    renderTalkWidget,
-    rtmpRedirect
 } from "./web";
 import { DevCommand } from "./commands/DevCommand";
 import { IRCBridge } from "./IRCBridge";
@@ -53,13 +51,10 @@ import { CopyModeratorsCommand } from "./commands/CopyModeratorsCommand";
 import { AttendanceCommand } from "./commands/AttendanceCommand";
 import { ScheduleCommand } from "./commands/ScheduleCommand";
 import { CheckInMap } from "./CheckInMap";
-import { FDMCommand } from "./commands/FDMCommand";
 import { IScheduleBackend } from "./backends/IScheduleBackend";
-import { PentaBackend } from "./backends/penta/PentaBackend";
 import { JsonScheduleBackend } from "./backends/json/JsonScheduleBackend";
 import { JoinCommand } from "./commands/JoinRoomCommand";
 import { StatusCommand } from "./commands/StatusCommand";
-import { CachingBackend } from "./backends/CachingBackend";
 import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
 import { Server } from "http";
 import { collectDefaultMetrics, register } from "prom-client";
@@ -72,14 +67,12 @@ LogService.info("index", "Bot starting...");
 export class ConferenceBot {
     private static async loadBackend(config: IConfig) {
         switch (config.conference.schedule.backend) {
-            case "penta":
-                return await CachingBackend.new(() => PentaBackend.new(config), path.join(config.dataPath, "penta_cache.json"));
             case "pretalx":
                 return await PretalxScheduleBackend.new(config.dataPath, config.conference.schedule, config.conference.prefixes);
             case "json":
-                return await JsonScheduleBackend.new(config.dataPath, config.conference.schedule);
+                return await JsonScheduleBackend.new(config.dataPath, config.conference.schedule, config);
             default:
-                throw new Error(`Unknown scheduling backend: choose penta, pretalx or json!`)
+                throw new Error(`Unknown scheduling backend: choose pretalx or json!`)
         }
     }
 
@@ -87,10 +80,15 @@ export class ConferenceBot {
         if (!RunMode[config.mode]) {
             throw Error(`Incorrect mode '${config.mode}'`);
         }
+
+        if (config.moderatorUserId !== undefined) {
+            throw new Error("The `moderatorUserId` config option has been replaced by `moderatorUserIds` that takes a list.");
+        }
+        
         const storage = new SimpleFsStorageProvider(path.join(config.dataPath, "bot.json"));
         const client = await ConferenceMatrixClient.create(config, storage);
         client.impersonateUserId(config.userId);       
-        const backend = await this.loadBackend(config);
+        const backend = await ConferenceBot.loadBackend(config);
         const conference = new Conference(backend, config.conference.id, client, config);
         const checkins = new CheckInMap(client, config);
         const scoreboard = new Scoreboard(conference, client, config);
@@ -221,10 +219,8 @@ export class ConferenceBot {
         app.set('views', tmplPath);
         app.set('view engine', 'liquid');
         app.get('/widgets/auditorium.html', (req, res) => renderAuditoriumWidget(req, res, this.conference, this.config.livestream.auditoriumUrl));
-        app.get('/widgets/talk.html', (req, res) =>  renderTalkWidget(req, res, this.conference, this.config.livestream.talkUrl, this.config.livestream.jitsiDomain));
         app.get('/widgets/scoreboard.html', (req, res) =>  renderScoreboardWidget(req,res, this.conference));
         app.get('/widgets/hybrid.html', (req, res) => renderHybridWidget(req, res, this.config.livestream.hybridUrl, this.config.livestream.jitsiDomain));
-        app.post('/onpublish', (req, res) =>  rtmpRedirect(req,res,this.conference, this.config.livestream.onpublish));
         app.get('/healthz', renderHealthz);
         app.get('/scoreboard/:roomId', (rq, rs) => renderScoreboard(rq, rs, this.scoreboard, this.conference));
         app.get('/make_hybrid', (req, res) =>  makeHybridWidget(req, res, this.client, this.config.livestream.widgetAvatar, this.config.webserver.publicBaseUrl));
@@ -239,7 +235,6 @@ export class ConferenceBot {
             new BuildCommand(this.client, this.conference, this.config),
             new CopyModeratorsCommand(this.client),
             new DevCommand(this.client, this.conference),
-            new FDMCommand(this.client, this.conference, this.config),
             new HelpCommand(this.client),
             new InviteCommand(this.client, this.conference, this.config),
             new InviteMeCommand(this.client, this.conference),
@@ -274,12 +269,13 @@ export class ConferenceBot {
 
             const prefixes = [
                 "!conference",
-                localpart + ":",
-                displayName + ":",
-                userId + ":",
-                localpart + " ",
-                displayName + " ",
-                userId + " ",
+                "!c",
+                `${localpart}:`,
+                `${displayName}:`,
+                `${userId}:`,
+                `${localpart} `,
+                `${displayName} `,
+                `${userId} `,
             ];
 
             const prefixUsed = prefixes.find(p => content['body'].startsWith(p));

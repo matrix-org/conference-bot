@@ -17,9 +17,9 @@ limitations under the License.
 import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../Conference";
 import { MatrixRoom } from "./MatrixRoom";
-import { decodePrefix } from "../backends/penta/PentabarfParser";
 import { PhysicalRoom } from "./PhysicalRoom";
 import { IPrefixConfig } from "../config";
+import { decodePrefix } from "../backends/pretalx/PretalxParser";
 
 /**
  * Represents an interest room.
@@ -38,11 +38,11 @@ export class InterestRoom extends MatrixRoom implements PhysicalRoom {
         this.name = decodePrefix(id, prefixes)!.name;
     }
 
-    public async getName(): Promise<string> {
+    public getName(): string {
         return this.name;
     }
 
-    public async getId(): Promise<string> {
+    public getId(): string {
         return this.id;
     }
 }

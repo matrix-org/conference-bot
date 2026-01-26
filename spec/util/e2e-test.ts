@@ -1,6 +1,5 @@
 import { ComplementHomeServer, createHS, destroyHS } from "./homerunner";
 import { MatrixClient, PowerLevelsEventContent, RoomEvent, TextualMessageEventContent } from "matrix-bot-sdk";
-import dns from 'node:dns';
 import { mkdtemp, rm } from "node:fs/promises";
 import { IConfig, RunMode } from "../../src/config";
 import { ConferenceBot } from "../../src/index";
@@ -135,7 +134,7 @@ export class E2ETestMatrixClient extends MatrixClient {
 
 export class E2ETestEnv {
     static async createTestEnv(opts: Opts): Promise<E2ETestEnv> {
-        const workerID = parseInt(process.env.JEST_WORKER_ID ?? '0');
+        const workerID = parseInt(process.env.JEST_WORKER_ID ?? '0', 10);
         const { matrixLocalparts, config: providedConfig  } = opts;
         const tmpDir = await mkdtemp('confbot-test');
 
@@ -153,7 +152,7 @@ export class E2ETestEnv {
         await adminUser.client.joinRoom(mgmntRoom);
 
         // Configure JSON schedule
-        const scheduleDefinition = path.resolve(__dirname, '..', 'fixtures', opts.fixture + ".json");
+        const scheduleDefinition = path.resolve(__dirname, '..', 'fixtures', `${opts.fixture}.json`);
 
         const config: IConfig = {
             livestream: {
@@ -187,12 +186,10 @@ export class E2ETestEnv {
                     displayNameSuffixes: {},
                     suffixes: {},
                     qaAuditoriumRooms: [],
-                    physicalAuditoriumRooms: [],
                     nameOverrides: {},
                 },
                 schedule: {
                     backend: 'json',
-                    database: undefined,
                     scheduleDefinition,
                 },
                 subspaces: {
@@ -203,7 +200,7 @@ export class E2ETestEnv {
                     }
                 },
             },
-            moderatorUserId: `@modbot:${homeserver.domain}`,
+            moderatorUserIds: [`@modbot:${homeserver.domain}`],
             webserver: {
                 address: '0.0.0.0',
                 port: 0,
@@ -227,13 +224,14 @@ export class E2ETestEnv {
             ...providedConfig,
         };
         const conferenceBot = await ConferenceBot.start(config);
-        return new E2ETestEnv(homeserver, conferenceBot, adminUser.client, opts, tmpDir, config);
+        return new E2ETestEnv(homeserver, conferenceBot, adminUser.client, confBotOpts.client, opts, tmpDir, config);
     }
 
     private constructor(
         public readonly homeserver: ComplementHomeServer,
         public confBot: ConferenceBot,
         public readonly adminClient: MatrixClient,
+        public readonly confbotClient: MatrixClient,
         public readonly opts: Opts,
         private readonly dataDir: string,
         private readonly config: IConfig,

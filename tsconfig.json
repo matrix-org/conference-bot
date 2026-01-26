@@ -1,5 +1,5 @@
 {
-  "extends": "@tsconfig/node18",
+  "extends": "@tsconfig/node22",
   "compilerOptions": {
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
@@ -10,6 +10,7 @@
     "useUnknownInCatchVariables": false,
     "sourceMap": true,
     "outDir": "./lib",
+    "isolatedModules": true,
     "types": [
       "node"
     ]

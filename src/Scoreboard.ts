@@ -155,7 +155,7 @@ export class Scoreboard {
             // Write to a temporary file, then replace the previous data atomically.
             // This ensures that the saved data remains valid even if the bot dies while writing
             // new data.
-            const tempFilePath = this.path + '.tmp';
+            const tempFilePath = `${this.path}.tmp`;
             await fs.writeFile(tempFilePath, JSON.stringify(json));
             await fs.rename(tempFilePath, this.path);
         } finally {

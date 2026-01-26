@@ -19,7 +19,7 @@ import { RoomCreateOptions } from "matrix-bot-sdk";
 
 export const KickPowerLevel = 50;
 
-export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = (moderatorUserId: string) => ({
+const ROOM_POWER_LEVELS_TEMPLATE = (moderatorUserIds: string[]) => ({
     ban: 50,
     events_default: 0,
     invite: 50,
@@ -40,16 +40,8 @@ export const PUBLIC_ROOM_POWER_LEVELS_TEMPLATE = (moderatorUserId: string) => ({
         "m.space.parent": 100,
         "m.space.child": 100,
     },
-    users: {
-        [moderatorUserId]: 100,
-        // should be populated with the creator
-    },
+    users: Object.fromEntries(moderatorUserIds.map(moderator => [moderator, 100])),
 });
-
-export const PRIVATE_ROOM_POWER_LEVELS_TEMPLATE = {
-    ...PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
-    invite: 0,
-};
 
 /**
  * Key in a RS_LOCATOR event that identifies what kind of room it is.
@@ -62,10 +54,9 @@ export enum RoomKind {
      * This is *not* the public space for the conference.
      */
     ConferenceDb = "conference",
-    ConferenceSpace = "conference_space", // TODO
+    ConferenceSpace = "conference_space",
     Auditorium = "auditorium",
     AuditoriumBackstage = "auditorium_backstage",
-    Talk = "talk",
     SpecialInterest = "other",
 }
 
@@ -76,7 +67,6 @@ export const RS_LOCATOR = "org.matrix.confbot.locator";
 
 export const RSC_CONFERENCE_ID = "conferenceId";
 export const RSC_AUDITORIUM_ID = "auditoriumId";
-export const RSC_TALK_ID = "talkId";
 export const RSC_SPECIAL_INTEREST_ID = "interestId";
 
 export const CONFERENCE_ROOM_CREATION_TEMPLATE: RoomCreateOptions = {
@@ -91,7 +81,7 @@ export const CONFERENCE_ROOM_CREATION_TEMPLATE: RoomCreateOptions = {
     },
 };
 
-export const AUDITORIUM_CREATION_TEMPLATE = (moderatorUserId: string) => ({
+export const AUDITORIUM_CREATION_TEMPLATE = (moderatorUserIds: string[]): RoomCreateOptions => ({
     preset: 'public_chat',
     visibility: 'public',
     initial_state: [
@@ -101,11 +91,11 @@ export const AUDITORIUM_CREATION_TEMPLATE = (moderatorUserId: string) => ({
     creation_content: {
         [RSC_ROOM_KIND_FLAG]: RoomKind.Auditorium,
     },
-    power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE(moderatorUserId),
-    invite: [moderatorUserId],
+    power_level_content_override: ROOM_POWER_LEVELS_TEMPLATE(moderatorUserIds),
+    invite: moderatorUserIds,
 } satisfies RoomCreateOptions);
 
-export const AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE: RoomCreateOptions = {
+export const AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE = (moderatorUserIds: string[]): RoomCreateOptions => ({
     preset: 'private_chat',
     visibility: 'private',
     initial_state: [
@@ -115,42 +105,31 @@ export const AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE: RoomCreateOptions = {
     creation_content: {
         [RSC_ROOM_KIND_FLAG]: RoomKind.AuditoriumBackstage,
     },
-    power_level_content_override: PRIVATE_ROOM_POWER_LEVELS_TEMPLATE,
-};
+    power_level_content_override: ROOM_POWER_LEVELS_TEMPLATE(moderatorUserIds),
+});
 
-export const TALK_CREATION_TEMPLATE = (moderatorUserId: string) => ({ // before being opened up to the public
-    preset: 'private_chat',
-    visibility: 'private',
-    initial_state: [
-        {type: "m.room.guest_access", state_key: "", content: {guest_access: "forbidden"}},
-        {type: "m.room.history_visibility", state_key: "", content: {history_visibility: "invited"}},
-    ],
-    creation_content: {
-        [RSC_ROOM_KIND_FLAG]: RoomKind.Talk,
-    },
-    power_level_content_override: PUBLIC_ROOM_POWER_LEVELS_TEMPLATE(moderatorUserId),
-    invite: [moderatorUserId],
-} satisfies RoomCreateOptions);
-
-export const SPECIAL_INTEREST_CREATION_TEMPLATE = (moderatorUserId: string) => ({
-    preset: 'public_chat',
-    visibility: 'public',
-    initial_state: [
-        {type: "m.room.guest_access", state_key: "", content: {guest_access: "can_join"}},
-        {type: "m.room.history_visibility", state_key: "", content: {history_visibility: "world_readable"}},
-    ],
-    creation_content: {
-        [RSC_ROOM_KIND_FLAG]: RoomKind.SpecialInterest,
-    },
-    power_level_content_override: {
-        ...PUBLIC_ROOM_POWER_LEVELS_TEMPLATE,
-        events: {
-            ...PUBLIC_ROOM_POWER_LEVELS_TEMPLATE['events'],
-            "m.room.power_levels": 50,
+export const SPECIAL_INTEREST_CREATION_TEMPLATE = (moderatorUserIds: string[]):RoomCreateOptions  => {
+    let template = ROOM_POWER_LEVELS_TEMPLATE(moderatorUserIds);
+    return ({
+        preset: 'public_chat',
+        visibility: 'public',
+        initial_state: [
+            {type: "m.room.guest_access", state_key: "", content: {guest_access: "can_join"}},
+            {type: "m.room.history_visibility", state_key: "", content: {history_visibility: "world_readable"}},
+        ],
+        creation_content: {
+            [RSC_ROOM_KIND_FLAG]: RoomKind.SpecialInterest,
         },
-    },
-    invite: [moderatorUserId],
-} satisfies RoomCreateOptions);
+        power_level_content_override: {
+            ...template,
+            events: {
+                ...template.events,
+                "m.room.power_levels": 50,
+            },
+        },
+        invite: moderatorUserIds,
+    } satisfies RoomCreateOptions);
+};
 
 export function mergeWithCreationTemplate(template: RoomCreateOptions, addlProps: any): any {
     const result = {...template};

@@ -1,25 +1,36 @@
-FROM node:18-slim AS builder
-
-COPY ./ /app/
+# Structure based off
+# https://pnpm.io/docker#example-1-build-a-bundle-in-a-docker-container
+FROM node:22-slim AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+COPY . /app
 WORKDIR /app
-RUN yarn install
 
-# Set NODE_ENV after install to trick webpack but not `yarn install`
-ENV NODE_ENV=production
-RUN yarn build
+# Note that the E2E tests in CI run *this* stage, not *prod*.
+FROM base AS build
+RUN --mount=type=cache,id=pnpm-build,target=/pnpm/store pnpm install --frozen-lockfile
+# Run a full build (of dev and prod dependencies).
+# We can't just use `pnpm install --prod`, otherwise `matrix-bot-sdk` won't get
+# built.
+# TODO: add a postinstall script to matrix-bot-sdk to build on install.
+RUN pnpm run build
 
-FROM node:18-slim
+FROM build AS prod
+# Prune dev dependencies to reduce final image size.
+RUN pnpm prune --prod
 
-COPY --from=builder /app/lib /app/lib
-COPY --from=builder /app/srv /app/srv
-COPY --from=builder /app/package.json /app/package.json
-COPY --from=builder /app/yarn.lock /app/yarn.lock
+FROM base
+COPY --from=prod /app/node_modules /app/node_modules
+COPY --from=build /app/lib /app/lib
+COPY --from=build /app/srv /app/srv
+COPY --from=build /app/package.json /app/package.json
+COPY --from=build /app/pnpm-lock.yaml /app/pnpm-lock.yaml
 
 WORKDIR /app
 ENV NODE_CONFIG_DIR=/data/config
 ENV NODE_ENV=production
 ENV CONF_TEMPLATES_PATH=/app/srv
-RUN yarn install
 
 VOLUME ["/data"]
 EXPOSE 8080

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { LogLevel, LogService, RoomAlias, Space } from "matrix-bot-sdk";
+import { LogService, RoomAlias, Space } from "matrix-bot-sdk";
 import {
     AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE,
     AUDITORIUM_CREATION_TEMPLATE,
@@ -25,39 +25,31 @@ import {
     RSC_CONFERENCE_ID,
     RSC_ROOM_KIND_FLAG,
     RSC_SPECIAL_INTEREST_ID,
-    RSC_TALK_ID, RS_LOCATOR, SPECIAL_INTEREST_CREATION_TEMPLATE,
-    TALK_CREATION_TEMPLATE
+    RS_LOCATOR, SPECIAL_INTEREST_CREATION_TEMPLATE,
 } from "./models/room_kinds";
 import { IAuditorium, IConference, IInterestRoom, IPerson, ITalk, Role } from "./models/schedule";
 import {
     IStoredSubspace,
-    makeAssociatedSpace,
     makeAuditoriumBackstageLocator,
     makeAuditoriumLocator,
     makeDbLocator,
     makeInterestLocator,
     makeRootSpaceLocator,
     makeStoredPersonOverride,
-    makeTalkLocator,
     RS_3PID_PERSON_ID,
     RS_STORED_PERSON,
     RS_STORED_SUBSPACE,
 } from "./models/room_state";
-import { applySuffixRules, objectFastClone, safeCreateRoom } from "./utils";
-import { addAndDeleteManagedAliases, applyAllAliasPrefixes, assignAliasVariations, calculateAliasVariations } from "./utils/aliases";
-import { IConfig } from "./config";
+import { applyAllAliasPrefixes, assignAliasVariations } from "./utils/aliases";
+import { safeCreateRoom } from "./utils";
+import { IConfig, RunMode } from "./config";
 import { MatrixRoom } from "./models/MatrixRoom";
 import { Auditorium, AuditoriumBackstage } from "./models/Auditorium";
-import { Talk } from "./models/Talk";
 import { ResolvedPersonIdentifier, resolveIdentifiers } from "./invites";
-import { PentaDb } from "./backends/penta/db/PentaDb";
 import { PermissionsCommand } from "./commands/PermissionsCommand";
 import { InterestRoom } from "./models/InterestRoom";
 import { IStateEvent } from "./models/room_state";
-import { logMessage } from "./LogProxy";
 import { IScheduleBackend } from "./backends/IScheduleBackend";
-import { PentaBackend } from "./backends/penta/PentaBackend";
-import { setUnion } from "./utils/sets";
 import { ConferenceMatrixClient } from "./ConferenceMatrixClient";
 import { Gauge } from "prom-client";
 
@@ -66,8 +58,6 @@ const attendeeTotalGauge = new Gauge({ name: "confbot_attendee_total", help: "Th
 export class Conference {
     private rootSpace: Space | null;
     private dbRoom: MatrixRoom | null;
-    // TODO This shouldn't be here.
-    private pentaDb: PentaDb | null = null;
     private subspaces: {
         [subspaceId: string]: Space
     } = {};
@@ -76,9 +66,6 @@ export class Conference {
     } = {};
     private auditoriumBackstages: {
         [auditoriumId: string]: AuditoriumBackstage;
-    } = {};
-    private talks: {
-        [talkId: string]: Talk;
     } = {};
     private interestRooms: {
         [interestId: string]: InterestRoom;
@@ -105,7 +92,8 @@ export class Conference {
             // On any member event, recaulculate the membership.
             this.enqueueRecalculateRoomMembership(roomId);
 
-            if (event['content']?.['third_party_invite']) {
+            // Only process 3pid invites when running as the bot, not the web interface
+            if (event['content']?.['third_party_invite'] && config.mode === RunMode.normal) {
                 const emailInviteToken = event['content']['third_party_invite']['signed']?.['token'];
                 const emailInvite = await this.client.getRoomStateEvent(roomId, "m.room.third_party_invite", emailInviteToken);
                 if (emailInvite[RS_3PID_PERSON_ID]) {
@@ -121,12 +109,13 @@ export class Conference {
                             const people = await this.findPeopleWithId(emailInvite[RS_3PID_PERSON_ID]);
                             if (people?.length) {
                                 // Finally, associate the users.
-                                for (const person of people) {
-                                    const clonedPerson = objectFastClone(person);
-                                    clonedPerson.matrix_id = event['state_key'];
-                                    await this.createUpdatePerson(clonedPerson);
-                                    LogService.info("Conference", `Updated ${clonedPerson.id} to be associated with ${clonedPerson.matrix_id}`);
-                                }
+                                // Pick out the first person entry from the list, they should all represent the same person
+                                // and have the same ID (they just represent different rooms), but we don't want to repeat
+                                // the association as that would just involve sending duplicate state events.
+                                let person = people[0];
+                                const updatedPerson = { ...person, matrix_id: event['state_key'] };
+                                await this.createUpdatePerson(updatedPerson);
+                                LogService.info("Conference", `Updated ${updatedPerson.id} to be associated with ${updatedPerson.matrix_id}`);
 
                                 // Update permissions while we're here (if we can identify the room kind)
                                 const aud = this.storedAuditoriums.find(a => a.roomId === roomId);
@@ -140,13 +129,6 @@ export class Conference {
                                         const mods = await this.getModeratorsForAuditorium(audBackstage);
                                         const resolved = await resolveIdentifiers(this.client, mods);
                                         await PermissionsCommand.ensureModerator(this.client, roomId, resolved);
-                                    } else {
-                                        const talk = this.storedTalks.find(a => a.roomId === roomId);
-                                        if (talk) {
-                                            const mods = await this.getModeratorsForTalk(talk);
-                                            const resolved = await resolveIdentifiers(this.client, mods);
-                                            await PermissionsCommand.ensureModerator(this.client, roomId, resolved);
-                                        }
                                     }
                                 }
                             }
@@ -167,15 +149,6 @@ export class Conference {
 
     public get hasRootSpace(): boolean {
         return !!this.rootSpace;
-    }
-
-    /**
-     * Returns all detected talk rooms for this conference.
-     * (Note that since physical auditoriums don't have any talk rooms, there won't be any results for talks
-     * in physical auditoriums here.)
-     */
-    public get storedTalks(): Talk[] {
-        return Object.values(this.talks);
     }
 
     public get storedAuditoriums(): Auditorium[] {
@@ -199,17 +172,11 @@ export class Conference {
         this.subspaces = {};
         this.auditoriums = {};
         this.auditoriumBackstages = {};
-        this.talks = {};
         this.interestRooms = {};
     }
 
     public async construct() {
         this.reset();
-
-        if (this.backend instanceof PentaBackend) {
-            // TODO this is not nice.
-            this.pentaDb = this.backend.db;
-        }
 
         // Locate all the rooms for the conference
         const roomIds = await this.client.getJoinedRooms();
@@ -236,34 +203,30 @@ export class Conference {
                                 this.dbRoom = new MatrixRoom(roomId, this.client, this);
                                 this.recalculateRoomMembership(roomId);
                                 break;
-                            case RoomKind.Auditorium:
+                            case RoomKind.Auditorium: {
                                 const auditoriumId = locatorEvent[RSC_AUDITORIUM_ID];
                                 if (this.backend.auditoriums.has(auditoriumId)) {
                                     this.auditoriums[auditoriumId] = new Auditorium(roomId, this.backend.auditoriums.get(auditoriumId)!, this.client, this);
                                     this.recalculateRoomMembership(roomId);
                                 }
                                 break;
-                            case RoomKind.AuditoriumBackstage:
+                            }
+                            case RoomKind.AuditoriumBackstage: {
                                 const auditoriumBsId = locatorEvent[RSC_AUDITORIUM_ID];
                                 if (this.backend.auditoriums.has(auditoriumBsId)) {
                                     this.auditoriumBackstages[auditoriumBsId] = new AuditoriumBackstage(roomId, this.backend.auditoriums.get(auditoriumBsId)!, this.client, this);
                                     this.recalculateRoomMembership(roomId);
                                 }
                                 break;
-                            case RoomKind.Talk:
-                                const talkId = locatorEvent[RSC_TALK_ID];
-                                if (this.backend.talks.has(talkId)) {
-                                    this.talks[talkId] = new Talk(roomId, this.backend.talks.get(talkId)!, this.client, this);
-                                    this.recalculateRoomMembership(roomId);
-                                }
-                                break;
-                            case RoomKind.SpecialInterest:
+                            }
+                            case RoomKind.SpecialInterest: {
                                 const interestId = locatorEvent[RSC_SPECIAL_INTEREST_ID];
                                 if (this.backend.interestRooms.has(interestId)) {
                                     this.interestRooms[interestId] = new InterestRoom(roomId, this.client, this, interestId, this.config.conference.prefixes);
                                     this.recalculateRoomMembership(roomId);
                                 }
                                 break;
+                            }
                             default:
                                 break;
                         }
@@ -357,12 +320,6 @@ export class Conference {
         }
     }
 
-    public async getPentaDb(): Promise<PentaDb | null> {
-        if (this.pentaDb === null) return null;
-        await this.pentaDb.connect();
-        return this.pentaDb;
-    }
-
     public async getSpace(): Promise<Space | null> {
         return this.rootSpace;
     }
@@ -372,9 +329,9 @@ export class Conference {
      */
     public async createSupportRooms() {
         const roomAliases = [
-            this.config.conference.supportRooms.speakers,
-            this.config.conference.supportRooms.specialInterest,
-            this.config.conference.supportRooms.coordinators,
+            this.config.conference.supportRooms?.speakers,
+            this.config.conference.supportRooms?.specialInterest,
+            this.config.conference.supportRooms?.coordinators,
         ];
 
         const rootSpace = await this.getSpace();
@@ -384,7 +341,7 @@ export class Conference {
 
         for (const alias of roomAliases) {
             // Skip aliases that aren't configured.
-            if (alias == null) continue;
+            if (!alias) continue;
             try {
                 await this.client.resolveRoom(alias);
             } catch (e1) {
@@ -392,9 +349,9 @@ export class Conference {
                 try {
                     const roomId = await safeCreateRoom(
                         this.client,
-                        mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
+                        mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE(this.config.moderatorUserIds), {
                             room_alias_name: (new RoomAlias(alias)).localpart,
-                            invite: [this.config.moderatorUserId],
+                            invite: this.config.moderatorUserIds,
                         }),
                     );
                     await rootSpace.addChildRoom(roomId);
@@ -433,14 +390,14 @@ export class Conference {
             subspace = await this.client.createSpace({
                 isPublic: true,
                 name: name,
-                invites: [this.config.moderatorUserId],
+                invites: this.config.moderatorUserIds,
             });
             this.subspaces[subspaceId] = subspace;
 
             await assignAliasVariations(
                 this.client,
                 subspace.roomId,
-                applyAllAliasPrefixes("space-" + aliasLocalpart, this.config.conference.prefixes.aliases),
+                applyAllAliasPrefixes(`space-${aliasLocalpart}`, this.config.conference.prefixes.aliases),
                 this.config.conference.prefixes.suffixes,
             );
 
@@ -448,9 +405,11 @@ export class Conference {
                 roomId: subspace.roomId,
             } as IStoredSubspace);
 
-            // Grants PL100 to the moderator in the subspace.
+            // Grants PL100 to the moderators in the subspace.
             // We can't do this directly with `createSpace` unfortunately, as we could for plain rooms.
-            await this.client.setUserPowerLevel(this.config.moderatorUserId, subspace.roomId, 100);
+            for (let moderator of this.config.moderatorUserIds) {
+                await this.client.setUserPowerLevel(moderator, subspace.roomId, 100);
+            }
         } else {
             subspace = this.subspaces[subspaceId];
         }
@@ -481,7 +440,7 @@ export class Conference {
                 );
             } else {
                 // Create a new interest room.
-                roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(SPECIAL_INTEREST_CREATION_TEMPLATE(this.config.moderatorUserId), {
+                roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(SPECIAL_INTEREST_CREATION_TEMPLATE(this.config.moderatorUserIds), {
                     creation_content: {
                         [RSC_CONFERENCE_ID]: this.id,
                         [RSC_SPECIAL_INTEREST_ID]: interestRoom.id,
@@ -524,7 +483,7 @@ export class Conference {
     }
 
     /**
-     * Creates an auditorium space, room and backstage room.
+     * Creates an auditorium room and auditorium backstage room.
      *
      * The auditorium space's children are ordered as follows:
      *  1. auditorium room
@@ -540,45 +499,14 @@ export class Conference {
         }
 
         const parentSpace = await this.getDesiredParentSpace(auditorium);
-        let audSpace;
-        try {
-            audSpace = await this.client.createSpace({
-                isPublic: true,
-                name: applySuffixRules(
-                    auditorium.name, auditorium.id, this.config.conference.prefixes.displayNameSuffixes
-                ),
-            });
 
-            await assignAliasVariations(
-                this.client,
-                audSpace.roomId,
-                applyAllAliasPrefixes("space-" + auditorium.slug, this.config.conference.prefixes.aliases),
-                this.config.conference.prefixes.suffixes,
-                auditorium.id
-            );
-
-            // Ensure that the space can be viewed by guest users.
-            await this.client.sendStateEvent(
-                audSpace.roomId,
-                "m.room.guest_access",
-                "",
-                {guest_access:"can_join"},
-            );
-        } catch (e) {
-            await logMessage(LogLevel.ERROR, "utils", `Can't create auditorium space for ${auditorium.slug}: ${e}!`, this.client);
-            throw e;
-        }
-
-        await parentSpace.addChildSpace(audSpace, { order: `auditorium-${auditorium.id}` });
-
-        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_CREATION_TEMPLATE(this.config.moderatorUserId), {
+        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_CREATION_TEMPLATE(this.config.moderatorUserIds), {
             creation_content: {
                 [RSC_CONFERENCE_ID]: this.id,
                 [RSC_AUDITORIUM_ID]: auditorium.id,
             },
             initial_state: [
                 makeAuditoriumLocator(this.id, auditorium.id),
-                makeAssociatedSpace(audSpace.roomId),
             ],
             name: auditorium.name,
         }));
@@ -590,11 +518,11 @@ export class Conference {
         // const widget = await LiveWidget.forAuditorium(this.auditoriums[auditorium.id], this.client);
         // await this.client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
 
-        await audSpace.addChildRoom(roomId, { order: "1-auditorium" });
+        await parentSpace.addChildRoom(roomId, { order: `auditorium-${auditorium.id}-1-front` });
 
         // Now create the backstage
         const backstage = await this.createAuditoriumBackstage(auditorium);
-        await audSpace.addChildRoom(backstage.roomId, { order: "2-backstage" });
+        await parentSpace.addChildRoom(backstage.roomId, { order: `auditorium-${auditorium.id}-2-backstage` });
 
         return this.auditoriums[auditorium.id];
     }
@@ -604,7 +532,7 @@ export class Conference {
             return this.auditoriumBackstages[auditorium.id];
         }
 
-        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE, {
+        const roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(AUDITORIUM_BACKSTAGE_CREATION_TEMPLATE(this.config.moderatorUserIds), {
             creation_content: {
                 [RSC_CONFERENCE_ID]: this.id,
                 [RSC_AUDITORIUM_ID]: auditorium.id,
@@ -612,63 +540,13 @@ export class Conference {
             initial_state: [
                 makeAuditoriumBackstageLocator(this.id, auditorium.id),
             ],
+            name: `[BACKSTAGE] ${auditorium.name}`,
         }));
-        await assignAliasVariations(this.client, roomId, applyAllAliasPrefixes(auditorium.slug + "-backstage", this.config.conference.prefixes.aliases),
+        await assignAliasVariations(this.client, roomId, applyAllAliasPrefixes(`${auditorium.slug}-backstage`, this.config.conference.prefixes.aliases),
         this.config.conference.prefixes.suffixes, auditorium.id);
         this.auditoriumBackstages[auditorium.id] = new AuditoriumBackstage(roomId, auditorium, this.client, this);
 
         return this.auditoriumBackstages[auditorium.id];
-    }
-
-    public async createTalk(talk: ITalk, auditorium: Auditorium): Promise<MatrixRoom> {
-        let roomId: string;
-
-        const auditoriumSpace = await auditorium.getAssociatedSpace();
-        if (!auditoriumSpace) {
-            throw new Error(`Can't create talk ${talk.id} in ${talk.auditoriumId}: No auditorium container space`);
-        }
-
-        if (!this.talks[talk.id]) {
-            roomId = await safeCreateRoom(this.client, mergeWithCreationTemplate(TALK_CREATION_TEMPLATE(this.config.moderatorUserId), {
-                name: talk.title,
-                creation_content: {
-                    [RSC_CONFERENCE_ID]: this.id,
-                    [RSC_TALK_ID]: talk.id,
-                    [RSC_AUDITORIUM_ID]: await auditorium.getId(),
-                },
-                initial_state: [
-                    makeTalkLocator(this.id, talk.id),
-                ],
-            }));
-            this.talks[talk.id] = new Talk(roomId, talk, this.client, this);
-        } else {
-            roomId = this.talks[talk.id].roomId;
-
-            // Ensure that the room has the correct name.
-            await this.client.sendStateEvent(roomId, "m.room.name", "", {name: talk.title});
-        }
-
-        // Calculate all the aliases the room should have, then update the list of bot-assigned aliases to match
-        const wantedBaseNames = [
-            (await auditorium.getSlug()) + '-' + talk.slug,
-            'talk-' + talk.id,
-        ];
-        const wantedPrefixedNames = wantedBaseNames.flatMap(baseName => applyAllAliasPrefixes(baseName, this.config.conference.prefixes.aliases));
-        const allAliasVariantsToAssign = wantedPrefixedNames
-            .map(a => calculateAliasVariations(a,
-                this.config.conference.prefixes.suffixes))
-            .reduce((setLeft, setRight) => setUnion(setLeft, setRight));
-        await addAndDeleteManagedAliases(this.client, roomId, allAliasVariantsToAssign);
-
-        // TODO: Send widgets after creation
-        // const widget = await LiveWidget.forTalk(this.talks[talk.id], this.client);
-        // await this.client.sendStateEvent(roomId, widget.type, widget.state_key, widget.content);
-
-        // Ensure that the room appears within the correct space.
-        const startTime = new Date(talk.startTime).toISOString();
-        await auditoriumSpace.addChildRoom(roomId, { order: `3-talk-${startTime}` });
-
-        return this.talks[talk.id];
     }
 
     public async createUpdatePerson(person: IPerson): Promise<IPerson> {
@@ -684,6 +562,19 @@ export class Conference {
 
     /**
      * Determines the space in which an auditorium space or interest room should reside.
+     *
+     * For both auditoria and interest rooms, this is based off a set of configured prefixes for the
+     * auditorium or interest room ID.
+     *
+     * For auditoria, there is the additional option to match on the track type (with a set of configured
+     * mappings).
+     *
+     * ## Historical notes
+     *
+     * Matching on track types was added for FOSDEM 2025. Previously, only prefixes were available
+     * as a matching mechanism but the track type support was needed once auditoria were changed to
+     * represent tracks instead of being 1:1 mapped to physical in-person rooms.
+     *
      * @param auditoriumOrInterestRoom The description of the auditorium or interest room.
      * @returns The space in which the auditorium or interest room should reside.
      */
@@ -698,12 +589,19 @@ export class Conference {
         const id = auditoriumOrInterestRoom.id;
 
         for (const [subspaceId, subspaceConfig] of Object.entries(this.config.conference.subspaces)) {
-            for (const prefix of subspaceConfig.prefixes) {
-                if (id.startsWith(prefix)) {
-                    if (!(subspaceId in this.subspaces)) {
-                        throw new Error(`The ${subspaceId} subspace has not been created yet!`);
+            if (subspaceConfig.prefixes !== undefined) {
+                for (const prefix of subspaceConfig.prefixes) {
+                    if (id.startsWith(prefix)) {
+                        if (!(subspaceId in this.subspaces)) {
+                            throw new Error(`The ${subspaceId} subspace has not been created yet!`);
+                        }
+                        return this.subspaces[subspaceId];
                     }
+                }
+            }
 
+            if (subspaceConfig.trackTypes !== undefined && 'trackType' in auditoriumOrInterestRoom) {
+                if (subspaceConfig.trackTypes.includes(auditoriumOrInterestRoom.trackType)) {
                     return this.subspaces[subspaceId];
                 }
             }
@@ -718,59 +616,51 @@ export class Conference {
     }
 
     public async getPeopleForAuditorium(auditorium: Auditorium): Promise<IPerson[]> {
-        const audit = await auditorium.getDefinition();
+        const audit = auditorium.getDefinition();
         const people: IPerson[] = [];
         for (const t of this.backend.talks.values()) {
             if (t.auditoriumId == audit.id) {
                 people.push(...t.speakers);
             }
         }
+        people.push(...audit.extraPeople);
         return people;
     }
 
-    public async getPeopleForTalk(talk: Talk): Promise<IPerson[]> {
-        const db = await this.getPentaDb();
-        if (db !== null) {
-            return await this.resolvePeople(await db.findAllPeopleForTalk(await talk.getId()));
-        }
-
-        return talk.getSpeakers();
-    }
-
+    /**
+     * @deprecated This always returns `[]`.
+     */
     public async getPeopleForInterest(int: InterestRoom): Promise<IPerson[]> {
-        const db = await this.getPentaDb();
-        if (db !== null) {
-            // Yes, an interest room is an auditorium to Penta.
-            return await this.resolvePeople(await db.findAllPeopleForAuditorium(await int.getId()));
-        }
-
         return [];
     }
 
-    public async getInviteTargetsForAuditorium(auditorium: Auditorium, backstage = false): Promise<IPerson[]> {
+    public async getInviteTargetsForAuditorium(auditorium: Auditorium, roles = [Role.Coordinator, Role.Host, Role.Speaker]): Promise<IPerson[]> {
         const people = await this.getPeopleForAuditorium(auditorium);
-        const roles = [Role.Coordinator, Role.Host, Role.Speaker];
-        let includesPerson = (person, array) => {
-            for (const element of array) {
-                if (element.name === person.name) {
-                    return true
-                }
-            }
-            return false
+
+        // HACK dedupe people by name.
+        const namesToPersons: Map<string, IPerson> = new Map();
+
+        let shouldWritePerson = (person: IPerson) => {
+            // ignore unknown roles
+            if (! roles.includes(person.role)) return false;
+
+            if (! namesToPersons.has(person.name)) return true;
+
+            // (TODO HACK we should figure out a nicer way of doing this, like directly tracking multiple roles for people)
+            // overwrite the previous person entry if this person is a coordinator
+            // (coordinator role is more important than speaker)
+            if (person.role == Role.Coordinator) return true;
+
+            return false;
         };
-        let uniquePeople: IPerson[] = []
+
         for (const person of people) {
-            if (!includesPerson(person, uniquePeople)) {
-                uniquePeople.push(person)
+            if (shouldWritePerson(person)) {
+                namesToPersons.set(person.name, person);
             }
         }
-        return uniquePeople.filter(p => roles.includes(p.role));
-    }
 
-    public async getInviteTargetsForTalk(talk: Talk): Promise<IPerson[]> {
-        const people = await this.getPeopleForTalk(talk);
-        const roles = [Role.Speaker, Role.Host, Role.Coordinator];
-        return people.filter(p => roles.includes(p.role));
+        return Array.from(namesToPersons.values());
     }
 
     public async getInviteTargetsForInterest(int: InterestRoom): Promise<IPerson[]> {
@@ -785,50 +675,50 @@ export class Conference {
         return people.filter(p => roles.includes(p.role));
     }
 
-    public async getModeratorsForTalk(talk: Talk): Promise<IPerson[]> {
-        const people = await this.getPeopleForTalk(talk);
-        const roles = [Role.Coordinator, Role.Speaker, Role.Host];
-        return people.filter(p => roles.includes(p.role));
-    }
-
     public async getModeratorsForInterest(int: InterestRoom): Promise<IPerson[]> {
         const people = await this.getPeopleForInterest(int);
         const roles = [Role.Host, Role.Coordinator];
         return people.filter(p => roles.includes(p.role));
     }
 
-    private async resolvePeople(people: IPerson[]): Promise<IPerson[]> {
-        // Clone people from the DB to avoid accidentally mutating caches
-        people = people.map(p => objectFastClone(p))
-
-        // Fill in any details we have that the database doesn't
-        for (const person of people) {
-            if (person.matrix_id) continue;
-            const storedPerson = this.getPerson(person.id);
-            if (storedPerson?.matrix_id) {
-                person.matrix_id = storedPerson.matrix_id;
-            }
-        }
-
-        // We don't do the final resolution because that can take too much time at this level
-        // in the call chain
-        return people;
-    }
-
     public getAuditorium(audId: string): Auditorium {
         return this.auditoriums[audId];
+    }
+
+    public getAuditoriumBySlug(audSlug: string): Auditorium | null {
+        for (let auditorium of Object.values(this.auditoriums)) {
+            if (auditorium.getSlug() === audSlug) {
+                return auditorium;
+            }
+        }
+        return null;
     }
 
     public getAuditoriumBackstage(audId: string): AuditoriumBackstage {
         return this.auditoriumBackstages[audId];
     }
 
-    public getTalk(talkId: string): Talk | undefined {
-        return this.talks[talkId];
-    }
-
     public getInterestRoom(intId: string): InterestRoom {
         return this.interestRooms[intId];
+    }
+
+    public getInterestById(audSlug: string): InterestRoom | null {
+        for (let interest of Object.values(this.interestRooms)) {
+            if (interest.getId() === audSlug) {
+                return interest;
+            }
+        }
+        return null;
+    }
+
+    public getAuditoriumOrInterestByIdOrSlug(audOrInterestIdOrSlug: string): Auditorium | InterestRoom | null {
+        if (this.auditoriums[audOrInterestIdOrSlug]) {
+            return this.auditoriums[audOrInterestIdOrSlug];
+        }
+        if (this.interestRooms[audOrInterestIdOrSlug]) {
+            return this.interestRooms[audOrInterestIdOrSlug];
+        }
+        return this.getAuditoriumBySlug(audOrInterestIdOrSlug);
     }
 
     public async ensurePermissionsFor(people: ResolvedPersonIdentifier[], roomId: string): Promise<void> {
@@ -839,7 +729,9 @@ export class Conference {
         // we'll be unable to do promotions/demotions in the future.
         const pls = await this.client.getRoomStateEvent(roomId, "m.room.power_levels", "");
         pls['users'][await this.client.getUserId()] = 100;
-        pls['users'][this.config.moderatorUserId] = 100;
+        for (let moderator of this.config.moderatorUserIds) {
+            pls['users'][moderator] = 100;
+        }
         for (const userId of mxids) {
             if (pls['users'][userId]) continue;
             pls['users'][userId] = 50;
@@ -880,23 +772,41 @@ export class Conference {
         return this.getUpcomingTalksByLambda(talk => talk.endTime, inNextMinutes, minBefore);
     }
 
+    /**
+     * Return a list of all people with the given person ID.
+     *
+     * TODO does not support interest rooms
+     */
     public async findPeopleWithId(personId: string): Promise<IPerson[]> {
-        // TODO
-        const db = await this.getPentaDb();
-        if (db !== null) {
-            return await db.findPeopleWithId(personId);
+        let out: IPerson[] = [];
+
+        for (let auditorium of Object.values(this.auditoriums)) {
+            let audDef = auditorium.getDefinition();
+            for (let talk of audDef.talks.values()) {
+                for (let person of talk.speakers) {
+                    if (person.id === personId) {
+                        out.push(person);
+                    }
+                }
+            }
+
+            for (let person of audDef.extraPeople) {
+                if (person.id === personId) {
+                    out.push(person);
+                }
+            }
         }
 
-        return [];
+        return out;
     }
 
     /**
      * Recalculate the number of joined and left users in a room,
      * and then update the total count for the conference.
-     * 
+     *
      * Prefer to call `enqueueRecalculateRoomMembership` as it will
      * queue and debounce calls appropriately.
-     * 
+     *
      * @param roomId The roomId to recalculate.
      */
     private async recalculateRoomMembership(roomId: string) {
@@ -907,7 +817,9 @@ export class Conference {
             this.membersInRooms[roomId] = joinedOrLeftMembers;
             const total = new Set(Object.values(this.membersInRooms).flat());
             total.delete(myUserId);
-            total.delete(this.config.moderatorUserId);
+            for (let moderator of this.config.moderatorUserIds) {
+                total.delete(moderator);
+            }
             attendeeTotalGauge.set(total.size);
         } catch (ex) {
             LogService.warn("Conference", `Failed to recalculate room membership for ${roomId}`, ex);

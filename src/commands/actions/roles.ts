@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import { doAuditoriumResolveAction, doInterestResolveAction, IAction } from "./people";
-import { MatrixClient } from "matrix-bot-sdk";
 import { Conference } from "../../Conference";
 import { ConferenceMatrixClient } from "../../ConferenceMatrixClient";
 
@@ -31,12 +30,12 @@ export async function runRoleCommand(action: IAction, conference: Conference, cl
             if (!spiRoom) return client.replyNotice(roomId, event, "Unknown auditorium/interest room");
             await doInterestResolveAction(action, client, spiRoom, conference, isInvite);
         } else {
-            await doAuditoriumResolveAction(action, client, aud, conference, backstageOnly, skipTalks, isInvite);
+            await doAuditoriumResolveAction(action, client, aud, conference, backstageOnly, isInvite);
         }
     } else {
         if (!args.includes("sionly")) {
             for (const auditorium of conference.storedAuditoriums) {
-                await doAuditoriumResolveAction(action, client, auditorium, conference, backstageOnly, skipTalks, isInvite);
+                await doAuditoriumResolveAction(action, client, auditorium, conference, backstageOnly, isInvite);
             }
         }
         if (!args.includes("nosi")) {

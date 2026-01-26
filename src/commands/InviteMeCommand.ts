@@ -53,38 +53,20 @@ export class InviteMeCommand implements ICommand {
 
         for (const aud of this.conference.storedAuditoriums) {
             addToGroup("auditorium", aud.roomId);
-            const audSlug = await aud.getSlug();
-            addToGroup(audSlug + ":*", aud.roomId);
-            addToGroup(audSlug + ":public", aud.roomId);
+            const audSlug = aud.getSlug();
+            addToGroup(`${audSlug}:*`, aud.roomId);
+            addToGroup(`${audSlug}:public`, aud.roomId);
             addToGroup("public", aud.roomId);
             addToGroup("*", aud.roomId);
-
-            // Auditoriums have a wrapping space, which should be auto-invited if needed.
-            const space = await aud.getAssociatedSpace();
-            addToGroup(audSlug + ":*", space.roomId);
-            addToGroup(audSlug + ":public", space.roomId);
-            addToGroup(audSlug + ":space", space.roomId);
-            addToGroup("public", space.roomId);
-            addToGroup("*", space.roomId);
         }
 
         for (const audBack of this.conference.storedAuditoriumBackstages) {
             addToGroup("auditorium_backstage", audBack.roomId);
-            const audSlug = await audBack.getSlug();
-            addToGroup(audSlug + ":*", audBack.roomId);
-            addToGroup(audSlug + ":private", audBack.roomId);
+            const audSlug = audBack.getSlug();
+            addToGroup(`${audSlug}:*`, audBack.roomId);
+            addToGroup(`${audSlug}:private`, audBack.roomId);
             addToGroup("private", audBack.roomId);
             addToGroup("*", audBack.roomId);
-        }
-
-        for (const talk of this.conference.storedTalks) {
-            addToGroup("talk", talk.roomId);
-            const audSlug = await this.conference.getAuditorium(await talk.getAuditoriumId()).getSlug();
-            addToGroup(audSlug + ":talk", talk.roomId);
-            addToGroup(audSlug + ":*", talk.roomId);
-            addToGroup(audSlug + ":private", talk.roomId);
-            addToGroup("private", talk.roomId);
-            addToGroup("*", talk.roomId);
         }
 
         for (const spi of this.conference.storedInterestRooms) {

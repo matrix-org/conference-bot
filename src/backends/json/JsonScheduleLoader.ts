@@ -68,14 +68,12 @@ export class JsonScheduleLoader {
             id: talk.id.toString(), // TODO We have numbers on the rhs and a string on the lhs.
             title: talk.title,
             subtitle: talk.description, // TODO is this valid?
-            slug: slugify(talk.title),
 
             auditoriumId,
             prerecorded: true, // TODO
             qa_startTime: null, // TODO
             livestream_endTime: endMoment.valueOf(), // TODO is this right?
             speakers: talk.speakers.map(speaker => this.convertSpeaker(speaker)),
-            track: "", // TODO we have multiple of them!!!
 
             // Must .clone() here because .startOf() mutates the moment(!)
             dateTs: startMoment.clone().startOf("day").valueOf(),
@@ -104,8 +102,9 @@ export class JsonScheduleLoader {
             name: stream.stream_name,
             kind: RoomKind.Auditorium,
             talks,
-            // TODO Support physical auditoriums in the JSON schedule backend
-            isPhysical: false,
+            extraPeople: [],
+            trackType: '',
+            livestreamId: '',
         };
     }
 }

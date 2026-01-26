@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import { IInterestRoom, IAuditorium, ITalk, Role } from "../../models/schedule";
-import { decodePrefix } from "../penta/PentabarfParser";
 import { IPrefixConfig } from "../../config";
 import { simpleTimeParse } from "../common";
 import { RoomKind } from "../../models/room_kinds";
@@ -49,7 +48,6 @@ interface PretalxTalk {
     do_not_record: boolean,
     title: string,
     subtitle: string,
-    track: string,
     type: string,
     language: string,
     abstract: string,
@@ -108,11 +106,36 @@ export interface PretalxSchema {
 }
 
 /**
+ * Given a event-room ID (not a Matrix ID; a room from the Pentabarf XML),
+ * decodes that to figure out what type of event-room it is
+ * and also returns the unprefixed version.
+ */
+export function decodePrefix(id: string, prefixConfig: IPrefixConfig): {kind: RoomKind, name: string} | null {
+    const override = prefixConfig.nameOverrides[id];
+
+    const auditoriumPrefix = prefixConfig.auditoriumRooms.find(p => id.startsWith(p));
+    if (auditoriumPrefix) {
+        // TODO(FOSDEM 2023): don't strip the prefix, because on FOSDEM's end they are not stripped in the livestream IDs.
+        //     It would be good to figure out why we wanted to strip prefixes originally and whether we need finer controls.
+        //return {kind: RoomKind.Auditorium, name: override || id.substring(auditoriumPrefix.length)};
+        return {kind: RoomKind.Auditorium, name: override || id };
+    }
+
+    const interestPrefix = prefixConfig.interestRooms.find(p => id.startsWith(p));
+    if (interestPrefix) {
+        return {kind: RoomKind.SpecialInterest, name: override || id.substring(interestPrefix.length)};
+    }
+
+    // Rooms in the schedule not matching a prefix should not be treated as special interests.
+    return null;
+}
+
+/**
  * This will parse a schedule JSON file and attempt to fill in some of the fields. As the JSON
  * only contains some (public) data, consumers should expect to find additional information through
  * the API.
- * @param rawXml 
- * @returns 
+ * @param rawXml
+ * @returns
  */
 export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig): Promise<PretalxSchema> {
     const { conference } = (JSON.parse(rawJson) as PretalxData).schedule;
@@ -133,16 +156,17 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
             };
             interestRooms.set(spiRoom.id, spiRoom);
         } else if (kind === RoomKind.Auditorium) {
-            const isPhysical = prefixConfig.physicalAuditoriumRooms.some(p => room.description.startsWith(p));
             const qaEnabled = prefixConfig.qaAuditoriumRooms.some(p => room.description.startsWith(p));
-            const auditorium = {
+            const auditorium: IAuditorium & {qaEnabled: boolean} = {
                 id: room.name,
                 slug: slugify(room.name),
                 name: description,
                 kind: kind,
                 talks: new Map(),
-                isPhysical: isPhysical,
+                extraPeople: [],
                 qaEnabled: qaEnabled,
+                trackType: '',
+                livestreamId: '',
             };
             auditoriums.set(room.name, auditorium);
         }
@@ -165,7 +189,7 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
                     (durationHours * 1000 * 60 * 60)
                     + (durationMinutes * 1000 * 60)
                 );
-                
+
                 if (event.type === 'Talk') {
                     // Tediously, we need the "code" to map to pretalx. The "code"
                     // is only available via the URL.
@@ -182,7 +206,6 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
                         startTime: eventDate.getTime(),
                         subtitle: event.subtitle,
                         title: event.title,
-                        track: event.track,
                         prerecorded: false,
                         speakers: event.persons.map(p => ({
                             id: p.code,
@@ -195,7 +218,6 @@ export async function parseFromJSON(rawJson: string, prefixConfig: IPrefixConfig
                         })), //event.persons,
                         // TODO: Unsure?
                         auditoriumId: roomName,
-                        slug: event.slug,
                     };
                     talks.set(eventCode, talk);
                     auditorium?.talks.set(eventCode, talk);

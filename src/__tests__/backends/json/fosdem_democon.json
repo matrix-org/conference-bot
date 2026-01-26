@@ -1,0 +1,145 @@
+{
+  "talks": [
+    {
+      "event_id": 3,
+      "title": "Panacea3D: The Final Word in Open Source 3D Solid Modelling",
+      "persons": [
+        {
+          "person_id": 4,
+          "event_role": "speaker",
+          "name": "Iarlaith O'Ferrell",
+          "email": "ioferrell@localhost",
+          "matrix_id": ""
+        },
+        {
+          "person_id": 5,
+          "event_role": "speaker",
+          "name": "Niamh O'Donnellan",
+          "email": "niamh@localhost",
+          "matrix_id": ""
+        },
+        {
+          "person_id": 1,
+          "event_role": "coordinator",
+          "name": "Conal Cördinator",
+          "email": "conal@example.org",
+          "matrix_id": "@conal:example.org"
+        }
+      ],
+      "conference_room": "c1111a",
+      "start_datetime": "2024-02-01T09:30:00+01:00",
+      "duration": 30,
+      "track": {
+        "id": 5,
+        "slug": "open_cad_cam",
+        "name": "Open CAD/CAM devroom",
+        "online_qa": false
+      }
+    },
+    {
+      "event_id": 14,
+      "title": "A new architecture for Local-First Computing without boundaries",
+      "persons": [
+        {
+          "person_id": 42,
+          "event_role": "speaker",
+          "name": "Yasunori Takeda",
+          "email": "tysnr@localhost",
+          "matrix_id": ""
+        },
+        {
+          "person_id": 246,
+          "event_role": "coordinator",
+          "name": "Chloé Coordinator",
+          "email": "chloe@example.org",
+          "matrix_id": "@chloe:example.org"
+        }
+      ],
+      "conference_room": "c4172",
+      "start_datetime": "2024-02-01T09:45:00+01:00",
+      "duration": 45,
+      "track": {
+        "id": 6,
+        "slug": "selfhosting",
+        "name": "Self-Hosted Software devroom",
+        "online_qa": true
+      }
+    },
+    {
+      "event_id": 19,
+      "title": "Devising a Blended Federation Topology that reaches Cosmique Perfection",
+      "persons": [
+        {
+          "person_id": 94,
+          "event_role": "speaker",
+          "name": "Vivaldo Corradetti",
+          "email": "vivaldo@localhost",
+          "matrix_id": "@vivaldo:example.org"
+        },
+        {
+          "person_id": 246,
+          "event_role": "coordinator",
+          "name": "Chloé Coordinator",
+          "email": "chloe@example.org",
+          "matrix_id": "@chloe:example.org"
+        }
+      ],
+      "conference_room": "c4172",
+      "start_datetime": "2024-02-01T10:45:00+01:00",
+      "duration": 45,
+      "track": {
+        "id": 6,
+        "slug": "selfhosting",
+        "name": "Self-Hosted Software devroom",
+        "online_qa": true
+      }
+    }
+  ],
+  "tracks": [
+    {
+      "id": 5,
+      "slug": "open_cad_cam",
+      "name": "Open CAD/CAM devroom",
+      "type": "devroom",
+      "managers": [
+        {
+          "person_id": 1,
+          "event_role": "coordinator",
+          "name": "Conal Coordinator",
+          "email": "conal@example.org",
+          "matrix_id": "@conal:example.org"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "slug": "selfhosting",
+      "name": "Self-Hosted Software devroom",
+      "type": "devroom",
+      "managers": [
+        {
+          "person_id": 246,
+          "event_role": "coordinator",
+          "name": "Chloé Coordinator",
+          "email": "chloe@example.org",
+          "matrix_id": "@chloe:example.org"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "slug": "key_notes",
+      "name": "Keynotes (TALKS NOT ANNOUNCED YET)",
+      "type": "maintrack",
+      "managers": [
+        {
+          "person_id": 0,
+          "event_role": "coordinator",
+          "name": "Bert Boss",
+          "email": "",
+          "matrix_id": ""
+        }
+      ]
+    }
+  ]
+}

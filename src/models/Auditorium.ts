@@ -25,26 +25,23 @@ export class Auditorium extends MatrixRoom implements PhysicalRoom {
         super(roomId, client, conference);
     }
 
-    public async getDefinition(): Promise<IAuditorium> {
+    public getDefinition(): IAuditorium {
         return this.definition;
     }
 
-    public async getName(): Promise<string> {
-        return (await this.getDefinition()).name;
+    public getName(): string {
+        return this.getDefinition().name;
     }
 
-    public async getSlug(): Promise<string> {
-        return (await this.getDefinition()).slug;
+    public getSlug(): string {
+        return this.getDefinition().slug;
     }
 
-    public async getId(): Promise<string> {
-        return (await this.getDefinition()).id;
+    public getId(): string {
+        return this.getDefinition().id;
     }
 }
 
-// It's the same but different
+// Same properties, but treated as an independent type by the type system.
 export class AuditoriumBackstage extends Auditorium {
-    constructor(roomId: string, definition: IAuditorium, client: MatrixClient, conference: Conference) {
-        super(roomId, definition, client, conference);
-    }
 }

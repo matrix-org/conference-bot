@@ -24,8 +24,6 @@ import config from "../config";
     const fname = process.argv[2];
     const yaml = YAML.parse(await fs.promises.readFile(fname, 'utf-8'));
 
-    // TODO: Use penta or another location as an import location
-
     const client = new MatrixClient(config.homeserverUrl, config.accessToken);
     const domain = (new UserID(await client.getUserId())).domain;
 

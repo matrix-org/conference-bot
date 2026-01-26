@@ -16,7 +16,6 @@ limitations under the License.
 
 import { ICommand } from "./ICommand";
 import { MatrixClient } from "matrix-bot-sdk";
-import { Conference } from "../Conference";
 
 export class HelpCommand implements ICommand {
     public readonly prefixes = ["help", "?"];
@@ -32,12 +31,10 @@ export class HelpCommand implements ICommand {
             "!conference help                                          - This menu.\n" +
             "!conference build                                         - Builds the basic conference structure needed to prepare the rest\n" +
             "                                                            of the conference. This is based off the bot's config.\n" +
-            "!conference build [sionly] [backstages] [notalks] [nosi]  - The same as !conference build.\n" +
+            "!conference build [sionly] [backstages] [nosi]            - The same as !conference build.\n" +
             "                                                            'sionly' restricts the build to special interest rooms only.\n" +
             "                                                            'backstages' excludes auditorium spaces, rooms and talk rooms.\n" +
-            "                                                            'notalks' excludes talk rooms.\n" +
             "                                                            'nosi' excludes special interest rooms.\n" +
-            "!conference build talk &lt;aud&gt; &lt;talk-id&gt;                    - Builds the auditorium and room for a single talk.\n" +
             "!conference build interest &lt;interest-id&gt;                  - Builds a single interest room.\n" +
             "!conference run &lt;aud&gt;                                     - Runs the schedule in the given auditorium. If 'all' is used,\n" +
             "                                                            then all auditoriums will be run.\n" +

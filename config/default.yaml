@@ -20,32 +20,37 @@ managementRoom: "!room:example.org"
 # The identity server to use to send email invites to any participants. The
 # bot will accept all terms of service automatically - please ensure that it
 # has legal capability to do so before running the bot in this way.
-idServerDomain: "vector.im"
+#
+# Comment out this option to disable identity services.
+# Disabling IS services is usually required for running in non-publicly-reachable environments,
+# like in development.
+# idServerDomain: "vector.im"
 
 # The brand to supply to the identity server when performing actions which may
 # result in emails or other communications to the user.
 idServerBrand: "vector-im"
 
-# This is the user ID of the moderator for all public-facing rooms the bot creates.
-# Note that this user will be granted power level 100 (the highest) in every room
+# These are the user IDs of the moderators for all public-facing rooms the bot creates.
+# Note that these users will be granted power level 100 (the highest) in every room
 # and be invited.
-moderatorUserId: "@moderator:example.org"
+moderatorUserIds: ["@moderator:example.org"]
 
 # Settings for how the bot should represent livestreams.
 livestream:
   # The template for livestreams in auditorium rooms
   # Available variables:
   #  id  - The room ID/name (eg: "D.collab")
-  #  sId - The room ID/name, but lowercase and only alphanumeric characters
+  #  sId - [DEPRECATED] The room ID/name, but lowercase and only alphanumeric characters
   #        are included (eg: "dcollab")
+  #  livestreamId - The livestream ID acquired from the conference schedule source.
   auditoriumUrl: "https://stream.example.org/conference/hls/{id}.m3u8"
 
   # The template for livestreams in talk rooms
   # Available variables:
-  #  slug  - The shorthand version of the talk name (eg: "matrix-p2p")
+  #  id    - The talk's ID
   #  audId - The auditorium ID the talk is held in (eg: "D.collab")
   #  jitsi - The Jitsi conference name in lowercase.
-  talkUrl: "https://stream.example.org/conference-talks/hls/{slug}.m3u8"
+  talkUrl: "https://stream.example.org/conference-talks/hls/talk-{id}.m3u8"
 
   # The template for livestreams in random rooms.
   # Available variables:
@@ -123,7 +128,7 @@ conference:
 
 
   # You must specifiy a backend for your schedule.
-  # It may either be "json", "penta", or "pretalx". Remember to only
+  # It may either be "json" or "pretalx". Remember to only
   # specify *one*.
 
   # sample schedule configuration for using the json backend.
@@ -136,25 +141,9 @@ conference:
     # the JSON schema of the JSON schedule format.
     scheduleDefinition: "path/to/local/file"
 
-  # sample schedule configuration for using the penta backend.
-  # schedule:
-    # backend: "penta"
-    # The URL to the XML which is updated with conference information.
-    # This is read and parsed by the bot during the early stages of
-    # setting up the conference.
-    # scheduleDefinition: "https://fosdem.org/2021/schedule/xml"
-
-  # sample schedule configuration for using the pretalx backend. 
+  # sample schedule configuration for using the pretalx backend.
   # schedule:
     # backend: "pretalx"
-    # The format the scheduleDefinition is in. Use "pretalx" if you are loading the
-    # JSON export from pretalx directly, or "fosdem" for the specific pentabarf-xml-format
-    # they use instead.
-    # scheduleFormat: "fosdem"|"pretalx"
-    # The URL to the XML which is updated with conference information.
-    # This is read and parsed by the bot during the early stages of
-    # setting up the conference.
-    # scheduleDefinition: "https://fosdem.org/2021/schedule/xml"
     # The endpoint to reach the base API path of the conference.
     # pretalxApiEndpoint: "https://pretalx.example.com/api/events/example-2021/"
     # Access token for accessing the Pretalx API
@@ -175,88 +164,6 @@ conference:
   # Should never be less than 5 minutes.
   lookaheadMinutes: 5
 
-  # Connection information to get data about the conference during the conference.
-  # This can be readonly. Currently the bot only supports postgresql.
-  # Should be specified as null if not using Pentabarf.
-  database: null
-  #database:
-    #host: "localhost"
-    #port: 5432
-    #username: "db_username"
-    #password: "db_password"
-    #database: "your_db"
-    #sslmode: "require"
-
-    ## The table/view for the bot to access for information about people involved in the conference.
-    ## Must at least have the following columns:
-    ##  event_id         - TEXT(like) - The penta ID for the talk (event) associated with
-    ##                                  the person, if relevant. Null if a coordinator.
-    ##  person_id        - TEXT(like) - The penta ID for the person.
-    ##  event_role       - TEXT(like) - One of [speaker, coordinator, host]. See roles later on.
-    ##  name             - TEXT(like) - The full name, or otherwise useful name, for the person.
-    ##  email            - TEXT(like) - The preferred email address for the person.
-    ##  matrix_id        - TEXT(like) - If known, the Matrix User ID for the person, otherwise null.
-    ##  conference_room  - TEXT(like) - The relevant room. This should match the event_id or be
-    ##                                  the room where coordinators are assigned.
-    ##
-    ## People may be assigned multiple roles with multiple rows.
-    ##
-    ## Roles:
-    ##  speaker      - A speaker for event_id. This person will get moderator in their talk's
-    ##                 room, and invited to the auditorium backstage room. They will be required
-    ##                 to check in before their talk starts.
-    ##
-    ##  host         - Someone who is moderating the talk itself in collaboration with the speakers
-    ##                 for the event_id. One host must check in before the talk starts, otherwise
-    ##                 the issue will be raised to the management room and coordinators will be
-    ##                 asked to take over. Hosts will get moderator in their talk's room, and be
-    ##                 invited to the public auditorium room, backstage room, and talk room.
-    ##
-    ##  coordinator  - These are typically people responsible for scheduling the auditorium's
-    ##                 talks. They'll get moderator in the auditorium room, backstage room, and all
-    ##                 talk rooms for their auditorium, though will only be invited to the auditorium
-    ##                 and backstage room (and the talk rooms on-demand if needed to fill in for a
-    ##                 missing host).
-    ##
-    ## The bot will ignore unknown events, rooms, and roles.
-    ##
-    ## CAUTION: Although the bot uses parameterized queries, it is unable to use the table name as
-    ## a parameter. As such, this particular config value is vulnerable to SQL injection. Seeing as
-    ## how you (the bot's admin) are the one entering it: don't do that to yourself.
-    #tblPeople: "view_matrix_bot_export_people"
-
-    ## The table/view for the bot to access for information about the conference schedule.
-    ## Must at least have the following columns:
-    ##  event_id            - TEXT(like) - The penta ID for the talk (event).
-    ##  conference_room     - TEXT(like) - The relevant room. This should match the event_id.
-    ##  start_datetime      - TIMESTAMP WITHOUT TIME ZONE - The start time of the talk. The timezone
-    ##                        is determined by the bot using the timezone elsewhere in this config.
-    ##  duration            - INTERVAL   - How long the talk is meant to last (start to end).
-    ##  presentation_length - INTERVAL   - The portion of `duration` where the speaker is presenting.
-    ##                                     The remainder is assumed to be Q&A.
-    ##  prerecorded         - BOOLEAN    - True if the presentation is prerecorded. When false, the
-    ##                                     bot will assume that presentation_length is zero and switch
-    ##                                     directly into "hallway" mode at start_datetime.
-    ##
-    ## The bot will ignore unknown talks. Any if the start_datetime is NULL then the bot will ignore
-    ## that record. If the INTERVAL fields are NULL, the bot will assume zero.
-    ##
-    ## Note: the bot is capable of running both tblSchedule and tblPeople off the same table/view.
-    ## It will use DISTINCT where it needs to in order to get accurate information.
-    ##
-    ## CAUTION: Although the bot uses parameterized queries, it is unable to use the table name as
-    ## a parameter. As such, this particular config value is vulnerable to SQL injection. Seeing as
-    ## how you (the bot's admin) are the one entering it: don't do that to yourself.
-    #tblSchedule: "view_matrix_bot_export_schedule"
-
-    ## The duration in seconds added to the `presentation_length` to account for preroll material
-    ## such as sponsor segments. If this is built into the table already then set this to zero.
-    #schedulePreBufferSeconds: 30
-
-    ## The duration in seconds added to the talk `duration` to account for postroll material
-    ## such as sponsor segments. If this is built into the table already then set this to zero.
-    #schedulePostBufferSeconds: 30
-
   # Various prefixes used by the bot when parsing information.
   prefixes:
     # The prefixes for the rooms listed in the pentabarf definition which
@@ -267,10 +174,6 @@ conference:
     # Prefixes for the auditorium rooms that have Q&A sessions.
     # Rooms outside of these prefixes will not have Q&A sessions.
     qaAuditoriumRooms: ["D."]
-
-    # Prefixes for the auditorium rooms that are virtual representations of events taking place in a physical venue.
-    # These auditoriums will not have individual rooms for talks.
-    physicalAuditoriumRooms: ["P."]
 
     # The prefixes for the rooms listed in the pentabarf definition which
     # describe the rooms that are 'special interest' rooms. The prefixes will
@@ -306,8 +209,15 @@ conference:
     #stands:
     #  displayName: Stands
     #  alias: stands
-    #  # The prefixes of rooms which belong in the subspace
+    #
+    #  ### MATCHING RULES ###
+    #  # Each space should only be matched by one subspace's `prefixes` and `trackTypes` config,
+    #  # otherwise the result is undefined and may not be deterministic.
+    #
+    #  # The prefixes of the schedule IDs of auditorium and interests rooms which belong in the subspace
     #  prefixes: ["S."]
+    #  # The types of tracks which belong in the subspace
+    #  trackTypes: ["stands"]
 
 # Options related to the IRC bridge. Set to null if you don't use an IRC bridge.
 ircBridge: null
