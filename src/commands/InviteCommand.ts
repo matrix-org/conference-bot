@@ -134,9 +134,9 @@ export class InviteCommand implements ICommand {
 
             if (args.length === 0) {
                 // If no specific rooms are requested, then also handle invites to all support rooms.
-                await this.runSpeakersSupport();
-                await this.runCoordinatorsSupport();
-                await this.runSpecialInterestSupport();
+                invitesSent += await this.runSpeakersSupport();
+                invitesSent += await this.runCoordinatorsSupport();
+                invitesSent += await this.runSpecialInterestSupport();
             }
         }
 
