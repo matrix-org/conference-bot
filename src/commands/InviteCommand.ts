@@ -153,6 +153,12 @@ export class InviteCommand implements ICommand {
         await this.client.sendNotice(managementRoomId, `${invitesSent} invites sent!`);
     }
 
+    /**
+     * Ensure that a person is invited to the room. Skips people that are already joined to the room.
+     *
+     * @returns {number} The number of invites that were sent out.
+     * @throws An exception if we're unable to fetch the state of the room.
+     */
     public async ensureInvited(roomId: string, people: ResolvedPersonIdentifier[]): Promise<number> {
         // We don't want to invite anyone we have already invited or that has joined though, so
         // avoid those people. We do this by querying the room state and filtering.
