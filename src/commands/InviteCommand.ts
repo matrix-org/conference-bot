@@ -24,7 +24,20 @@ import { logMessage } from "../LogProxy";
 import { IPerson, Role } from "../models/schedule";
 import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 import { IConfig } from "../config";
-import { sleep } from "../utils";
+import { editNotice, sleep } from "../utils";
+
+type InviteOptions = {
+    /**
+     * If true, then no actual invites will be sent.
+     */
+    dryRun: boolean;
+
+    /**
+     * Called for every invite that was sent.
+     * Still called during dry-run.
+     */
+    onInviteSent: () => Promise<void>;
+}
 
 export class InviteCommand implements ICommand {
     public readonly prefixes = ["invite", "inv"];
@@ -36,12 +49,12 @@ export class InviteCommand implements ICommand {
      *
      * @param {IPerson[]} people - The list of people to invite.
      * @param {string} alias - The alias of the room to invite people to.
-     * 
+     *
      * @returns {number} The number of invites that were sent out.
      * @throws An exception if the room alias failed to be resolved, or we're unable to
      *     fetch the state of the room.
      */
-    private async createInvites(people: IPerson[], alias: string): Promise<number> {
+    private async createInvites(people: IPerson[], alias: string, options: InviteOptions): Promise<void> {
         const resolved = await resolveIdentifiers(this.client, people);
 
         let targetRoomId;
@@ -51,11 +64,10 @@ export class InviteCommand implements ICommand {
         catch (error) {
             throw Error(`Error resolving room id for ${alias}`, {cause: error})
         }
-        return await this.ensureInvited(targetRoomId, resolved);
+        await this.ensureInvited(targetRoomId, resolved, options);
     }
 
-    private async runSpeakersSupport(): Promise<number> {
-        let invitesSent = 0;
+    private async runSpeakersSupport(options: InviteOptions): Promise<void> {
         let people: IPerson[] = [];
         for (const aud of this.conference.storedAuditoriumBackstages) {
             people.push(...await this.conference.getInviteTargetsForAuditorium(aud, [Role.Speaker]));
@@ -68,13 +80,11 @@ export class InviteCommand implements ICommand {
         });
         const speakersRoom = this.config.conference.supportRooms?.speakers;
         if (speakersRoom) {
-            invitesSent += await this.createInvites(newPeople, speakersRoom);
+            await this.createInvites(newPeople, speakersRoom, options);
         }
-        return invitesSent;
     }
 
-    private async runCoordinatorsSupport(): Promise<number> {
-        let invitesSent = 0;
+    private async runCoordinatorsSupport(options: InviteOptions): Promise<void> {
         let people: IPerson[] = [];
         for (const aud of this.conference.storedAuditoriums) {
             // This hack was not wanted in 2023 or 2024.
@@ -96,22 +106,19 @@ export class InviteCommand implements ICommand {
         });
         const coordinatorsRoom = this.config.conference.supportRooms?.coordinators;
         if (coordinatorsRoom) {
-            invitesSent += await this.createInvites(newPeople, coordinatorsRoom);
+            await this.createInvites(newPeople, coordinatorsRoom, options);
         }
-        return invitesSent;
     }
 
-    private async runSpecialInterestSupport(): Promise<number> {
-        let invitesSent = 0;
+    private async runSpecialInterestSupport(options: InviteOptions): Promise<void> {
         const people: IPerson[] = [];
         for (const sir of this.conference.storedInterestRooms) {
             people.push(...await this.conference.getInviteTargetsForInterest(sir));
         }
         const siRoom = this.config.conference.supportRooms?.specialInterest;
         if (siRoom) {
-            invitesSent += await this.createInvites(people, siRoom);
+            await this.createInvites(people, siRoom, options);
         }
-        return invitesSent;
     }
 
     public async run(managementRoomId: string, event: any, args: string[]) {
@@ -122,35 +129,85 @@ export class InviteCommand implements ICommand {
             LogService.error(`StatusCommand`, `Failed to opportunistically refresh the backend (continuing invites anyway): ${error}`)
         }
 
-        await this.client.replyNotice(managementRoomId, event, "Sending invites to participants. This might take a while.");
 
         // This is called invite but it's really membership sync in a way. We're iterating over
         // every possible room the bot knows about and making sure that we have the right people
         // in it. We don't remove anyone and don't care about extras - we just want to make sure
         // that a subset of people are joined.
 
+        // Before we do anything, let's do a dry-run to figure out how many invites we're expecting to send.
+        let invitesToSend = 0;
+        await this.runWithOptions(managementRoomId, event, args, {
+            dryRun: true,
+            onInviteSent: async () => {
+                ++invitesToSend;
+            },
+        });
+
         let invitesSent = 0;
 
+        const makeProgressMessage = () => `Sending invites: ${invitesSent}/${invitesToSend}...`;
+
+        // Send an event and periodically update it to show progress.
+        const progressEvent = await this.client.replyNotice(managementRoomId, event, makeProgressMessage());
+
+        let lastSentProgressMillis = Date.now();
+        const SEND_UPDATES_EVERY_MILLIS = 60_000;
+
+        // Now we're ready to start inviting whilst sending progress messages now and again.
+        await this.runWithOptions(managementRoomId, event, args, {
+            dryRun: false,
+            onInviteSent: async () => {
+                ++invitesSent;
+
+                // Send a progress update if one is overdue.
+                if (Date.now() - lastSentProgressMillis > SEND_UPDATES_EVERY_MILLIS) {
+                    await editNotice(
+                        this.client,
+                        managementRoomId,
+                        progressEvent,
+                        makeProgressMessage(),
+                    );
+                    lastSentProgressMillis = Date.now();
+                }
+            },
+        });
+
+        // Make it obvious we are finished now
+        await editNotice(
+            this.client,
+            managementRoomId,
+            progressEvent,
+            `${invitesSent} invites sent!`
+        );
+    }
+
+    /**
+     * Handle the actual argument handling and inviting logic.
+     * Should not send messages to the room.
+     *
+     * @param args - The arguments to this command.
+     * @param options - Options for running the invites.
+     */
+    private async runWithOptions(managementRoomId: string, event: any, args: string[], options: InviteOptions): Promise<void> {
         if (args[0] && args[0] === "speakers-support") {
-            invitesSent += await this.runSpeakersSupport();
+            await this.runSpeakersSupport(options);
         } else if (args[0] && args[0] === "coordinators-support") {
-            invitesSent += await this.runCoordinatorsSupport();
+            await this.runCoordinatorsSupport(options);
         } else if (args[0] && args[0] === "si-support") {
-            invitesSent += await this.runSpecialInterestSupport();
+            await this.runSpecialInterestSupport(options);
         } else {
             await runRoleCommand(async (_client, room, people) => {
-                invitesSent += await this.ensureInvited(room, people);
+                await this.ensureInvited(room, people, options);
             }, this.conference, this.client, managementRoomId, event, args);
 
             if (args.length === 0) {
                 // If no specific rooms are requested, then also handle invites to all support rooms.
-                invitesSent += await this.runSpeakersSupport();
-                invitesSent += await this.runCoordinatorsSupport();
-                invitesSent += await this.runSpecialInterestSupport();
+                await this.runSpeakersSupport(options);
+                await this.runCoordinatorsSupport(options);
+                await this.runSpecialInterestSupport(options);
             }
         }
-
-        await this.client.sendNotice(managementRoomId, `${invitesSent} invites sent!`);
     }
 
     /**
@@ -159,11 +216,9 @@ export class InviteCommand implements ICommand {
      * @returns {number} The number of invites that were sent out.
      * @throws An exception if we're unable to fetch the state of the room.
      */
-    public async ensureInvited(roomId: string, people: ResolvedPersonIdentifier[]): Promise<number> {
+    public async ensureInvited(roomId: string, people: ResolvedPersonIdentifier[], options: InviteOptions): Promise<void> {
         // We don't want to invite anyone we have already invited or that has joined though, so
         // avoid those people. We do this by querying the room state and filtering.
-        let invitesSent = 0;
-
         let state: Awaited<ReturnType<MatrixClient["getRoomState"]>>;
         try {
             state = await this.client.getRoomState(roomId);
@@ -191,8 +246,10 @@ export class InviteCommand implements ICommand {
 
             for (let attempt = 0; attempt < 3; ++attempt) {
                 try {
-                    await invitePersonToRoom(this.client, target, roomId, this.config);
-                    ++invitesSent;
+                    if (!options.dryRun) {
+                        await invitePersonToRoom(this.client, target, roomId, this.config);
+                    }
+                    await options.onInviteSent();
                 } catch (e) {
                     if (e.statusCode === 429) {
                         // Retry after ratelimits
@@ -211,7 +268,5 @@ export class InviteCommand implements ICommand {
                 break;
             }
         }
-
-        return invitesSent;
     }
 }
