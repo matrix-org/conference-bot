@@ -31,6 +31,16 @@ export class InviteCommand implements ICommand {
 
     constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference, private readonly config: IConfig) {}
 
+    /*
+     * Invite the given people to the room pointed to by the given room alias.
+     *
+     * @param {IPerson[]} people - The list of people to invite.
+     * @param {string} alias - The alias of the room to invite people to.
+     * 
+     * @returns {number} The number of invites that were sent out.
+     * @throws An exception if the room alias failed to be resolved, or we're unable to
+     *     fetch the state of the room.
+     */
     private async createInvites(people: IPerson[], alias: string): Promise<number> {
         const resolved = await resolveIdentifiers(this.client, people);
 
