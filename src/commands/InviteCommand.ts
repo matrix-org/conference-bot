@@ -24,13 +24,24 @@ import { logMessage } from "../LogProxy";
 import { IPerson, Role } from "../models/schedule";
 import { ConferenceMatrixClient } from "../ConferenceMatrixClient";
 import { IConfig } from "../config";
+import { sleep } from "../utils";
 
 export class InviteCommand implements ICommand {
     public readonly prefixes = ["invite", "inv"];
 
     constructor(private readonly client: ConferenceMatrixClient, private readonly conference: Conference, private readonly config: IConfig) {}
 
-    private async createInvites(people: IPerson[], alias: string) {
+    /*
+     * Invite the given people to the room pointed to by the given room alias.
+     *
+     * @param {IPerson[]} people - The list of people to invite.
+     * @param {string} alias - The alias of the room to invite people to.
+     * 
+     * @returns {number} The number of invites that were sent out.
+     * @throws An exception if the room alias failed to be resolved, or we're unable to
+     *     fetch the state of the room.
+     */
+    private async createInvites(people: IPerson[], alias: string): Promise<number> {
         const resolved = await resolveIdentifiers(this.client, people);
 
         let targetRoomId;
@@ -40,10 +51,11 @@ export class InviteCommand implements ICommand {
         catch (error) {
             throw Error(`Error resolving room id for ${alias}`, {cause: error})
         }
-        await this.ensureInvited(targetRoomId, resolved);
+        return await this.ensureInvited(targetRoomId, resolved);
     }
 
-    private async runSpeakersSupport(): Promise<void> {
+    private async runSpeakersSupport(): Promise<number> {
+        let invitesSent = 0;
         let people: IPerson[] = [];
         for (const aud of this.conference.storedAuditoriumBackstages) {
             people.push(...await this.conference.getInviteTargetsForAuditorium(aud, [Role.Speaker]));
@@ -56,11 +68,13 @@ export class InviteCommand implements ICommand {
         });
         const speakersRoom = this.config.conference.supportRooms?.speakers;
         if (speakersRoom) {
-            await this.createInvites(newPeople, speakersRoom);
+            invitesSent += await this.createInvites(newPeople, speakersRoom);
         }
+        return invitesSent;
     }
 
-    private async runCoordinatorsSupport(): Promise<void> {
+    private async runCoordinatorsSupport(): Promise<number> {
+        let invitesSent = 0;
         let people: IPerson[] = [];
         for (const aud of this.conference.storedAuditoriums) {
             // This hack was not wanted in 2023 or 2024.
@@ -82,19 +96,22 @@ export class InviteCommand implements ICommand {
         });
         const coordinatorsRoom = this.config.conference.supportRooms?.coordinators;
         if (coordinatorsRoom) {
-            await this.createInvites(newPeople, coordinatorsRoom);
+            invitesSent += await this.createInvites(newPeople, coordinatorsRoom);
         }
+        return invitesSent;
     }
 
-    private async runSpecialInterestSupport(): Promise<void> {
+    private async runSpecialInterestSupport(): Promise<number> {
+        let invitesSent = 0;
         const people: IPerson[] = [];
         for (const sir of this.conference.storedInterestRooms) {
             people.push(...await this.conference.getInviteTargetsForInterest(sir));
         }
         const siRoom = this.config.conference.supportRooms?.specialInterest;
         if (siRoom) {
-            await this.createInvites(people, siRoom);
+            invitesSent += await this.createInvites(people, siRoom);
         }
+        return invitesSent;
     }
 
     public async run(managementRoomId: string, event: any, args: string[]) {
@@ -112,30 +129,42 @@ export class InviteCommand implements ICommand {
         // in it. We don't remove anyone and don't care about extras - we just want to make sure
         // that a subset of people are joined.
 
+        let invitesSent = 0;
+
         if (args[0] && args[0] === "speakers-support") {
-            await this.runSpeakersSupport();
+            invitesSent += await this.runSpeakersSupport();
         } else if (args[0] && args[0] === "coordinators-support") {
-            await this.runCoordinatorsSupport();
+            invitesSent += await this.runCoordinatorsSupport();
         } else if (args[0] && args[0] === "si-support") {
-            await this.runSpecialInterestSupport();
+            invitesSent += await this.runSpecialInterestSupport();
         } else {
-            await runRoleCommand((_client, room, people) => this.ensureInvited(room, people), this.conference, this.client, managementRoomId, event, args);
+            await runRoleCommand(async (_client, room, people) => {
+                invitesSent += await this.ensureInvited(room, people);
+            }, this.conference, this.client, managementRoomId, event, args);
 
             if (args.length === 0) {
                 // If no specific rooms are requested, then also handle invites to all support rooms.
-                await this.runSpeakersSupport();
-                await this.runCoordinatorsSupport();
-                await this.runSpecialInterestSupport();
+                invitesSent += await this.runSpeakersSupport();
+                invitesSent += await this.runCoordinatorsSupport();
+                invitesSent += await this.runSpecialInterestSupport();
             }
         }
 
-        await this.client.sendNotice(managementRoomId, "Invites sent!");
+        await this.client.sendNotice(managementRoomId, `${invitesSent} invites sent!`);
     }
 
-    public async ensureInvited(roomId: string, people: ResolvedPersonIdentifier[]) {
+    /**
+     * Ensure that a person is invited to the room. Skips people that are already joined to the room.
+     *
+     * @returns {number} The number of invites that were sent out.
+     * @throws An exception if we're unable to fetch the state of the room.
+     */
+    public async ensureInvited(roomId: string, people: ResolvedPersonIdentifier[]): Promise<number> {
         // We don't want to invite anyone we have already invited or that has joined though, so
         // avoid those people. We do this by querying the room state and filtering.
-        let state: Awaited<ReturnType<MatrixClient["getRoomState"]>>
+        let invitesSent = 0;
+
+        let state: Awaited<ReturnType<MatrixClient["getRoomState"]>>;
         try {
             state = await this.client.getRoomState(roomId);
         }
@@ -160,12 +189,29 @@ export class InviteCommand implements ICommand {
             // Notably, we DO try to invite users by MXID (when known) even if
             // we've already invited them by email.
 
-            try {
-                await invitePersonToRoom(this.client, target, roomId, this.config);
-            } catch (e) {
-                LogService.error("InviteCommand", e);
-                await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${target.mxid}/${target.emails} / ${target.person.id} to ${roomId} - ignoring: ${e.message ?? e.statusMessage ?? '(see logs)'}`, this.client);
+            for (let attempt = 0; attempt < 3; ++attempt) {
+                try {
+                    await invitePersonToRoom(this.client, target, roomId, this.config);
+                    ++invitesSent;
+                } catch (e) {
+                    if (e.statusCode === 429) {
+                        // Retry after ratelimits
+                        // Add 1 second to the ratelimit just to ensure we don't retry too quickly
+                        // due to clock drift or a very small requested wait.
+                        // If no retry time set, use 5 minutes.
+                        let delay = (e.retryAfterMs ?? 300_000) + 1_000;
+
+                        await sleep(delay);
+                        continue;
+                    }
+
+                    LogService.error("InviteCommand", e);
+                    await logMessage(LogLevel.ERROR, "InviteCommand", `Error inviting ${target.mxid}/${target.emails} / ${target.person.id} to ${roomId} - ignoring: ${e.message ?? e.statusMessage ?? '(see logs)'}`, this.client);
+                }
+                break;
             }
         }
+
+        return invitesSent;
     }
 }

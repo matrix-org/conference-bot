@@ -191,3 +191,7 @@ export async function writeJsonFileAsync(path: string, data: object, replacer: a
         }
     }));
 }
+
+export function sleep(millis: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, millis));
+}
