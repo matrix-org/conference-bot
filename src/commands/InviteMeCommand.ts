@@ -27,7 +27,7 @@ export class InviteMeCommand implements ICommand {
     public readonly prefixes = ["inviteme", "inviteto"];
 
     private async inviteTo(invitee: string, room: string): Promise<void> {
-        let members;
+        let members: string[];
         try {
             members = await this.client.getJoinedRoomMembers(room);
         }
