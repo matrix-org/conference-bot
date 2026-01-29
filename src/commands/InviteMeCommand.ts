@@ -108,37 +108,44 @@ export class InviteMeCommand implements ICommand {
         if (!args.length) {
             return this.client.replyHtmlNotice(roomId, event, "Please specify a room ID or alias, or one of the room groups:\n" + this.prettyGroupNameList(roomGroups));
         }
-        const userId = args[1] || event['sender'];
 
-        if (roomGroups.has(args[0])) {
-            const group = roomGroups.get(args[0])!;
-            await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], 'Joining ' + group.size);
+        // Support overriding the User ID to be invited,
+        // or even specifying a comma-separated list
+        const userIds: string[] = args[1]?.split(",") || [event['sender']];
 
-            for (const roomId of group) {
+        for (const userId of userIds) {
+            if (roomGroups.has(args[0])) {
+                const group = roomGroups.get(args[0])!;
+                if (userIds.length === 1) {
+                    // Show some feedback on the number of rooms, but only if we're not batch-inviting
+                    await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], 'Joining ' + group.size);
+                }
+
+                for (const roomId of group) {
+                    try {
+                        await this.inviteTo(userId, roomId);
+                    } catch (e) {
+                        await logMessage(LogLevel.WARN, "InviteMeCommand", `Error inviting ${userId} to ${roomId}: ${e?.message || e?.body?.message}`, this.client);
+                    }
+                }
+            } else {
+                // Invite to one particular room.
+                let targetRoomId: string;
                 try {
-                    await this.inviteTo(userId, roomId);
-                } catch (e) {
-                    await logMessage(LogLevel.WARN, "InviteMeCommand", `Error inviting ${userId} to ${roomId}: ${e?.message || e?.body?.message}`, this.client);
+                    targetRoomId = await this.client.resolveRoom(args[0]);
+                }
+                catch (error) {
+                    throw Error(`Error resolving room ${args[0]}`, { cause: error })
+                }
+                try {
+                    await this.client.inviteUser(userId, targetRoomId);
+                }
+                catch (error) {
+                    throw Error(`Error inviting ${userId} to ${targetRoomId}`, { cause: error })
                 }
             }
-
-            await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
-        } else {
-            // Invite to one particular room.
-            let targetRoomId;
-            try {
-                targetRoomId = await this.client.resolveRoom(args[0]);
-            }
-            catch (error) {
-                throw Error(`Error resolving room ${args[0]}`, {cause:error})
-            }
-            try {
-                await this.client.inviteUser(userId, targetRoomId);
-            }
-            catch (error) {
-                throw Error(`Error inviting ${userId} to ${targetRoomId}`, {cause:error})
-            }
-            await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
         }
+
+        await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
     }
 }
