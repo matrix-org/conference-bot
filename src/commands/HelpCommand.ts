@@ -61,7 +61,7 @@ export class HelpCommand implements ICommand {
             "<h4>General management:</h4>" +
             "<pre><code>" +
             "!conference inviteme &lt;room&gt;         - Asks the bot to invite you to the given room.\n" +
-            "!conference inviteto &lt;room&gt; &lt;user&gt;  - Asks the bot to invite the given user to the given room.\n" +
+            "!conference inviteto &lt;room&gt; &lt;user&gt; [&lt;user&gt;,...]  - Asks the bot to invite the given user(s) to the given room.\n" +
             "!conference join &lt;room&gt;             - Makes the bot join the given room.\n" +
             "!conference copymods &lt;from&gt; &lt;to&gt;    - Copies the moderators from one room to another.\n" +
             "!conference widgets &lt;aud&gt;           - Creates all widgets for the auditorium and its talks.\n" +
