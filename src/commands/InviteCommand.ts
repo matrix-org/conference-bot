@@ -230,11 +230,11 @@ export class InviteCommand implements ICommand {
         const emailInvitePersonIds: string[] = state.filter(s => s.type === "m.room.third_party_invite").map(s => s.content?.[RS_3PID_PERSON_ID]).filter(i => !!i);
         // List of state events that are m.room.member events.
         const members: MembershipEvent[] = state.filter(s => s.type === "m.room.member").map(s => new MembershipEvent(s));
-        // List of Matrix user IDs that have already joined
-        const effectiveJoinedUserIds: string[] = members.filter(m => m.effectiveMembership === "join").map(m => m.membershipFor);
+        // List of Matrix user IDs that have already joined or are already invited
+        const effectiveJoinedOrInvitedUserIds: string[] = members.filter(m => m.effectiveMembership === "join" || m.effectiveMembership === "invite").map(m => m.membershipFor);
         for (const target of people) {
             if (target.mxid) {
-                if (effectiveJoinedUserIds.includes(target.mxid)) continue;
+                if (effectiveJoinedOrInvitedUserIds.includes(target.mxid)) continue;
             } else {
                 // The user does not have an MXID on record. If we've already
                 // invited them by email, continue to the next user.
