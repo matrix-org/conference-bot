@@ -119,9 +119,17 @@ export class InviteMeCommand implements ICommand {
             return this.client.replyHtmlNotice(roomId, event, "Please specify a room ID or alias, or one of the room groups:\n" + this.prettyGroupNameList(roomGroups));
         }
 
-        // Support overriding the User ID to be invited,
-        // or even specifying a comma-separated list
-        const userIds: string[] = args[1]?.split(",") || [event['sender']];
+        // Support specifying the User ID(s) to be invited,
+        // but default to the command user.
+        let userIds: string[] = args.slice(1);
+        if (userIds.length === 0) {
+            userIds = [event['sender']];
+        }
+
+        const obviouslyInvalidUserIds = userIds.filter(user_id => !user_id.startsWith("@") || user_id.indexOf(":") !== -1);
+        if (obviouslyInvalidUserIds.length > 0) {
+            return this.client.replyHtmlNotice(roomId, event, `Invalid user ID(s): ${obviouslyInvalidUserIds.join(', ')}`);
+        }
 
         let roomIds: Set<string>;
 
