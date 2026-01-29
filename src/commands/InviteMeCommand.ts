@@ -126,7 +126,7 @@ export class InviteMeCommand implements ICommand {
             userIds = [event['sender']];
         }
 
-        const obviouslyInvalidUserIds = userIds.filter(user_id => !user_id.startsWith("@") || user_id.indexOf(":") !== -1);
+        const obviouslyInvalidUserIds = userIds.filter(user_id => !user_id.startsWith("@") || user_id.indexOf(":") === -1);
         if (obviouslyInvalidUserIds.length > 0) {
             return this.client.replyHtmlNotice(roomId, event, `Invalid user ID(s): ${obviouslyInvalidUserIds.join(', ')}`);
         }
