@@ -26,7 +26,7 @@ export class InviteMeCommand implements ICommand {
 
     public readonly prefixes = ["inviteme", "inviteto"];
 
-    private async inviteTo(invitee: string, room: string): Promise<void> {
+    private async tryInviteTo(invitees: string[], room: string): Promise<void> {
         let members: string[];
         try {
             members = await this.client.getJoinedRoomMembers(room);
@@ -34,8 +34,18 @@ export class InviteMeCommand implements ICommand {
         catch (error) {
             throw Error(`Error getting joined members from room ${room}`, {cause:error})
         }
-        if (members.includes(invitee)) return;
-        await this.client.inviteUser(invitee, room);
+
+        for (const invitee of invitees) {
+            if (members.includes(invitee)) {
+                continue;
+            }
+
+            try {
+                await this.client.inviteUser(invitee, room);
+            } catch (e) {
+                await logMessage(LogLevel.WARN, "InviteMeCommand", `Error inviting ${invitee} to ${room}: ${e?.message || e?.body?.message}`, this.client);
+            }
+        }
     }
 
     /**
@@ -113,37 +123,24 @@ export class InviteMeCommand implements ICommand {
         // or even specifying a comma-separated list
         const userIds: string[] = args[1]?.split(",") || [event['sender']];
 
-        for (const userId of userIds) {
-            if (roomGroups.has(args[0])) {
-                const group = roomGroups.get(args[0])!;
-                if (userIds.length === 1) {
-                    // Show some feedback on the number of rooms, but only if we're not batch-inviting
-                    await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], 'Joining ' + group.size);
-                }
+        let roomIds: Set<string>;
 
-                for (const roomId of group) {
-                    try {
-                        await this.inviteTo(userId, roomId);
-                    } catch (e) {
-                        await logMessage(LogLevel.WARN, "InviteMeCommand", `Error inviting ${userId} to ${roomId}: ${e?.message || e?.body?.message}`, this.client);
-                    }
-                }
-            } else {
-                // Invite to one particular room.
-                let targetRoomId: string;
-                try {
-                    targetRoomId = await this.client.resolveRoom(args[0]);
-                }
-                catch (error) {
-                    throw Error(`Error resolving room ${args[0]}`, { cause: error })
-                }
-                try {
-                    await this.client.inviteUser(userId, targetRoomId);
-                }
-                catch (error) {
-                    throw Error(`Error inviting ${userId} to ${targetRoomId}`, { cause: error })
-                }
+        if (roomGroups.has(args[0])) {
+            roomIds = roomGroups.get(args[0])!;
+            // Show some feedback on the number of rooms
+            await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], 'rooms: ' + roomIds.size);
+        } else {
+            // Invite to one particular room.
+            try {
+                const targetRoomId = await this.client.resolveRoom(args[0]);
+                roomIds = new Set([targetRoomId]);
+            } catch (error) {
+                throw Error(`Error resolving room ${args[0]}`, { cause: error })
             }
+        }
+
+        for (const roomId of roomIds) {
+            await this.tryInviteTo(userIds, roomId);
         }
 
         await this.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
