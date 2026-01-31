@@ -102,6 +102,7 @@ export class LiveWidget {
     public static async scheduleForAuditorium(aud: Auditorium, client: MatrixClient, avatar: string, scheduleUrl: string): Promise<IStateEvent<IWidget>> {
         const widgetId = sha256(`${JSON.stringify(aud.getDefinition())}_AUDSCHED`);
         const widgetUrl = template(scheduleUrl, {
+            audSlug: aud.getSlug(),
             audName: aud.getName(),
         });
         return {
@@ -123,17 +124,20 @@ export class LiveWidget {
         };
     }
 
-    public static layoutForAuditorium(widget: IStateEvent<IWidget>): IStateEvent<ILayout> {
+    public static layoutForAuditorium(livestreamWidget: IStateEvent<IWidget>, scheduleWidget: IStateEvent<IWidget>): IStateEvent<ILayout> {
         return {
             type: "io.element.widgets.layout",
             state_key: "",
             content: {
                 widgets: {
-                    [widget.state_key]: {
+                    [livestreamWidget.state_key]: {
                         container: "top",
                         index: 0,
                         width: 100,
                         height: 40,
+                    },
+                    [scheduleWidget.state_key]: {
+                        container: "right",
                     },
                 },
             },

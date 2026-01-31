@@ -29,12 +29,12 @@ export class WidgetsCommand implements ICommand {
     private async addToRoom(aud: Auditorium) {
         const avatar = this.config.livestream.widgetAvatar;
         const baseUrl = this.config.webserver.publicBaseUrl;
-        const audWidget = await LiveWidget.forAuditorium(aud, this.client, avatar, baseUrl);
-        const audLayout = LiveWidget.layoutForAuditorium(audWidget);
-        const audSchedule = await LiveWidget.scheduleForAuditorium(aud, this.client, avatar, this.config.livestream.scheduleUrl);
+        const livestreamWidget = await LiveWidget.forAuditorium(aud, this.client, avatar, baseUrl);
+        const scheduleWidget = await LiveWidget.scheduleForAuditorium(aud, this.client, avatar, this.config.livestream.scheduleUrl);
+        const audLayout = LiveWidget.layoutForAuditorium(livestreamWidget, scheduleWidget);
 
         try {
-            await this.client.sendStateEvent(aud.roomId, audWidget.type, audWidget.state_key, audWidget.content);
+            await this.client.sendStateEvent(aud.roomId, livestreamWidget.type, livestreamWidget.state_key, livestreamWidget.content);
         }
         catch (error) {
             throw Error(`Error sending state event for auditorium widget into room ${aud.roomId}`, {cause:error})
