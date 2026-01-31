@@ -41,7 +41,7 @@ export class WidgetsCommand implements ICommand {
         }
 
         try {
-            await this.client.sendStateEvent(aud.roomId, audSchedule.type, audSchedule.state_key, audSchedule.content);
+            await this.client.sendStateEvent(aud.roomId, scheduleWidget.type, scheduleWidget.state_key, scheduleWidget.content);
         }
         catch (error) {
             throw Error(`Error sending state event for schedule widget into room ${aud.roomId}`, {cause:error})
