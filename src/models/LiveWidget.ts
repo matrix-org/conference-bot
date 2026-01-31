@@ -102,8 +102,8 @@ export class LiveWidget {
     public static async scheduleForAuditorium(aud: Auditorium, client: MatrixClient, avatar: string, scheduleUrl: string): Promise<IStateEvent<IWidget>> {
         const widgetId = sha256(`${JSON.stringify(aud.getDefinition())}_AUDSCHED`);
         const widgetUrl = template(scheduleUrl, {
-            audSlug: aud.getSlug(),
-            audName: aud.getName(),
+            audId: aud.getId(),
+            livestreamId: aud.getDefinition().livestreamId,
         });
         return {
             type: "im.vector.modular.widgets",
