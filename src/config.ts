@@ -60,7 +60,6 @@ export interface IConfig {
         address: string;
         port: number;
     };
-    dry_run_enabled: boolean;
     conference: {
         id: string;
         name: string;

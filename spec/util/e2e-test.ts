@@ -220,7 +220,6 @@ export class E2ETestEnv {
                 address: '0.0.0.0',
                 port: 0,
             },
-            dry_run_enabled: false,
             ...providedConfig,
         };
         const conferenceBot = await ConferenceBot.start(config);
